@@ -1,5 +1,4 @@
 import { useId, useState } from 'react'
-import { ExternalLink } from 'lucide-react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type {
@@ -13,6 +12,7 @@ import { cn } from '@/utils'
 import { LivePreview } from './LivePreview'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Card } from './primitives/Card'
+import { Icon } from './primitives/Icon'
 import { Link } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
 import { Section } from './Section'
@@ -102,8 +102,8 @@ const ProjectCard = ({
             </>
           )}
           repo{' '}
-          <ExternalLink
-            aria-hidden="true"
+          <Icon
+            name="external-link"
             className="inline-block size-[1em] align-[-0.125em]"
           />
         </Link>

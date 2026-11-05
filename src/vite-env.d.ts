@@ -1,10 +1,17 @@
 /// <reference types="vite/client" />
 
-/** The site's logos, bundled by `scripts/icons-plugin.ts`. */
+/** The site's icons, from Iconify's sets, bundled by `scripts/icons-plugin.ts`. */
 declare module 'virtual:icons' {
-  /** A Simple Icons path to fill in any color, or Devicon's logo's URL. */
-  export type VirtualIcon = { path: string } | { src: string }
+  /**
+   * An SVG's contents and the `viewBox` they're drawn in.
+   *
+   * A one-color icon draws in `currentColor`; a multicolor one, in its own.
+   */
+  export type VirtualIcon = { body: string; viewBox: string }
 
-  /** Keyed by slug, for every slug in `ICON_SLUGS` that has a logo. */
-  export const ICONS: Partial<Record<string, VirtualIcon>>
+  /** Logos keyed by slug, for every slug in `ICON_SLUGS` that has one. */
+  export const BRAND_ICONS: Partial<Record<string, VirtualIcon>>
+
+  /** Lucide's glyphs, for every name in `UI_ICON_NAMES`. */
+  export const UI_ICONS: Record<import('@/lib/icons').UiIconName, VirtualIcon>
 }

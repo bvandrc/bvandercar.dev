@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useEasedScrollIntoView, useTimer } from '@bvandrc/react-toolkit'
-import { ChevronRight } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
 
 import { cn } from '@/utils'
+import { Icon } from './primitives/Icon'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
   Pick<React.ComponentProps<'button'>, 'aria-describedby'> &
@@ -61,8 +61,8 @@ export const LivePreview = ({
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
-        <ChevronRight
-          aria-hidden="true"
+        <Icon
+          name="chevron-right"
           className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90"
         />
         {`${open ? 'Hide' : 'Show'} live preview`}

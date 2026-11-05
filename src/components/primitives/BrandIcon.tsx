@@ -1,4 +1,4 @@
-import { ICONS, type VirtualIcon } from 'virtual:icons'
+import { BRAND_ICONS, type VirtualIcon } from 'virtual:icons'
 import type { MergeExclusive } from 'type-fest'
 
 export type BrandIconProps = Omit<
@@ -15,12 +15,11 @@ export type BrandIconProps = Omit<
     { width: number; height: number }
   >
 
-const iconSrc = (icon: VirtualIcon, color: string) =>
-  'src' in icon
-    ? icon.src
-    : `data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#${color}"><path d="${icon.path}"/></svg>`
-      )}`
+const iconSrc = ({ body, viewBox }: VirtualIcon, color: string) =>
+  `data:image/svg+xml,${encodeURIComponent(
+    // `color` sets what a one-color logo's `currentColor` draws in.
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" color="#${color}">${body}</svg>`
+  )}`
 
 /**
  * A brand's logo: Simple Icons' in the given color, or for the few it lacks,
@@ -40,7 +39,7 @@ export const BrandIcon = ({
   title,
   ...props
 }: BrandIconProps) => {
-  const icon = ICONS[slug]
+  const icon = BRAND_ICONS[slug]
   if (!icon) {
     return null
   }
