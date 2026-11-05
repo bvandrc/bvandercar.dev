@@ -17,8 +17,8 @@ export type SimpleIconProps = Omit<
 /**
  * A Simple Icons logo in the given color.
  *
- * Given only one of `alt` and `title`, it uses that for both. Given neither,
- * it is decorative.
+ * A `title` doubles as the alt text, but `alt` alone shows no native tooltip.
+ * Given neither, it is decorative.
  */
 export const SimpleIcon = ({
   slug,
@@ -35,7 +35,7 @@ export const SimpleIcon = ({
     width={width}
     height={height}
     alt={alt ?? title ?? ''}
-    title={title ?? alt}
+    title={title}
     {...props}
   />
 )
