@@ -5,10 +5,6 @@ import { BrandIcon, type BrandIconProps } from './primitives/BrandIcon'
 import { Link, type LinkProps } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
 
-// Matches the accent theme token in src/styles/index.css, as the link text does.
-// LinkedIn's logo comes from Devicon, which keeps its own blue instead.
-const PROFILE_ICON_COLOR = '22d3ee'
-
 type HeaderSocialLinkProps = Pick<LinkProps, 'href'> & {
   /** The tooltip, naming the profile the link goes to. */
   tooltip: string
@@ -34,7 +30,9 @@ const HeaderSocialLink = ({
       data-testid={testId}>
       <BrandIcon
         slug={iconSlug}
-        color={PROFILE_ICON_COLOR}
+        // Matches the accent theme token in src/styles/index.css, as the link
+        // text does. LinkedIn's logo comes from Devicon, which keeps its own blue.
+        color="22d3ee"
         size={16}
         className="size-4"
       />
