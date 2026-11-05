@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { pick } from 'es-toolkit'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type {
@@ -142,8 +143,7 @@ export const Projects = () => {
   const [previewOpened, setPreviewOpened] = useState(false)
   return (
     <Section
-      icon={{ glyph: SECTIONS.PROJECTS.glyph }}
-      title={SECTIONS.PROJECTS.title}
+      {...pick(SECTIONS.PROJECTS, ['glyph', 'title'])}
       data-testid="projects">
       {PROJECTS.map((group) => (
         <Section
