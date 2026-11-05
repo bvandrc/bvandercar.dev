@@ -39,10 +39,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           {TYPE_LABELS[project.type]}
         </span>
       </div>
-      <p className="text-sm text-ink-muted">
-        {project.blurb}
-        {project.private && <em> (private repo)</em>}
-      </p>
+      <p className="text-sm text-ink-muted">{project.blurb}</p>
       <a
         href={repoUrl(project.repo)}
         target="_blank"
