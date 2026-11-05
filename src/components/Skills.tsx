@@ -21,8 +21,7 @@ export const Skills = () => (
                   {row.lines.flat().map((skill) => (
                     <span
                       key={skill.alt}
-                      className="rounded-md border border-border bg-surface px-2 py-1 text-sm"
-                      data-testid="skill-chip">
+                      className="rounded-md border border-border bg-surface px-2 py-1 text-sm">
                       {skill.alt}
                     </span>
                   ))}

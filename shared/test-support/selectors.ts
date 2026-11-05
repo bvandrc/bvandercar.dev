@@ -9,17 +9,10 @@ export const SELECTORS = {
   MAIN: 'main',
   PROJECTS: {
     SELF: 'projects',
-    CARD: {
-      SELF: 'project-card',
-      NAME: 'project-card-name',
-      TYPE_ICON: 'project-card-type-icon',
-      REPO_LINK: 'project-card-repo-link',
-      SCREENSHOT: 'project-card-screenshot',
-    },
+    CARD: 'project-card',
   },
   SKILLS: {
     SELF: 'skills',
-    CHIP: 'skill-chip',
   },
   BEYOND_CODE: 'beyond-code',
   FOOTER: {

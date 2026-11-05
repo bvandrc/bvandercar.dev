@@ -41,8 +41,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
             href={project.href}
             target="_blank"
             rel="noopener noreferrer"
-            className={LINK_CLASSES}
-            data-testid="project-card-name">
+            className={LINK_CLASSES}>
             {project.name}
           </a>
         </h4>
@@ -53,7 +52,6 @@ const ProjectCard = ({ project }: { project: Project }) => {
           width={14}
           height={14}
           className="size-3.5"
-          data-testid="project-card-type-icon"
         />
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
@@ -61,8 +59,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
         href={repoUrl(project.repo)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs text-ink-muted hover:text-accent"
-        data-testid="project-card-repo-link">
+        className="text-xs text-ink-muted hover:text-accent">
         {counts
           ? `${formatCount(counts.commits, 'commit')} · ${formatCount(counts.prs, 'PR')}`
           : 'Source on GitHub'}
@@ -73,7 +70,6 @@ const ProjectCard = ({ project }: { project: Project }) => {
           alt={`${project.name} screenshot`}
           loading="lazy"
           className="mt-auto w-full rounded-md border border-border"
-          data-testid="project-card-screenshot"
         />
       )}
     </Card>

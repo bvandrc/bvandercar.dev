@@ -10,7 +10,7 @@ test.describe('Accessibility', () => {
     await page.goto('/')
 
     await expect(page.getByTestId(HEADER.TITLE)).toBeVisible()
-    await expect(page.getByTestId(PROJECTS.CARD.SELF).first()).toBeVisible()
+    await expect(page.getByTestId(PROJECTS.CARD).first()).toBeVisible()
     await expect(page.getByTestId(FOOTER.SELF)).toBeVisible()
 
     await checkA11y(page)
