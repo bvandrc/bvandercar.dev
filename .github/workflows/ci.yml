@@ -59,9 +59,8 @@ jobs:
             name: E2E Tests
           - suite: a11y
             name: Accessibility Tests
-          # Temporarily disabled; restore to re-enable.
-          # - suite: lighthouse
-          #   name: Lighthouse Audit
+          - suite: lighthouse
+            name: Lighthouse Audit
 
     env:
       PORT: 4173
@@ -95,8 +94,6 @@ jobs:
 
   zap-security-scan:
     name: ZAP Security Scan
-    # Temporarily disabled; remove this line to re-enable.
-    if: false
     runs-on: ubuntu-latest
 
     env:
