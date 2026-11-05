@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useEasedScrollIntoView } from '@bvandrc/react-toolkit'
+import { useEasedScrollIntoView, useTimer } from '@bvandrc/react-toolkit'
 import { ChevronRight } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
 
@@ -18,6 +18,9 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     pulse?: boolean
   }
 
+/** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
+const SCROLL_DELAY_MS = 50
+
 /**
  * A live page in an iframe, collapsed behind a toggle until asked for.
  *
@@ -35,11 +38,16 @@ export const LivePreview = ({
 }: LivePreviewProps) => {
   const [open, setOpen] = useState(false)
   const { scrollIntoView } = useEasedScrollIntoView()
+  const scrollTimer = useTimer()
   return (
     <Collapsible.Root
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen)
+        if (!nextOpen) {
+          // Closed before the scroll ran: don't scroll to a preview going away.
+          scrollTimer.clear()
+        }
         onOpenChange?.(nextOpen)
       }}
       className={cn('flex flex-col gap-2', className)}
@@ -66,9 +74,13 @@ export const LivePreview = ({
           'data-[state=closed]:animate-collapsible-close data-[state=open]:animate-collapsible-open'
         )}
         onAnimationEnd={(event) => {
-          // Once it has finished opening, bring the whole preview on screen.
+          // Shortly after it finishes opening, bring the whole preview on screen.
           if (open && event.target === event.currentTarget) {
-            scrollIntoView(event.currentTarget, 'nearest')
+            const preview = event.currentTarget
+            scrollTimer.start(
+              () => scrollIntoView(preview, 'nearest'),
+              SCROLL_DELAY_MS
+            )
           }
         }}>
         {/* Portrait on a narrow screen, where a phone layout fits better. */}
