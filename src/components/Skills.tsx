@@ -1,7 +1,7 @@
 import { SKILLS } from '@/generated/profile/content/skills'
 import type { SkillBadge } from '@/generated/profile/content/types'
 import { cn } from '@/utils'
-import { Section } from './Section'
+import { Section } from './primitives/Section'
 
 // Mirror the surface and ink theme tokens in src/styles/index.css.
 const CHIP_BACKGROUND = '141a25'

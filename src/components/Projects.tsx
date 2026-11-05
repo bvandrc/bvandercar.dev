@@ -5,7 +5,7 @@ import type { Project, ProjectType } from '@/generated/profile/content/types'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
-import { Section } from './Section'
+import { Section } from './primitives/Section'
 
 type TypeIcon = {
   /** Simple Icons slug, as bvandrc's README uses for the same type */
