@@ -8,7 +8,7 @@
     "portfolio",
     "react"
   ],
-  "homepage": "https://bvandrc.github.io/bvandercar.dev/",
+  "homepage": "https://bvandercar.dev",
   "bugs": {
     "url": "https://github.com/bvandrc/bvandercar.dev/issues"
   },
@@ -75,6 +75,7 @@
     "type-fest": "^5",
     "typescript": "^7",
     "vite": "^8",
-    "vitest": "^5"
+    "vitest": "^5",
+    "wrangler": "^4"
   }
 }

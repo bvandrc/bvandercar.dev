@@ -3,5 +3,5 @@
 > Personal developer site for Blake Vandercar: skills, projects, and a little about me.
 
 ## Links
-- [Website](https://bvandrc.github.io/bvandercar.dev/)
+- [Website](https://bvandercar.dev/)
 - [GitHub](https://github.com/bvandrc)

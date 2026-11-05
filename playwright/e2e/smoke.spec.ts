@@ -9,8 +9,8 @@ test('home page loads', async ({ page }) => {
 
   await expect(page).toHaveTitle('Blake Vandercar')
   await expect(page.getByTestId(HEADER.TITLE)).toHaveText('Blake Vandercar')
-  // Checks the image loaded, not just its box: a wrong asset path (like a
-  // leading-slash `/logo.svg` under the Pages subpath) still renders the box.
+  // Checks the image loaded, not just its box: a wrong asset path still
+  // renders the box.
   await expect
     .poll(() =>
       page

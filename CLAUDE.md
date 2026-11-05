@@ -1,10 +1,10 @@
 ## Project
 
-Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to GitHub Pages by `.github/workflows/deploy.yml`.
+Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to Cloudflare (Workers static assets, configured in `wrangler.jsonc`) by `.github/workflows/deploy.yml`.
 
 - **Stack**: React 18 + Vite + TypeScript, Tailwind v4, Biome, Vitest + Testing Library for unit/component tests, Playwright for e2e/a11y/Lighthouse.
 - **Layout**: `src/` is the app, with unit tests in `__tests__/` folders beside the modules they cover; `playwright/` is the browser suites; `shared/test-support/` holds test helpers either suite can import, like the test-id registry in `selectors.ts` (alias `~/test-support/*`).
-- **Base path**: Pages serves the site from a subpath, so `site.config.ts` holds `BASE_PATH`/`SITE_URL` and is imported by `vite.config.ts` and `playwright.config.ts`. In app code, build asset URLs from `import.meta.env.BASE_URL` (see `Header.tsx`) — a leading-slash path like `/logo.svg` 404s once deployed.
+- **Base path**: `site.config.ts` holds `BASE_PATH`/`SITE_URL` and is imported by `vite.config.ts` and `playwright.config.ts`. The site is served from the domain root today, but in app code still build asset URLs from `import.meta.env.BASE_URL` (see `Header.tsx`) so they keep working if that ever changes.
 
 ## Code conventions
 

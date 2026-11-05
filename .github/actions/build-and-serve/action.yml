@@ -9,7 +9,7 @@ inputs:
   base-path:
     description: Base path the app is served under (must match BASE_PATH in site.config.ts)
     required: false
-    default: /bvandercar.dev/
+    default: /
 
 runs:
   using: composite

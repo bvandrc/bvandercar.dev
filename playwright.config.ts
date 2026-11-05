@@ -5,7 +5,7 @@ import { BASE_PATH, SITE_URL } from './site.config'
 const RESULTS_FOLDER = 'playwright/results'
 
 const PORT = process.env.PORT || 4173 // vite preview default port
-// The preview server serves under the same base path GitHub Pages uses.
+// The preview server serves under the same base path production uses.
 const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}${BASE_PATH}`
 const PRODUCTION_URL = process.env.PLAYWRIGHT_BASE_URL ?? SITE_URL

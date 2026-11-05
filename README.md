@@ -1,6 +1,6 @@
 # bvandercar.dev
 
-Blake Vandercar's personal developer site: skills, projects, and a little about me. Deployed to GitHub Pages at <https://bvandrc.github.io/bvandercar.dev/>.
+Blake Vandercar's personal developer site: skills, projects, and a little about me. Live at <https://bvandercar.dev/>, served by Cloudflare.
 
 Built on:
 
@@ -9,7 +9,7 @@ Built on:
 - **Biome** for formatting, linting, and import sorting
 - **Vitest** + **Testing Library** for unit and component tests
 - **Playwright** suites for end-to-end, accessibility (axe), and Lighthouse checks
-- **GitHub Actions** for CI, GitHub Pages deploys, and post-deploy Lighthouse audits
+- **GitHub Actions** for CI, Cloudflare deploys, and post-deploy Lighthouse audits
 
 ## Scripts
 
@@ -60,6 +60,7 @@ shared/
   test-support/   Test helpers either suite can import
     selectors.ts  The data-testid registry
 tsconfig.json     App TypeScript config
+wrangler.jsonc    Cloudflare Workers config (assets directory, custom domain)
 vite.config.ts    Vite config (port, Tailwind plugin, build options)
 vitest.config.ts  Vitest config (happy-dom, globals, aliases)
 biome.jsonc       Formatter, linter, and import sorter config
@@ -70,5 +71,5 @@ index.html        HTML entry point (title, meta, og tags)
 
 - **CI** — lint, type check, unit tests, and the three Playwright suites on every push and PR
 - **PR CI** — pull-request-only jobs: the changed-line count, written to the run's job summary
-- **Deploy** — build and publish `dist` to GitHub Pages on the default branch
+- **Deploy** — once CI passes on the default branch, build and publish `dist` to Cloudflare with Wrangler
 - **Production Lighthouse** — audits the live site 15 minutes after each deploy

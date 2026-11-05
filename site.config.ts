@@ -6,11 +6,11 @@
 /**
  * Path the site is served under, which every asset URL is prefixed with.
  *
- * GitHub Pages serves project sites from `https://<user>.github.io/<repo>/`,
- * hence the repo name. Set to `'/'` if the site moves to a custom domain or a
- * user/org Pages repo.
+ * The site is served from the root of its own domain. Change this, and the
+ * `base-path` input of `.github/actions/build-and-serve`, if it ever moves
+ * under a subpath.
  */
-export const BASE_PATH = '/bvandercar.dev/'
+export const BASE_PATH = '/'
 
 /** Public URL of the deployed site. */
-export const SITE_URL = `https://bvandrc.github.io${BASE_PATH}`
+export const SITE_URL = `https://bvandercar.dev${BASE_PATH}`
