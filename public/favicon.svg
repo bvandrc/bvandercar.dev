@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Blake Vandercar">
   <title>Blake Vandercar</title>
   <rect width="64" height="64" rx="14" fill="#0b0f17" />
-  <path d="M16 18v28M16 18h7a7 7 0 0 1 0 14h-7M16 32h8a7 7 0 0 1 0 14h-8M35 18l7 28 7-28" fill="none" stroke="#7cc4ff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M13 23l-6 9 6 9M51 23l6 9-6 9" fill="none" stroke="#7cc4ff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M20 17v25M20 35.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0 -13 0M37 29l5 13 5-13" fill="none" stroke="#f0f4fa" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

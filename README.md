@@ -13,19 +13,20 @@ Built on:
 
 ## Scripts
 
-| Script                 | What it does                                       |
-| ---------------------- | -------------------------------------------------- |
-| `pnpm dev`             | Vite dev server on port 5000                       |
-| `pnpm build`           | Production build into `dist`                       |
-| `pnpm preview`         | Build, then serve `dist`                           |
-| `pnpm check`           | Format + lint + type check (app and Playwright)    |
-| `pnpm test`            | Vitest unit tests, once                            |
-| `pnpm test:watch`      | Vitest in watch mode                               |
-| `pnpm test:e2e`        | End-to-end smoke tests                             |
-| `pnpm test:a11y`       | axe scans, desktop and mobile viewports            |
-| `pnpm test:lighthouse` | Lighthouse audits against the local preview server |
-| `pnpm pw:open`         | Playwright UI mode                                 |
-| `pnpm pw:report`       | Open the last HTML report                          |
+| Script                 | What it does                                        |
+| ---------------------- | --------------------------------------------------- |
+| `pnpm dev`             | Vite dev server on port 5000                        |
+| `pnpm build`           | Production build into `dist`                        |
+| `pnpm preview`         | Build, then serve `dist`                            |
+| `pnpm icons`           | Re-render the PNG icons and preview from their SVGs |
+| `pnpm check`           | Format + lint + type check (app and Playwright)     |
+| `pnpm test`            | Vitest unit tests, once                             |
+| `pnpm test:watch`      | Vitest in watch mode                                |
+| `pnpm test:e2e`        | End-to-end smoke tests                              |
+| `pnpm test:a11y`       | axe scans, desktop and mobile viewports             |
+| `pnpm test:lighthouse` | Lighthouse audits against the local preview server  |
+| `pnpm pw:open`         | Playwright UI mode                                  |
+| `pnpm pw:report`       | Open the last HTML report                           |
 
 The Playwright suites run against `vite preview`, so build first (`pnpm build`) and start it with `pnpm preview:ci`, or let CI do it.
 
@@ -37,10 +38,14 @@ The Playwright suites run against `vite preview`, so build first (`pnpm build`) 
     setup/            Composite action: pnpm + Node + install
     setup-playwright/ Composite action: Playwright browser cache + install
   workflows/      CI, PR-only CI, deploy, and production Lighthouse
+design/
+  preview.svg     Source for the social preview image
 public/
-  favicon.svg     Browser tab icon
+  favicon.svg     Browser tab icon, and the source for every raster icon
+  favicon.ico     Fallback tab icon (16, 32, and 48 px), rendered by `pnpm icons`
+  *.png           Touch, manifest, and social preview images, rendered by `pnpm icons`
   logo.svg        In-app logo
-  preview.svg     og:image / social preview
+  site.webmanifest  Web app manifest (name, icons, and colors)
   robots.txt      Crawler rules
   sitemap.xml     Sitemap
   llms.txt        LLM-readable site summary
@@ -52,6 +57,8 @@ src/
   hooks/          camelCase files, e.g. useMobile.ts
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
+scripts/
+  render-icons.mjs  Renders the PNG icons, favicon.ico, and preview.png from their SVG sources
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests

@@ -7,6 +7,8 @@ Blake Vandercar's personal developer site — skills, projects, and a short "abo
 - **Base path**: `site.config.ts` holds `BASE_PATH`/`SITE_URL` and is imported by `vite.config.ts` and `playwright.config.ts`. The site is served from the domain root today, but in app code still build asset URLs from `import.meta.env.BASE_URL` (see `Header.tsx`) so they keep working if that ever changes.
 - **Security headers**: `SECURITY_HEADERS` in `site.config.ts` is the one source for the CSP and other headers. The build writes it to `dist/_headers` for Cloudflare, and `vite preview` sends it, so CI's ZAP scan checks it. A new third-party script, font, image, or request origin must be added to the CSP there, or the browser blocks it in production.
 
+- **Icons**: `public/favicon.svg` and `design/preview.svg` are the sources. After changing either, run `pnpm icons` and commit the PNGs and `favicon.ico` it writes to `public/`.
+
 ## Code conventions
 
 Conventions live outside this file, synced from https://github.com/bvandrc/bvandrc-conventions — follow all of them:

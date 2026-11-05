@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Blake Vandercar">
+  <title>Blake Vandercar</title>
+  <rect width="1200" height="630" fill="#0b0f17" />
+  <g transform="translate(96 219) scale(3)">
+    <rect x="1" y="1" width="62" height="62" rx="14" fill="#141a25" stroke="#26303f" stroke-width="2" />
+    <path d="M13 23l-6 9 6 9M51 23l6 9-6 9" fill="none" stroke="#7cc4ff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M20 17v25M20 35.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0 -13 0M37 29l5 13 5-13" fill="none" stroke="#f0f4fa" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+  <text x="336" y="300" fill="#f0f4fa" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="72" font-weight="600">Blake Vandercar</text>
+  <text x="336" y="362" fill="#9fb0c8" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="32">Software developer · bvandercar.dev</text>
+</svg>
