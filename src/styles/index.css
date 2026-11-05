@@ -28,6 +28,40 @@
     }
   }
 
+  /* Pulses an accent glow around an element, to draw the eye to it. */
+  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+
+  @keyframes glow-pulse {
+    /* The accent at partial strength, so the pulse draws the eye without glaring. */
+    50% {
+      border-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
+      box-shadow: 0 0 10px
+        color-mix(in oklab, var(--color-accent) 35%, transparent);
+    }
+  }
+
+  /* Grows a collapsible's content open, and shrinks it closed, to the height Radix measures. */
+  --animate-collapsible-open: collapsible-open 300ms ease-out;
+  --animate-collapsible-close: collapsible-close 300ms ease-out;
+
+  @keyframes collapsible-open {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-close {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+
   /* Fades a tooltip in as it opens. */
   --animate-tooltip-in: tooltip-in 150ms ease-out;
 

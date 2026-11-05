@@ -16,5 +16,10 @@ export const SELECTORS = {
     SELF: 'skills',
   },
   BEYOND_CODE: 'beyond-code',
+  LIVE_PREVIEW: {
+    SELF: 'live-preview',
+    TOGGLE: 'live-preview-toggle',
+    FRAME: 'live-preview-frame',
+  },
   TOOLTIP: 'tooltip',
 } as const

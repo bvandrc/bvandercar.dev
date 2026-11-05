@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
+import { mockFramedPages } from '../support/mock-framed-pages'
 import { checkA11y } from './accessibility'
 
-const { HEADER, PROJECTS, BEYOND_CODE, TOOLTIP } = SELECTORS
+const { HEADER, PROJECTS, BEYOND_CODE, TOOLTIP, LIVE_PREVIEW } = SELECTORS
 
 test.describe('Accessibility', () => {
   test('Home page', async ({ page }) => {
@@ -27,5 +28,16 @@ test.describe('Accessibility', () => {
     // so it can float above the page; screen readers get its text as the
     // trigger's description instead.
     await checkA11y(page, { disableRules: ['region'] })
+  })
+
+  test('Open live preview', async ({ page }) => {
+    await mockFramedPages(page)
+    await page.goto('/')
+
+    const preview = page.getByTestId(LIVE_PREVIEW.SELF).first()
+    await preview.getByTestId(LIVE_PREVIEW.TOGGLE).click()
+    await expect(preview.getByTestId(LIVE_PREVIEW.FRAME)).toBeVisible()
+
+    await checkA11y(page)
   })
 })

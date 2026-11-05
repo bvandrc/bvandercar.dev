@@ -23,6 +23,15 @@ const GA_HIT_ORIGINS =
 // Devicon's logos, for the few Simple Icons lacks.
 const DEVICON_ORIGIN = 'https://cdn.jsdelivr.net'
 
+// The project sites shown live in an iframe: each project with an `embed` in
+// the profile content. __tests__/site.config.test.ts checks none is missing.
+const EMBED_ORIGINS = [
+  'https://taskrankr.com',
+  'https://bvandrc.github.io',
+  'https://specialingredientbass.com',
+  'https://womanhoodofwubz.pages.dev',
+].join(' ')
+
 // Cloudflare Web Analytics, which Cloudflare injects into every page, loads its
 // beacon from the first origin and reports to the second.
 const CLOUDFLARE_BEACON_ORIGIN = 'https://static.cloudflareinsights.com'
@@ -34,6 +43,7 @@ const CONTENT_SECURITY_POLICY = [
   `connect-src 'self' ${GA_HIT_ORIGINS} ${CLOUDFLARE_REPORT_ORIGIN}`,
   `img-src 'self' data: ${GA_HIT_ORIGINS} ${DEVICON_ORIGIN}`,
   "style-src 'self'",
+  `frame-src ${EMBED_ORIGINS}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

@@ -1,12 +1,16 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
-import type { Project } from '@/generated/profile/content/projects'
+import type {
+  Project,
+  ProjectSection,
+} from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { cn } from '@/utils'
+import { LivePreview } from './LivePreview'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
@@ -22,10 +26,33 @@ const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 const formatCount = (count: number, noun: string) =>
   `${count.toLocaleString('en-US')} ${count === 1 ? noun : `${noun}s`}`
 
+type GridLayout = 'preview' | 'pairs'
+
+// A group with a live preview takes the full width, so the page inside it has
+// room; the rest pair up from md.
+const GRID_CLASSES = {
+  preview: 'grid gap-4',
+  pairs: 'grid gap-4 md:grid-cols-2',
+} satisfies Record<GridLayout, string>
+
+const gridLayout = ({ projects }: ProjectSection): GridLayout =>
+  projects.some(({ embed }) => embed) ? 'preview' : 'pairs'
+
 /** A visual divider, which screen readers would otherwise read as "middle dot". */
 const Separator = () => <span aria-hidden="true">·</span>
 
-const ProjectCard = ({ project }: { project: Project }) => {
+type ProjectCardProps = {
+  project: Project
+  /** Whether a live preview's toggle pulses, to draw the eye to it. */
+  pulsePreview: boolean
+  onPreviewOpen: () => void
+}
+
+const ProjectCard = ({
+  project,
+  pulsePreview,
+  onPreviewOpen,
+}: ProjectCardProps) => {
   const counts = REPO_COUNTS[project.repo]
   const nameId = useId()
   const repoLinkId = useId()
@@ -81,40 +108,65 @@ const ProjectCard = ({ project }: { project: Project }) => {
           />
         </Link>
       </Tooltip>
-      {project.screenshot && (
-        <img
-          src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
-          alt={`${project.name} screenshot`}
-          loading="lazy"
-          className="mt-auto w-full rounded-md border border-border"
+      {project.embed ? (
+        <LivePreview
+          src={project.href}
+          title={project.name}
+          scale={project.embed.scale}
+          // Every card's toggle reads the same, so name the project it's for.
+          aria-describedby={nameId}
+          pulse={pulsePreview}
+          onOpenChange={(open) => {
+            if (open) {
+              onPreviewOpen()
+            }
+          }}
+          className="mt-auto"
         />
+      ) : (
+        project.screenshot && (
+          <img
+            src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
+            alt={`${project.name} screenshot`}
+            loading="lazy"
+            className="mt-auto w-full rounded-md border border-border"
+          />
+        )
       )}
     </Card>
   )
 }
 
-export const Projects = () => (
-  <Section
-    icon={SECTIONS.PROJECTS.icon}
-    title={SECTIONS.PROJECTS.title}
-    data-testid="projects">
-    {PROJECTS.map((group) => (
-      <Section
-        key={group.title}
-        icon={group.icon}
-        title={group.title}
-        level="h3"
-        className="flex flex-col gap-3">
-        {group.intro && <p className="text-ink-muted">{group.intro}</p>}
-        {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
-        <ul role="list" className="grid gap-4 md:grid-cols-2">
-          {group.projects.map((project) => (
-            <li key={project.repo}>
-              <ProjectCard project={project} />
-            </li>
-          ))}
-        </ul>
-      </Section>
-    ))}
-  </Section>
-)
+export const Projects = () => {
+  // Every preview toggle pulses on each page visit, until any one is opened.
+  const [previewOpened, setPreviewOpened] = useState(false)
+  return (
+    <Section
+      icon={SECTIONS.PROJECTS.icon}
+      title={SECTIONS.PROJECTS.title}
+      data-testid="projects">
+      {PROJECTS.map((group) => (
+        <Section
+          key={group.title}
+          icon={group.icon}
+          title={group.title}
+          level="h3"
+          className="flex flex-col gap-3">
+          {group.intro && <p className="text-ink-muted">{group.intro}</p>}
+          {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
+          <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
+            {group.projects.map((project) => (
+              <li key={project.repo}>
+                <ProjectCard
+                  project={project}
+                  pulsePreview={!previewOpened}
+                  onPreviewOpen={() => setPreviewOpened(true)}
+                />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ))}
+    </Section>
+  )
+}
