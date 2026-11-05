@@ -16,6 +16,37 @@ const HEADING_CLASSES = {
   h3: 'text-lg font-semibold',
 } satisfies Record<NonNullable<SectionProps['level']>, string>
 
+type Logo = {
+  /** Simple Icons slug */
+  slug: string
+  /** Brand color, as hex without the `#` */
+  color: string
+}
+
+/**
+ * Emoji drawn as a brand logo instead.
+ *
+ * Keyed by the emoji the profile content uses, which the GitHub README keeps.
+ */
+const EMOJI_LOGOS: Partial<Record<string, Logo>> = {
+  '⚛️': { slug: 'react', color: '61DAFB' },
+}
+
+/** A heading's emoji, or the brand logo that stands in for it; decorative either way. */
+const HeadingMark = ({ emoji }: { emoji: string }) => {
+  const logo = EMOJI_LOGOS[emoji]
+  if (!logo) {
+    return <span aria-hidden="true">{emoji}</span>
+  }
+  return (
+    <img
+      src={`https://cdn.simpleicons.org/${logo.slug}/${logo.color}`}
+      alt=""
+      className="inline-block size-[1em] align-[-0.125em]"
+    />
+  )
+}
+
 /** A titled section, labelled by its own heading. */
 export const Section = ({
   emoji,
@@ -33,8 +64,7 @@ export const Section = ({
       className={className ?? 'flex flex-col gap-5'}
       {...props}>
       <Heading id={headingId} className={HEADING_CLASSES[level]}>
-        <span aria-hidden="true">{emoji}</span> {title}{' '}
-        <span aria-hidden="true">{emoji}</span>
+        <HeadingMark emoji={emoji} /> {title} <HeadingMark emoji={emoji} />
       </Heading>
       {children}
     </section>
