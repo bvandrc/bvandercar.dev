@@ -7,7 +7,7 @@ import { SKILLS, type SkillBadge } from '@/generated/profile/content/skills'
 /** The logo beside the header's GitHub link. */
 export const GITHUB_ICON_SLUG = 'github'
 
-/** The logo beside the header's LinkedIn link, which Simple Icons lacks, so Devicon's. */
+/** The logo beside the header's LinkedIn link. */
 export const LINKEDIN_ICON_SLUG = 'linkedin'
 
 /** A skill badge's logo as a Simple Icons slug. */

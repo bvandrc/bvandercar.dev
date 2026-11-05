@@ -25,7 +25,7 @@ const HeaderSocialLink = ({
       <BrandIcon
         slug={iconSlug}
         // Matches the accent theme token in src/styles/index.css, as the link
-        // text does. LinkedIn's logo comes from Devicon, which keeps its own blue.
+        // text does.
         color="22d3ee"
         size={16}
         className="size-4"
