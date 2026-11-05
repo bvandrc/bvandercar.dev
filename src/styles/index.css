@@ -32,9 +32,11 @@
   --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
 
   @keyframes glow-pulse {
+    /* The accent at partial strength, so the pulse draws the eye without glaring. */
     50% {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 12px var(--color-accent);
+      border-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
+      box-shadow: 0 0 10px
+        color-mix(in oklab, var(--color-accent) 35%, transparent);
     }
   }
 
