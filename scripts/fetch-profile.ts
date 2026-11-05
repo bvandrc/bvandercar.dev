@@ -17,7 +17,7 @@ const REPO_URL = 'https://github.com/bvandrc/bvandrc'
 const REF = process.env.PROFILE_REF || 'main'
 const OUT_DIR = 'src/generated/profile'
 
-const git = (...args) =>
+const git = (...args: string[]) =>
   execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8' }).trim()
 
 // A shallow, sparse checkout of just the paths the site reads: the whole

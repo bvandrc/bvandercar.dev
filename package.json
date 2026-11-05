@@ -28,7 +28,7 @@
     "preview": "pnpm build && vite preview --open",
     "preview:ci": "vite preview --strictPort",
     "icons": "pwa-assets-generator",
-    "fetch:profile": "node scripts/fetch-profile.mjs",
+    "fetch:profile": "node scripts/fetch-profile.ts",
     "__c1": "====================[ Linting & Type Checking ]==================",
     "check": "pnpm fetch:profile && pnpm format && pnpm ts:check && pnpm pw:ts:check",
     "format": "npx biome check . --fix",

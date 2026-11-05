@@ -56,7 +56,7 @@ src/
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
 scripts/
-  fetch-profile.mjs  Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
+  fetch-profile.ts   Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests
