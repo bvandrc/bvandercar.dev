@@ -6,6 +6,7 @@ import type { Project } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import { cn } from '@/utils'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
 import { SimpleIcon } from './primitives/SimpleIcon'
@@ -28,7 +29,15 @@ const ProjectCard = ({ project }: { project: Project }) => {
   const nameId = useId()
   const repoLinkId = useId()
   return (
-    <Card className="flex h-full flex-col gap-3" data-testid="project-card">
+    <Card
+      className={cn(
+        'flex h-full flex-col gap-3',
+        'transition-[box-shadow,border-color] duration-200',
+        // Glows orange on hover, or while a link inside has keyboard focus.
+        'hover:border-orange-400 hover:shadow-glow-24 hover:shadow-orange-500',
+        'has-focus-visible:border-orange-400 has-focus-visible:shadow-glow-24 has-focus-visible:shadow-orange-500'
+      )}
+      data-testid="project-card">
       <div className="flex items-center justify-center gap-2">
         <h4 className="font-semibold">
           <Link href={project.href} newTab>

@@ -4,6 +4,7 @@ import a11yPlugin from 'colord/plugins/a11y'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
+import { cn } from '@/utils'
 import { DevIcon } from './primitives/DevIcon'
 import { Section } from './Section'
 
@@ -67,7 +68,12 @@ export const Skills = () => (
                   {row.lines.flat().map((skill) => (
                     <span
                       key={skill.alt}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm">
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm',
+                        'transition-[box-shadow,border-color] duration-200',
+                        // Glows orange on hover, like the project cards.
+                        'hover:border-orange-400 hover:shadow-glow-12 hover:shadow-orange-500'
+                      )}>
                       <DevIcon
                         slug={skillIconSlug(skill)}
                         color={skillIconColor(skill)}

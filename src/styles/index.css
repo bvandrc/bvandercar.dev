@@ -18,6 +18,12 @@
   --color-tone-neutral: #c4b5fd;
 }
 
+/* A glow: `shadow-glow-<blur-px>`, colored by the standard `shadow-<color>` utilities. */
+@utility shadow-glow-* {
+  box-shadow: 0 0 calc(--value(number) * 1px)
+    var(--tw-shadow-color, currentcolor);
+}
+
 @layer base {
   html {
     color-scheme: dark;
