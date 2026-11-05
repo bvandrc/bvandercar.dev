@@ -18,7 +18,8 @@ export const Header = () => (
         Blake Vandercar
       </h1>
       <Badge tone="caution" data-testid="header-status">
-        Under construction
+        <span aria-hidden="true">🚧</span> Under construction{' '}
+        <span aria-hidden="true">🚧</span>
       </Badge>
     </div>
     <div
