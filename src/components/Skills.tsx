@@ -12,7 +12,8 @@ export const Skills = () => (
         className="flex flex-col gap-3">
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[8rem_1fr]">
           {group.rows.map((row) => {
-            const label = [row.label].flat().join(' ')
+            // The label's line breaks are for the README's narrow column.
+            const label = row.label.replaceAll('\n', ' ')
             return (
               <div key={label} className="contents">
                 <dt className="text-sm text-ink-muted sm:pt-1">{label}</dt>
