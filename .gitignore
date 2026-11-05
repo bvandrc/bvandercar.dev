@@ -5,3 +5,9 @@ coverage
 playwright/results
 *.tgz
 .wrangler
+
+# Generated from public/favicon.svg by `pnpm icons`
+public/favicon.ico
+public/pwa-*.png
+public/maskable-icon-*.png
+public/apple-touch-icon-*.png

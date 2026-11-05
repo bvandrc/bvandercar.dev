@@ -13,19 +13,20 @@ Built on:
 
 ## Scripts
 
-| Script                 | What it does                                       |
-| ---------------------- | -------------------------------------------------- |
-| `pnpm dev`             | Vite dev server on port 5000                       |
-| `pnpm build`           | Production build into `dist`                       |
-| `pnpm preview`         | Build, then serve `dist`                           |
-| `pnpm check`           | Format + lint + type check (app and Playwright)    |
-| `pnpm test`            | Vitest unit tests, once                            |
-| `pnpm test:watch`      | Vitest in watch mode                               |
-| `pnpm test:e2e`        | End-to-end smoke tests                             |
-| `pnpm test:a11y`       | axe scans, desktop and mobile viewports            |
+| Script | What it does |
+| --- | --- |
+| `pnpm dev` | Vite dev server on port 5000 |
+| `pnpm build` | Production build into `dist` |
+| `pnpm preview` | Build, then serve `dist` |
+| `pnpm icons` | Generate favicon.ico and the PNG icons into `public/` |
+| `pnpm check` | Format + lint + type check (app and Playwright) |
+| `pnpm test` | Vitest unit tests, once |
+| `pnpm test:watch` | Vitest in watch mode |
+| `pnpm test:e2e` | End-to-end smoke tests |
+| `pnpm test:a11y` | axe scans, desktop and mobile viewports |
 | `pnpm test:lighthouse` | Lighthouse audits against the local preview server |
-| `pnpm pw:open`         | Playwright UI mode                                 |
-| `pnpm pw:report`       | Open the last HTML report                          |
+| `pnpm pw:open` | Playwright UI mode |
+| `pnpm pw:report` | Open the last HTML report |
 
 The Playwright suites run against `vite preview`, so build first (`pnpm build`) and start it with `pnpm preview:ci`, or let CI do it.
 
@@ -38,7 +39,8 @@ The Playwright suites run against `vite preview`, so build first (`pnpm build`) 
     setup-playwright/ Composite action: Playwright browser cache + install
   workflows/      CI, PR-only CI, deploy, and production Lighthouse
 public/
-  favicon.svg     Browser tab icon, and the source for the generated raster icons
+  favicon.svg     Browser tab icon, and the source for the icons `pnpm icons` generates here
+  site.webmanifest  Web app manifest (name, colors, and icons)
   logo.svg        In-app logo
   preview.png     og:image / social preview card (1200×630)
   robots.txt      Crawler rules
@@ -52,8 +54,6 @@ src/
   hooks/          camelCase files, e.g. useMobile.ts
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
-vite-plugins/
-  web-assets.ts   Generates the icons and site.webmanifest at build time, and links them from <head>
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests
@@ -63,6 +63,7 @@ shared/
     selectors.ts  The data-testid registry
 tsconfig.json     App TypeScript config
 wrangler.jsonc    Cloudflare Workers config (assets directory, custom domain)
+pwa-assets.config.ts  Icon generator config (preset, padding, background)
 vite.config.ts    Vite config (port, Tailwind plugin, build options)
 vitest.config.ts  Vitest config (happy-dom, globals, aliases)
 biome.jsonc       Formatter, linter, and import sorter config
