@@ -10,7 +10,6 @@ test('home page loads', async ({ page }) => {
   await expect(page).toHaveTitle('Blake Vandercar')
   for (const testId of [
     HEADER.TITLE,
-    HEADER.GITHUB_LINK,
     PROJECTS.SELF,
     SKILLS.SELF,
     BEYOND_CODE,

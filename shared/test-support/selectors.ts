@@ -5,7 +5,6 @@ export const SELECTORS = {
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
     STATUS: 'header-status',
-    GITHUB_LINK: 'header-github-link',
   },
   MAIN: 'main',
   PROJECTS: {
