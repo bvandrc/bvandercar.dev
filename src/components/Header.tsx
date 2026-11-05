@@ -1,3 +1,4 @@
+import { INTRO_LINES } from '@/generated/profile/content/about'
 import { Badge } from './primitives/Badge'
 
 export const Header = () => (
@@ -20,8 +21,12 @@ export const Header = () => (
         Under construction
       </Badge>
     </div>
-    <p className="max-w-prose text-ink-muted" data-testid="header-tagline">
-      Software developer.
-    </p>
+    <div
+      className="flex max-w-prose flex-col gap-1 text-ink-muted"
+      data-testid="header-tagline">
+      {INTRO_LINES.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </div>
   </header>
 )

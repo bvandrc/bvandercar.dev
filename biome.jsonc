@@ -23,6 +23,7 @@
       "!!conventions",
       "!!**/coverage",
       "!!**/dist",
+      "!!src/generated",
       "!**/node_modules",
       "!**/playwright/results"
     ]

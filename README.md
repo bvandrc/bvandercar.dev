@@ -19,6 +19,7 @@ Built on:
 | `pnpm build` | Production build into `dist` |
 | `pnpm preview` | Build, then serve `dist` |
 | `pnpm icons` | Generate favicon.ico and the PNG icons into `public/` |
+| `pnpm fetch:profile` | Fetch the profile content and screenshots from bvandrc/bvandrc |
 | `pnpm check` | Format + lint + type check (app and Playwright) |
 | `pnpm test` | Vitest unit tests, once |
 | `pnpm test:watch` | Vitest in watch mode |
@@ -54,6 +55,8 @@ src/
   hooks/          camelCase files, e.g. useMobile.ts
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
+scripts/
+  fetch-profile.mjs  Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests
@@ -72,7 +75,7 @@ index.html        HTML entry point (title, meta, og tags)
 
 ## CI
 
-- **CI** — lint, type check, unit tests, and the three Playwright suites on every push and PR
+- **CI** — lint, type check, unit tests, and the three Playwright suites on every push and PR, and weekly so the site redeploys with fresh profile content
 - **PR CI** — pull-request-only jobs: the changed-line count, written to the run's job summary
 - **Deploy** — once CI passes on the default branch, build and publish `dist` to Cloudflare with Wrangler
 - **Preview** — on every PR, upload the build as a Cloudflare version (not deployed) and link its preview URL from the PR's "View deployment" button, stable per PR as `pr-<number>`
