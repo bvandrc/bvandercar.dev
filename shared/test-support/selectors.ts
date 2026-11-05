@@ -11,9 +11,11 @@ export const SELECTORS = {
   PROJECTS: {
     SELF: 'projects',
     CARD: 'project-card',
+    REPO_LINK: 'project-repo-link',
   },
   SKILLS: {
     SELF: 'skills',
   },
   BEYOND_CODE: 'beyond-code',
+  TOOLTIP: 'tooltip',
 } as const

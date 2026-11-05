@@ -7,6 +7,8 @@
 
   --color-canvas: #0b0f17;
   --color-surface: #141a25;
+  /* A surface lifted above the cards, like a tooltip. */
+  --color-surface-raised: #232c3b;
   --color-border: #26303f;
   --color-ink: #f0f4fa;
   --color-ink-muted: #9fb0c8;
@@ -23,6 +25,15 @@
   @keyframes caution-pulse {
     50% {
       color: var(--color-orange-400);
+    }
+  }
+
+  /* Fades a tooltip in as it opens. */
+  --animate-tooltip-in: tooltip-in 150ms ease-out;
+
+  @keyframes tooltip-in {
+    from {
+      opacity: 0;
     }
   }
 }
@@ -42,6 +53,8 @@
     background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* The arrow over plain text too, not the I-beam; links keep their hand. */
+    cursor: default;
     -webkit-font-smoothing: antialiased;
   }
 
