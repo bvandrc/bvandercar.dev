@@ -68,16 +68,14 @@ export const Skills = () => (
         icon={group.icon}
         title={group.title}
         level="h3"
-        // From sm up, as wide as the table below (its two columns and gap),
-        // so the heading's offset lines up with the table's skills column.
         className="flex flex-col gap-3">
         <dl className="flex flex-col gap-3">
           {group.rows.map((row) => {
             // The label's line breaks are for the README's narrow column.
             const label = row.label.replaceAll('\n', ' ')
             return (
-              // Below sm, a label sits above its skills; from sm up, the row's
-              // two cells join the table's grid.
+              // Below sm, a label sits above its skills; from sm up, beside
+              // them, with the row centered as a whole.
               <div
                 key={label}
                 className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-3">
