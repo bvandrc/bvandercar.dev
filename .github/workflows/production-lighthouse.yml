@@ -1,0 +1,57 @@
+name: Production Lighthouse
+
+# Runs on demand, or dispatched by the Check for New Deploy workflow
+# when a new deployment is detected.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: URL to audit
+        required: false
+        default: https://bvandrc.github.io/bvandrc-project-template-react-frontend/
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ inputs.target_url || 'https://bvandrc.github.io/bvandrc-project-template-react-frontend/' }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
+
+      - name: Check target URL is reachable
+        uses: jtalk/url-health-check-action@v5
+        with:
+          url: ${{ env.PLAYWRIGHT_BASE_URL }}
+          max-attempts: 10
+          retry-delay: 10s
+          retry-all: true
+
+      - name: Run Lighthouse audits
+        run: pnpm test:lighthouse:production
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: playwright/results
+          if-no-files-found: ignore

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="React Frontend Template">
+  <title>React Frontend Template</title>
+  <rect width="64" height="64" rx="14" fill="#0b0f17" />
+  <path d="M20 44V20h11a8 8 0 0 1 2.6 15.6L40 44h-6.6l-5.6-8H26v8z" fill="#7cc4ff" />
+  <path d="M26 26v5h5a2.5 2.5 0 0 0 0-5z" fill="#0b0f17" />
+</svg>

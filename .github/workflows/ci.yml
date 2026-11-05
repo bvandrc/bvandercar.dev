@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch: # Allows manual triggering
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Lint package.json
+        uses: bvandrc/lint-package-json@v2
+
+      - name: Lint & Type Check
+        run: pnpm run check
+
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Unit Tests
+        run: pnpm run test:unit
+
+  playwright:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: e2e
+            name: E2E Tests
+          - suite: a11y
+            name: Accessibility Tests
+          - suite: lighthouse
+            name: Lighthouse Audit
+
+    env:
+      PORT: 4173
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
+
+      - name: Build and serve
+        uses: ./.github/actions/build-and-serve
+        with:
+          port: ${{ env.PORT }}
+
+      - name: Run Playwright tests
+        run: pnpm test:${{ matrix.suite }}
+
+      - name: Upload results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-results-${{ matrix.suite }}
+          path: playwright/results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  zap-security-scan:
+    name: ZAP Security Scan
+    runs-on: ubuntu-latest
+    # Kept for repos generated from this template, skipped in the template itself.
+    if: github.repository != 'bvandrc/bvandrc-project-template-react-frontend'
+
+    env:
+      PORT: 4173
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build and serve
+        uses: ./.github/actions/build-and-serve
+        with:
+          port: ${{ env.PORT }}
+
+      - name: ZAP Baseline Security Scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: http://localhost:${{ env.PORT }}/bvandrc-project-template-react-frontend/
+          cmd_options: '-a'
+          fail_action: true
+          allow_issue_writing: false
+          rules_file_name: .zap/rules.tsv
+
+      - name: Upload ZAP Security Scan report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: zap-security-scan-report
+          path: report_html.html
+          if-no-files-found: ignore

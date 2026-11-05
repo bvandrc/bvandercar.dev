@@ -1,0 +1,80 @@
+{
+  "name": "bvandrc-project-template-react-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vite + React + TypeScript starter with Tailwind, Biome, and Playwright e2e/a11y/Lighthouse suites",
+  "keywords": [
+    "react",
+    "template",
+    "vite"
+  ],
+  "homepage": "https://bvandrc.github.io/bvandrc-project-template-react-frontend/",
+  "bugs": {
+    "url": "https://github.com/bvandrc/bvandrc-project-template-react-frontend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bvandrc/bvandrc-project-template-react-frontend.git"
+  },
+  "author": "Blake Vandercar",
+  "license": "ISC",
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "__c0": "====================[ Build & Development ]======================",
+    "start": "pnpm dev",
+    "dev": "vite --open",
+    "build": "vite build",
+    "preview": "pnpm build && vite preview --open",
+    "preview:ci": "vite preview --strictPort",
+    "__c1": "====================[ Linting & Type Checking ]==================",
+    "check": "pnpm format && pnpm ts:check && pnpm pw:ts:check",
+    "format": "npx biome check . --fix",
+    "ts:check": "tsc",
+    "pw:ts:check": "tsc --project playwright/tsconfig.json",
+    "__c2": "====================[ Unit Testing ]=============================",
+    "test": "vitest",
+    "test:unit": "pnpm test",
+    "test:watch": "pnpm run test --watch",
+    "__c3": "====================[ Playwright Testing ]=======================",
+    "test:e2e": "pnpm pw:run --project=e2e",
+    "test:a11y": "pnpm pw:run --project=a11y --project=a11y:mobile",
+    "test:lighthouse": "pnpm pw:run --project=lighthouse",
+    "test:lighthouse:production": "pnpm pw:run --project=lighthouse:production",
+    "pw:run": "playwright test",
+    "pw:open": "playwright test --ui",
+    "pw:report": "playwright show-report playwright/results/html"
+  },
+  "dependencies": {
+    "@bvandrc/react-toolkit": "^2",
+    "clsx": "^2",
+    "es-toolkit": "^1",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-ga4": "^3",
+    "tailwind-merge": "^3",
+    "ts-extras": "^1",
+    "usehooks-ts": "^3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4",
+    "@biomejs/biome": "^2.6",
+    "@playwright/test": "^1",
+    "@tailwindcss/vite": "^4",
+    "@testing-library/react": "^16",
+    "@testing-library/user-event": "^14",
+    "@types/node": "^24",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^6",
+    "axe-core": "^4",
+    "happy-dom": "^21",
+    "lighthouse": "^13",
+    "lighthouse-audit-utils": "^1",
+    "tailwindcss": "^4",
+    "type-fest": "^5",
+    "typescript": "^7",
+    "vite": "^8",
+    "vitest": "^5"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": {
+      // `paths` replaces rather than merges with the base config's, so both
+      // aliases are repeated here to keep them working in tests.
+      "@/*": ["../src/*"],
+      "~/test-support/*": ["../shared/test-support/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["../node_modules"]
+}
