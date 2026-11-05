@@ -22,7 +22,7 @@
 
   @keyframes caution-pulse {
     50% {
-      color: var(--color-orange-300);
+      color: var(--color-orange-400);
     }
   }
 }
