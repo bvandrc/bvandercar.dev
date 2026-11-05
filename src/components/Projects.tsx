@@ -4,6 +4,7 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import type { Project, ProjectType } from '@/generated/profile/content/types'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
+import { Link } from './primitives/Link'
 import { Section } from './Section'
 
 type TypeIcon = {
@@ -25,8 +26,6 @@ const TYPE_ICONS = {
 // Matches the ink-muted theme token in src/styles/index.css.
 const TYPE_ICON_COLOR = '9fb0c8'
 
-const LINK_CLASSES = 'text-accent hover:text-accent-hover'
-
 const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 
 /** `formatCount(1, 'PR')` → `'1 PR'`, `formatCount(654, 'PR')` → `'654 PRs'`. */
@@ -39,13 +38,9 @@ const ProjectCard = ({ project }: { project: Project }) => {
     <Card className="flex h-full flex-col gap-3" data-testid="project-card">
       <div className="flex items-center justify-center gap-2">
         <h4 className="font-semibold">
-          <a
-            href={project.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={LINK_CLASSES}>
+          <Link href={project.href} newTab>
             {project.name}
-          </a>
+          </Link>
         </h4>
         <img
           src={`https://cdn.simpleicons.org/${TYPE_ICONS[project.type].slug}/${TYPE_ICON_COLOR}`}
@@ -57,11 +52,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
         />
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
-      <a
+      <Link
         href={repoUrl(project.repo)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-ink-muted hover:text-accent">
+        newTab
+        tone="muted"
+        className="text-xs">
         {counts &&
           `${formatCount(counts.commits, 'commit')} · ${formatCount(counts.prs, 'PR')} · `}
         repo{' '}
@@ -69,7 +64,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           aria-hidden="true"
           className="inline-block size-[1em] align-[-0.125em]"
         />
-      </a>
+      </Link>
       {project.screenshot && (
         <img
           src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
