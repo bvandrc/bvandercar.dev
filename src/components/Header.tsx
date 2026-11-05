@@ -10,7 +10,6 @@ type HeaderSocialLinkProps = Pick<LinkProps, 'href'> & {
   tooltip: string
   /** The site's logo, shown before the text. */
   iconSlug: BrandIconProps['slug']
-  'data-testid'?: string
   children: React.ReactNode
 }
 
@@ -19,15 +18,10 @@ const HeaderSocialLink = ({
   href,
   tooltip,
   iconSlug,
-  'data-testid': testId,
   children,
 }: HeaderSocialLinkProps) => (
   <Tooltip content={tooltip}>
-    <Link
-      href={href}
-      newTab
-      className="inline-flex items-center gap-2"
-      data-testid={testId}>
+    <Link href={href} newTab className="inline-flex items-center gap-2">
       <BrandIcon
         slug={iconSlug}
         // Matches the accent theme token in src/styles/index.css, as the link
@@ -76,15 +70,13 @@ export const Header = () => (
       <HeaderSocialLink
         href="https://github.com/bvandrc"
         tooltip="GitHub Profile"
-        iconSlug={GITHUB_ICON_SLUG}
-        data-testid="header-github-link">
+        iconSlug={GITHUB_ICON_SLUG}>
         github.com/bvandrc
       </HeaderSocialLink>
       <HeaderSocialLink
         href="https://www.linkedin.com/in/blake-vandercar"
         tooltip="LinkedIn Profile"
-        iconSlug={LINKEDIN_ICON_SLUG}
-        data-testid="header-linkedin-link">
+        iconSlug={LINKEDIN_ICON_SLUG}>
         LinkedIn
       </HeaderSocialLink>
     </div>
