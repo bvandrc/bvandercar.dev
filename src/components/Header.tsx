@@ -1,12 +1,13 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
-import { GITHUB_ICON_SLUG } from '@/lib/icons'
+import { GITHUB_ICON_SLUG, LINKEDIN_ICON_SLUG } from '@/lib/icons'
 import { Badge } from './primitives/Badge'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Link } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
 
 // Matches the accent theme token in src/styles/index.css, as the link text does.
-const GITHUB_ICON_COLOR = '22d3ee'
+// LinkedIn's logo comes from Devicon, which keeps its own blue instead.
+const PROFILE_ICON_COLOR = '22d3ee'
 
 export const Header = () => (
   <header className="flex flex-col items-center gap-3" data-testid="header">
@@ -39,20 +40,37 @@ export const Header = () => (
         <p key={line}>{line}</p>
       ))}
     </div>
-    <Tooltip content="GitHub Profile">
-      <Link
-        href="https://github.com/bvandrc"
-        newTab
-        className="inline-flex items-center gap-2"
-        data-testid="header-github-link">
-        <BrandIcon
-          slug={GITHUB_ICON_SLUG}
-          color={GITHUB_ICON_COLOR}
-          size={16}
-          className="size-4"
-        />
-        github.com/bvandrc
-      </Link>
-    </Tooltip>
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+      <Tooltip content="GitHub Profile">
+        <Link
+          href="https://github.com/bvandrc"
+          newTab
+          className="inline-flex items-center gap-2"
+          data-testid="header-github-link">
+          <BrandIcon
+            slug={GITHUB_ICON_SLUG}
+            color={PROFILE_ICON_COLOR}
+            size={16}
+            className="size-4"
+          />
+          github.com/bvandrc
+        </Link>
+      </Tooltip>
+      <Tooltip content="LinkedIn Profile">
+        <Link
+          href="https://www.linkedin.com/in/blake-vandercar"
+          newTab
+          className="inline-flex items-center gap-2"
+          data-testid="header-linkedin-link">
+          <BrandIcon
+            slug={LINKEDIN_ICON_SLUG}
+            color={PROFILE_ICON_COLOR}
+            size={16}
+            className="size-4"
+          />
+          LinkedIn
+        </Link>
+      </Tooltip>
+    </div>
   </header>
 )

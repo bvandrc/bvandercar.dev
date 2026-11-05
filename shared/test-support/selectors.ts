@@ -6,6 +6,7 @@ export const SELECTORS = {
     TAGLINE: 'header-tagline',
     STATUS: 'header-status',
     GITHUB_LINK: 'header-github-link',
+    LINKEDIN_LINK: 'header-linkedin-link',
   },
   MAIN: 'main',
   PROJECTS: {
