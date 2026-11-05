@@ -1,6 +1,53 @@
 import { SKILLS } from '@/generated/profile/content/skills'
+import type { SkillBadge } from '@/generated/profile/content/types'
 import { cn } from '@/utils'
 import { Section } from './Section'
+
+// Mirror the surface and ink theme tokens in src/styles/index.css.
+const CHIP_BACKGROUND = '141a25'
+const CHIP_INK = 'f0f4fa'
+
+/** Below this contrast against the chip, a brand color is too dark to see. */
+const MIN_ICON_CONTRAST = 2
+
+const relativeLuminance = (hex: string) => {
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const channel = Number.parseInt(hex.slice(i, i + 2), 16) / 255
+    return channel <= 0.039_28
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+const contrast = (a: string, b: string) => {
+  const [light, dark] = [relativeLuminance(a), relativeLuminance(b)].sort(
+    (x, y) => y - x
+  )
+  return (light + 0.05) / (dark + 0.05)
+}
+
+/**
+ * The Simple Icons URL for a skill's logo, in its brand color.
+ *
+ * The color comes from its shields.io badge: the logo color where that's a
+ * real color, else the badge's background, since a white or black logo was
+ * only ever drawn on that. One too dark for the chip uses the chip's ink.
+ */
+const skillIconUrl = ({ logo, logoColor, path }: SkillBadge) => {
+  // Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
+  const slug = logo.toLowerCase().replaceAll('-', '')
+  const logoHex = decodeURIComponent(logoColor).replace('#', '')
+  const badgeHex = decodeURIComponent(path).match(
+    /-#?([0-9a-f]{6})(?:\.svg)?$/i
+  )?.[1]
+  const brand = /^[0-9a-f]{6}$/i.test(logoHex) ? logoHex : badgeHex
+  const color =
+    brand && contrast(brand, CHIP_BACKGROUND) >= MIN_ICON_CONTRAST
+      ? brand
+      : CHIP_INK
+  return `https://cdn.simpleicons.org/${slug}/${color}`
+}
 
 export const Skills = () => (
   <Section emoji="🌟" title="Skills" data-testid="skills">
@@ -34,7 +81,19 @@ export const Skills = () => (
                   {row.lines.flat().map((skill) => (
                     <span
                       key={skill.alt}
-                      className="rounded-md border border-border bg-surface px-2 py-1 text-sm">
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm">
+                      <img
+                        src={skillIconUrl(skill)}
+                        alt=""
+                        width={14}
+                        height={14}
+                        className="size-3.5"
+                        // Simple Icons lacks a few logos (Playwright's was
+                        // withdrawn); hide the broken image and keep the name.
+                        onError={(event) => {
+                          event.currentTarget.hidden = true
+                        }}
+                      />
                       {skill.alt}
                     </span>
                   ))}
