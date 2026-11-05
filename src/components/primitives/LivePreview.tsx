@@ -57,7 +57,7 @@ export const LivePreview = ({
           aria-hidden="true"
           className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90"
         />
-        {open ? 'Hide live preview' : 'Show live preview'}
+        {`${open ? 'Hide' : 'Show'} live preview`}
       </Collapsible.Trigger>
       <Collapsible.Content
         className={cn(
