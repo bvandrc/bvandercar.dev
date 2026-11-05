@@ -1,13 +1,21 @@
-import { useEffect, useState } from 'react'
-import { useEasedScrollIntoView, useTimer } from '@bvandrc/react-toolkit'
+import { useEffect } from 'react'
+import {
+  useEasedScrollIntoView,
+  useMaybeControlled,
+  useTimer,
+} from '@bvandrc/react-toolkit'
 import { ChevronRight } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
+import type { RequireAllOrNone } from 'type-fest'
 
 import { cn } from '@/utils'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
   Pick<React.ComponentProps<'button'>, 'aria-describedby'> &
-  Pick<Collapsible.CollapsibleProps, 'open' | 'onOpenChange'> & {
+  // Both or neither: `onOpenChange` alone would leave nothing to open it.
+  RequireAllOrNone<
+    Pick<Collapsible.CollapsibleProps, 'open' | 'onOpenChange'>
+  > & {
     /** The page to show. */
     src: string
     /** What the page is, which names the frame for screen readers. */
@@ -38,10 +46,11 @@ export const LivePreview = ({
   className,
   'aria-describedby': describedBy,
 }: LivePreviewProps) => {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
-  // Reports each change whether or not `open` is passed, unlike
-  // `useMaybeControlled`, which takes `onOpenChange` alone as control.
-  const open = controlledOpen ?? uncontrolledOpen
+  const [open, setOpen] = useMaybeControlled(
+    controlledOpen,
+    onOpenChange,
+    false
+  )
   const { scrollIntoView } = useEasedScrollIntoView()
   const scrollTimer = useTimer()
   useEffect(() => {
@@ -53,10 +62,7 @@ export const LivePreview = ({
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={(nextOpen) => {
-        setUncontrolledOpen(nextOpen)
-        onOpenChange?.(nextOpen)
-      }}
+      onOpenChange={setOpen}
       className={cn('flex flex-col gap-2', className)}
       data-testid="live-preview">
       <Collapsible.Trigger

@@ -36,32 +36,28 @@ describe('LivePreview', () => {
     expect(screen.getByTestId(TOGGLE).dataset.pulse).toBe('false')
   })
 
-  it('reports each open and close', async () => {
+  it('shows what its open prop says, and asks to change it on each toggle, when given one', async () => {
     const user = userEvent.setup()
     const onOpenChange = vi.fn()
-    render(
-      <LivePreview src={SRC} title="Example" onOpenChange={onOpenChange} />
-    )
-
-    await user.click(screen.getByTestId(TOGGLE))
-    await user.click(screen.getByTestId(TOGGLE))
-    expect(onOpenChange.mock.calls).toEqual([[true], [false]])
-  })
-
-  it('opens and closes as its open prop says, when given one', () => {
     const { rerender } = render(
-      <LivePreview src={SRC} title="Example" open onOpenChange={vi.fn()} />
-    )
-    expect(screen.getByTestId(FRAME)).toBeDefined()
-
-    rerender(
       <LivePreview
         src={SRC}
         title="Example"
         open={false}
-        onOpenChange={vi.fn()}
+        onOpenChange={onOpenChange}
       />
     )
+
+    await user.click(screen.getByTestId(TOGGLE))
+    // Its parent hasn't said yes yet.
     expect(screen.queryByTestId(FRAME)).toBeNull()
+
+    rerender(
+      <LivePreview src={SRC} title="Example" open onOpenChange={onOpenChange} />
+    )
+    expect(screen.getByTestId(FRAME)).toBeDefined()
+
+    await user.click(screen.getByTestId(TOGGLE))
+    expect(onOpenChange.mock.calls).toEqual([[true], [false]])
   })
 })
