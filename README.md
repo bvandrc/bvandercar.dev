@@ -4,7 +4,7 @@ My personal developer site: skills, projects, and a little about me. Live at <ht
 
 Built on:
 
-- **Vite 8** + **React 18** + **TypeScript**
+- **Vite 8** + **React 19** + **TypeScript**
 - **Tailwind CSS 4** via `@tailwindcss/vite`, with theme tokens in [src/styles/index.css](src/styles/index.css)
 - **Biome** for formatting, linting, and import sorting
 - **Vitest** + **Testing Library** for unit and component tests
