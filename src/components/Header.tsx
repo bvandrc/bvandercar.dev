@@ -17,11 +17,14 @@ export const Header = () => (
         data-testid="header-title">
         Blake Vandercar
       </h1>
-      <Badge tone="caution" data-testid="header-status">
-        <span aria-hidden="true">🚧</span> Under construction{' '}
-        <span aria-hidden="true">🚧</span>
-      </Badge>
     </div>
+    <Badge
+      tone="caution"
+      className="px-3 py-1 text-sm"
+      data-testid="header-status">
+      <span aria-hidden="true">🚧</span> Under construction{' '}
+      <span aria-hidden="true">🚧</span>
+    </Badge>
     <div
       className="flex max-w-prose flex-col items-center gap-1 text-ink-muted"
       data-testid="header-tagline">
