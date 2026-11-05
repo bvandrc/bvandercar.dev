@@ -1,16 +1,19 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import { TYPE_ICONS } from '@/generated/profile/content/project-types'
+import { PROJECTS } from '@/generated/profile/content/projects'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { Projects } from '../Projects'
 
-const { LIVE_PREVIEW, PROJECTS } = SELECTORS
+const { LIVE_PREVIEW } = SELECTORS
 const { TOGGLE } = LIVE_PREVIEW
+const { CARD, REPO_LINK } = SELECTORS.PROJECTS
 
 const getPreviewCard = () => {
   const card = screen
-    .getAllByTestId(PROJECTS.CARD)
+    .getAllByTestId(CARD)
     .find((each) => within(each).queryByTestId(TOGGLE))
   if (!card) {
     throw new Error('No project card has a live preview')
@@ -43,6 +46,19 @@ describe('Projects', () => {
     expect(new Set(getPulses())).toEqual(new Set(['true']))
   })
 
+  it("names each project's type icon for screen readers", () => {
+    renderWithProviders(<Projects />)
+    const projects = PROJECTS.flatMap((group) => group.projects)
+    const cards = screen.getAllByTestId(CARD)
+    expect(cards).toHaveLength(projects.length)
+    for (const [index, { name, type }] of projects.entries()) {
+      const icon = within(cards[index]).queryByRole('img', {
+        name: TYPE_ICONS[type].title,
+      })
+      expect(icon, name).not.toBeNull()
+    }
+  })
+
   it('toggles a live preview on a click on its card', async () => {
     const user = userEvent.setup()
     renderWithProviders(<Projects />)
@@ -68,7 +84,7 @@ describe('Projects', () => {
       }
     })
 
-    await user.click(within(card).getByTestId(PROJECTS.REPO_LINK))
+    await user.click(within(card).getByTestId(REPO_LINK))
     expect(within(card).queryByTestId(LIVE_PREVIEW.FRAME)).toBeNull()
 
     // Toggled once by the toggle, not back again by the card around it.

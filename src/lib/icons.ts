@@ -16,6 +16,15 @@ export const skillIconSlug = ({ logo }: SkillBadge) =>
   logo.toLowerCase().replaceAll('-', '')
 
 /**
+ * Every interface glyph the site shows, by its Lucide name.
+ *
+ * The build bundles exactly these, and fails on a name Lucide doesn't have.
+ */
+export const UI_ICON_NAMES = ['chevron-right', 'external-link'] as const
+
+export type UiIconName = (typeof UI_ICON_NAMES)[number]
+
+/**
  * Every logo slug the site shows.
  *
  * The build bundles exactly these, so a component showing a logo has to take

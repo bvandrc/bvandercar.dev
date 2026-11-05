@@ -20,9 +20,6 @@ const GA_SCRIPT_ORIGINS = 'https://*.googletagmanager.com'
 const GA_HIT_ORIGINS =
   'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 
-// Devicon's logos, for the few Simple Icons lacks.
-const DEVICON_ORIGIN = 'https://cdn.jsdelivr.net'
-
 // The project sites shown live in an iframe: each project with an `embed` in
 // the profile content. __tests__/site.config.test.ts checks none is missing.
 const EMBED_ORIGINS = [
@@ -41,7 +38,7 @@ const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   `script-src 'self' ${GA_SCRIPT_ORIGINS} ${CLOUDFLARE_BEACON_ORIGIN}`,
   `connect-src 'self' ${GA_HIT_ORIGINS} ${CLOUDFLARE_REPORT_ORIGIN}`,
-  `img-src 'self' data: ${GA_HIT_ORIGINS} ${DEVICON_ORIGIN}`,
+  `img-src 'self' data: ${GA_HIT_ORIGINS}`,
   "style-src 'self'",
   `frame-src ${EMBED_ORIGINS}`,
   "object-src 'none'",
