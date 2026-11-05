@@ -2,6 +2,7 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import type { Project, ProjectType } from '@/generated/profile/content/types'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
+import { ExternalLinkIcon } from './primitives/ExternalLinkIcon'
 import { Section } from './Section'
 
 type TypeIcon = {
@@ -60,9 +61,9 @@ const ProjectCard = ({ project }: { project: Project }) => {
         target="_blank"
         rel="noopener noreferrer"
         className="text-xs text-ink-muted hover:text-accent">
-        {counts
-          ? `${formatCount(counts.commits, 'commit')} · ${formatCount(counts.prs, 'PR')}`
-          : 'Source on GitHub'}
+        {counts &&
+          `${formatCount(counts.commits, 'commit')} · ${formatCount(counts.prs, 'PR')} · `}
+        repo <ExternalLinkIcon />
       </a>
       {project.screenshot && (
         <img
