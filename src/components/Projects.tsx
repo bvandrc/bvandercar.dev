@@ -31,10 +31,8 @@ const ProjectCard = ({ project }: { project: Project }) => {
         <SimpleIcon
           slug={TYPE_ICONS[project.type].slug}
           color={TYPE_ICON_COLOR}
-          alt={TYPE_ICONS[project.type].title}
           title={TYPE_ICONS[project.type].title}
-          width={14}
-          height={14}
+          size={14}
           className="size-3.5"
         />
       </div>

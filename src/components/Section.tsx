@@ -26,7 +26,13 @@ const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) =>
   typeof icon === 'string' ? (
     <span aria-hidden="true">{icon}</span>
   ) : (
-    <SimpleIcon slug={icon.slug} color={icon.color} className="size-[1em]" />
+    <SimpleIcon
+      slug={icon.slug}
+      color={icon.color}
+      // The h2 em; the class matches the heading at either level.
+      size={24}
+      className="size-[1em]"
+    />
   )
 
 /** A titled section, labelled by its own heading. */

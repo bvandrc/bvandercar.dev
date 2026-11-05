@@ -88,8 +88,7 @@ export const Skills = () => (
                       <SimpleIcon
                         slug={skillIconSlug(skill)}
                         color={skillIconColor(skill)}
-                        width={14}
-                        height={14}
+                        size={14}
                         className="size-3.5"
                         // Simple Icons lacks a few logos, so try Devicon's;
                         // if it lacks one too, hide the image and keep the name.
