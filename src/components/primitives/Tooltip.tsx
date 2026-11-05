@@ -31,7 +31,7 @@ export const Tooltip = ({ content, children }: TooltipProps) => (
     <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
     <RadixTooltip.Portal>
       <RadixTooltip.Content
-        sideOffset={6}
+        sideOffset={3}
         collisionPadding={8}
         className="z-50 max-w-xs animate-tooltip-in rounded-md border border-border bg-surface px-2 py-1 text-xs break-words text-ink shadow-lg"
         data-testid="tooltip">
