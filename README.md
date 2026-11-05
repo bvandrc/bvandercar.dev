@@ -38,9 +38,9 @@ The Playwright suites run against `vite preview`, so build first (`pnpm build`) 
     setup-playwright/ Composite action: Playwright browser cache + install
   workflows/      CI, PR-only CI, deploy, and production Lighthouse
 public/
-  favicon.svg     Browser tab icon
+  favicon.svg     Browser tab icon, and the source for the generated raster icons
   logo.svg        In-app logo
-  preview.svg     og:image / social preview
+  preview.png     og:image / social preview card (1200×630)
   robots.txt      Crawler rules
   sitemap.xml     Sitemap
   llms.txt        LLM-readable site summary
@@ -52,6 +52,8 @@ src/
   hooks/          camelCase files, e.g. useMobile.ts
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
+vite-plugins/
+  web-assets.ts   Generates the icons and site.webmanifest at build time, and links them from <head>
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests

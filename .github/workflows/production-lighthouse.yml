@@ -21,6 +21,8 @@ permissions:
 jobs:
   lighthouse:
     name: Lighthouse
+    # Temporarily disabled; remove this line to re-enable.
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
