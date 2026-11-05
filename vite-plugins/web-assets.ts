@@ -1,27 +1,20 @@
 /**
- * @fileoverview Vite plugin that generates the site's raster icons, web app
- * manifest, and social preview from SVG, so no rendered image is committed.
+ * @fileoverview Vite plugin that generates the site's raster icons and web app
+ * manifest from the SVG favicon, so no rendered icon is committed.
  */
 
 import { readFile } from 'node:fs/promises'
-import { Resvg } from '@resvg/resvg-js'
 import { generateHtmlMarkup } from '@vite-pwa/assets-generator/api/generate-html-markup'
 import { generateManifestIconsEntry } from '@vite-pwa/assets-generator/api/generate-manifest-icons-entry'
 import { instructions } from '@vite-pwa/assets-generator/api/instructions'
 import { minimal2023Preset } from '@vite-pwa/assets-generator/presets/minimal-2023'
-import satori from 'satori'
 import type { HtmlTagDescriptor, Plugin } from 'vite'
 
 const FAVICON_SVG_PATH = 'public/favicon.svg'
-const LOGO_SVG_PATH = 'public/logo.svg'
 const MANIFEST_FILE_NAME = 'site.webmanifest'
 
-// Mirrors the theme tokens in src/styles/index.css.
-const COLORS = {
-  CANVAS: '#0b0f17',
-  INK: '#f0f4fa',
-  INK_MUTED: '#9fb0c8',
-}
+// Mirrors the canvas theme token in src/styles/index.css.
+const CANVAS_COLOR = '#0b0f17'
 
 const MANIFEST = {
   name: 'Blake Vandercar',
@@ -31,8 +24,8 @@ const MANIFEST = {
   start_url: './',
   scope: './',
   display: 'browser',
-  background_color: COLORS.CANVAS,
-  theme_color: COLORS.CANVAS,
+  background_color: CANVAS_COLOR,
+  theme_color: CANVAS_COLOR,
 }
 
 const ICON_PRESET = {
@@ -44,58 +37,12 @@ const ICON_PRESET = {
   apple: {
     sizes: [180],
     padding: 0,
-    resizeOptions: { background: COLORS.CANVAS },
+    resizeOptions: { background: CANVAS_COLOR },
   },
   maskable: {
     sizes: [512],
-    resizeOptions: { background: COLORS.CANVAS },
+    resizeOptions: { background: CANVAS_COLOR },
   },
-}
-
-const readFont = (weight: 400 | 600) =>
-  readFile(
-    `node_modules/@fontsource/inter/files/inter-latin-${weight}-normal.woff`
-  )
-
-const renderPreview = async () => {
-  const logoSvg = await readFile(LOGO_SVG_PATH)
-  const svg = await satori(
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 48,
-        width: '100%',
-        height: '100%',
-        padding: '0 96px',
-        backgroundColor: COLORS.CANVAS,
-        fontFamily: 'Inter',
-      }}>
-      <img
-        src={`data:image/svg+xml;base64,${logoSvg.toString('base64')}`}
-        width={192}
-        height={192}
-        alt=""
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ fontSize: 72, fontWeight: 600, color: COLORS.INK }}>
-          Blake Vandercar
-        </div>
-        <div style={{ fontSize: 32, color: COLORS.INK_MUTED }}>
-          Software developer · bvandercar.dev
-        </div>
-      </div>
-    </div>,
-    {
-      width: 1200,
-      height: 630,
-      fonts: [
-        { name: 'Inter', data: await readFont(400), weight: 400 },
-        { name: 'Inter', data: await readFont(600), weight: 600 },
-      ],
-    }
-  )
-  return new Resvg(svg).render().asPng()
 }
 
 const generateWebAssets = async (base: string) => {
@@ -128,7 +75,6 @@ const generateWebAssets = async (base: string) => {
     ...generateManifestIconsEntry('object', iconInstructions),
   }
   files.set(MANIFEST_FILE_NAME, Buffer.from(JSON.stringify(manifest, null, 2)))
-  files.set('preview.png', await renderPreview())
 
   const headLinks = [
     ...generateHtmlMarkup(iconInstructions),
@@ -157,12 +103,12 @@ const toLinkTag = (markup: string): HtmlTagDescriptor => ({
 })
 
 /**
- * Generates the favicon.ico, touch and manifest icons, web app manifest, and
- * social preview, and links them from `<head>`.
+ * Generates the favicon.ico, touch and manifest icons, and web app manifest,
+ * and links them from `<head>`.
  *
- * Icons come from `public/favicon.svg` via `@vite-pwa/assets-generator`; the
- * preview card is laid out with satori around `public/logo.svg`. `vite build`
- * writes them to `dist`, and the dev server serves them from memory.
+ * Icons come from `public/favicon.svg` via `@vite-pwa/assets-generator`.
+ * `vite build` writes them to `dist`, and the dev server serves them from
+ * memory.
  */
 export const webAssets = (): Plugin => {
   let base = '/'
