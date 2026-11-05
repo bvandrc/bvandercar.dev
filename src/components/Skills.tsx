@@ -1,6 +1,7 @@
 import { colord, extend } from 'colord'
 import a11yPlugin from 'colord/plugins/a11y'
 
+import { SECTIONS } from '@/generated/profile/content/sections'
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
 import { DevIcon } from './primitives/DevIcon'
@@ -40,7 +41,10 @@ const skillIconColor = ({ logoColor, path }: SkillBadge) => {
 }
 
 export const Skills = () => (
-  <Section icon="🌟" title="Skills" data-testid="skills">
+  <Section
+    icon={SECTIONS.SKILLS.icon}
+    title={SECTIONS.SKILLS.title}
+    data-testid="skills">
     {SKILLS.map((group) => (
       <Section
         key={group.title}

@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type { Project } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
+import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
@@ -76,7 +77,10 @@ const ProjectCard = ({ project }: { project: Project }) => {
 }
 
 export const Projects = () => (
-  <Section icon="💎" title="Projects" data-testid="projects">
+  <Section
+    icon={SECTIONS.PROJECTS.icon}
+    title={SECTIONS.PROJECTS.title}
+    data-testid="projects">
     {PROJECTS.map((group) => (
       <Section
         key={group.title}
