@@ -23,10 +23,11 @@
   "scripts": {
     "__c0": "====================[ Build & Development ]======================",
     "start": "pnpm dev",
-    "dev": "vite --open",
-    "build": "vite build",
+    "dev": "pnpm icons && vite --open",
+    "build": "pnpm icons && vite build",
     "preview": "pnpm build && vite preview --open",
     "preview:ci": "vite preview --strictPort",
+    "icons": "pwa-assets-generator",
     "__c1": "====================[ Linting & Type Checking ]==================",
     "check": "pnpm format && pnpm ts:check && pnpm pw:ts:check",
     "format": "npx biome check . --fix",

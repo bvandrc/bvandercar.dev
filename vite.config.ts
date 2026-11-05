@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
 
 import { BASE_PATH, SECURITY_HEADERS } from './site.config'
-import { webAssets } from './vite-plugins/web-assets'
 
 /** Writes `SECURITY_HEADERS` to `dist/_headers`, which Cloudflare applies to every path. */
 const securityHeadersFile = (): Plugin => ({
@@ -26,7 +25,7 @@ export default defineConfig(() => ({
   // Unknown paths 404 instead of falling back to index.html, as on Cloudflare.
   // Lighthouse probes `/.well-known/` files and fails on an HTML 200.
   appType: 'mpa' as const,
-  plugins: [tailwindcss(), react(), securityHeadersFile(), webAssets()],
+  plugins: [tailwindcss(), react(), securityHeadersFile()],
   resolve: {
     tsconfigPaths: true,
   },
