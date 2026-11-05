@@ -2,6 +2,10 @@ import { uniq } from 'es-toolkit'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { PROJECTS } from '@/generated/profile/content/projects'
+import {
+  SECTIONS,
+  type SectionHeading,
+} from '@/generated/profile/content/sections'
 import { SKILLS, type SkillBadge } from '@/generated/profile/content/skills'
 
 /** The logo beside the header's GitHub link. */
@@ -15,28 +19,29 @@ export const skillIconSlug = ({ logo }: SkillBadge) =>
   // Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
   logo.toLowerCase().replaceAll('-', '')
 
-/**
- * Every interface glyph the site shows, by its Lucide name.
- *
- * A `material-symbols:` prefix takes the glyph from Material Symbols instead.
- * The build bundles exactly these, and fails on a name its set doesn't have.
- */
-export const UI_ICON_NAMES = [
-  'chevron-right',
-  'external-link',
-  'material-symbols:deployed-code-outline',
-  'party-popper',
-  'wrench',
-] as const
+/** Every interface glyph the site's own code draws, by its Lucide name. */
+export const UI_ICON_NAMES = ['chevron-right', 'external-link'] as const
 
 export type UiIconName = (typeof UI_ICON_NAMES)[number]
 
-/** The glyph beside each top-level section's heading on the site. */
-export const SECTION_ICONS = {
-  PROJECTS: 'material-symbols:deployed-code-outline',
-  SKILLS: 'wrench',
-  BEYOND_CODE: 'party-popper',
-} satisfies Record<'PROJECTS' | 'SKILLS' | 'BEYOND_CODE', UiIconName>
+/** The glyphs the profile content gives the section headings. */
+export const SECTION_GLYPHS = uniq(
+  Object.values(SECTIONS).flatMap(({ glyph }: SectionHeading) => glyph ?? [])
+)
+
+/** A glyph the build bundles: an interface glyph, or a section heading's. */
+export type GlyphName = UiIconName | NonNullable<SectionHeading['glyph']>
+
+/**
+ * Every glyph the site shows, by its Iconify name.
+ *
+ * A name is Lucide's unless prefixed `material-symbols:`. The build bundles
+ * exactly these, and fails on a name its set doesn't have.
+ */
+export const GLYPH_NAMES = uniq<GlyphName>([
+  ...UI_ICON_NAMES,
+  ...SECTION_GLYPHS,
+])
 
 /**
  * Every logo slug the site shows.

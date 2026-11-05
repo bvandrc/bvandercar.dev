@@ -8,7 +8,6 @@ import type {
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { SECTION_ICONS } from '@/lib/icons'
 import { cn } from '@/utils'
 import { LivePreview } from './LivePreview'
 import { BrandIcon } from './primitives/BrandIcon'
@@ -143,7 +142,7 @@ export const Projects = () => {
   const [previewOpened, setPreviewOpened] = useState(false)
   return (
     <Section
-      icon={{ glyph: SECTION_ICONS.PROJECTS }}
+      icon={{ glyph: SECTIONS.PROJECTS.glyph }}
       title={SECTIONS.PROJECTS.title}
       data-testid="projects">
       {PROJECTS.map((group) => (

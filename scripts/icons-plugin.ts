@@ -37,7 +37,7 @@ const getIcon = (set: IconifyJSON, name: string): VirtualIcon | undefined => {
 
 /**
  * Serves `virtual:icons`: the logos for `ICON_SLUGS`, and the glyphs for
- * `UI_ICON_NAMES`, in `src/lib/icons.ts`.
+ * `GLYPH_NAMES`, in `src/lib/icons.ts`.
  *
  * All come from Iconify's sets and are bundled, only those, so the page
  * fetches no icon. A logo is Simple Icons' where it has one, including those
@@ -70,7 +70,7 @@ export const iconsPlugin = (): Plugin => ({
         return []
       }
     )
-    const uiIcons = module.UI_ICON_NAMES.map((name): [string, VirtualIcon] => {
+    const uiIcons = module.GLYPH_NAMES.map((name): [string, VirtualIcon] => {
       const icon = name.startsWith(MATERIAL_SYMBOLS_PREFIX)
         ? getIcon(MATERIAL_SYMBOLS, name.slice(MATERIAL_SYMBOLS_PREFIX.length))
         : getIcon(LUCIDE, name)

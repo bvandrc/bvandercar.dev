@@ -1,13 +1,13 @@
 import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
-import type { UiIconName } from '@/lib/icons'
+import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Icon } from './primitives/Icon'
 
 /** An interface glyph for a heading, drawn in the site's orange. */
-export type SectionGlyph = { glyph: UiIconName }
+export type SectionGlyph = { glyph: GlyphName }
 
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,

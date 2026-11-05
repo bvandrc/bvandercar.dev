@@ -4,7 +4,7 @@ import a11yPlugin from 'colord/plugins/a11y'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
-import { SECTION_ICONS, skillIconSlug } from '@/lib/icons'
+import { skillIconSlug } from '@/lib/icons'
 import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Section } from './Section'
@@ -40,7 +40,7 @@ const skillIconColor = ({ logoColor, path }: SkillBadge) => {
 
 export const Skills = () => (
   <Section
-    icon={{ glyph: SECTION_ICONS.SKILLS }}
+    icon={{ glyph: SECTIONS.SKILLS.glyph }}
     title={SECTIONS.SKILLS.title}
     data-testid="skills">
     {SKILLS.map((group) => (
