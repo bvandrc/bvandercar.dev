@@ -33,7 +33,8 @@ export const Section = ({
       className={className ?? 'flex flex-col gap-5'}
       {...props}>
       <Heading id={headingId} className={HEADING_CLASSES[level]}>
-        <span aria-hidden="true">{emoji}</span> {title}
+        <span aria-hidden="true">{emoji}</span> {title}{' '}
+        <span aria-hidden="true">{emoji}</span>
       </Heading>
       {children}
     </section>
