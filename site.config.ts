@@ -29,6 +29,7 @@ const EMBED_ORIGINS = [
   'https://taskrankr.com',
   'https://bvandrc.github.io',
   'https://specialingredientbass.com',
+  'https://womanhoodofwubz.pages.dev',
 ].join(' ')
 
 // Cloudflare Web Analytics, which Cloudflare injects into every page, loads its
