@@ -11,6 +11,8 @@ runs:
     - name: Setup Node
       uses: actions/setup-node@v7
       with:
+        # 24 runs scripts/fetch-profile.ts directly, stripping its types.
+        node-version: 24
         cache: pnpm
 
     # `setup-node`'s cache only covers pnpm's content-addressable store -- the

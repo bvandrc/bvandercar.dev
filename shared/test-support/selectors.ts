@@ -5,10 +5,15 @@ export const SELECTORS = {
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
     STATUS: 'header-status',
+    GITHUB_LINK: 'header-github-link',
   },
   MAIN: 'main',
-  FOOTER: {
-    SELF: 'footer',
-    GITHUB_LINK: 'footer-github-link',
+  PROJECTS: {
+    SELF: 'projects',
+    CARD: 'project-card',
   },
+  SKILLS: {
+    SELF: 'skills',
+  },
+  BEYOND_CODE: 'beyond-code',
 } as const

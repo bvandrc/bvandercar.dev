@@ -17,12 +17,32 @@
       }
     }
   },
+  "overrides": [
+    {
+      // A test is named for the module it covers (Link.tsx -> Link.test.tsx),
+      // but exports nothing itself, so Biome can't match the name to an export.
+      "includes": ["**/__tests__/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["camelCase", "kebab-case", "PascalCase"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "files": {
     "includes": [
       "**",
       "!!conventions",
       "!!**/coverage",
       "!!**/dist",
+      "!!src/generated",
       "!**/node_modules",
       "!**/playwright/results"
     ]

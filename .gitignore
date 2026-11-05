@@ -11,3 +11,7 @@ public/favicon.ico
 public/pwa-*.png
 public/maskable-icon-*.png
 public/apple-touch-icon-*.png
+
+# Fetched from bvandrc/bvandrc by `pnpm fetch:profile`
+src/generated/
+public/project-screenshots/

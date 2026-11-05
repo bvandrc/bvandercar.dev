@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
   workflow_dispatch: # Allows manual triggering
+  # Weekly, an hour after bvandrc/bvandrc refreshes its repo counts, so a
+  # passing run redeploys the site with its latest content.
+  schedule:
+    - cron: '17 8 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
