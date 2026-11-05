@@ -25,6 +25,15 @@
       color: var(--color-orange-400);
     }
   }
+
+  /* Fades a tooltip in as it opens. */
+  --animate-tooltip-in: tooltip-in 150ms ease-out;
+
+  @keyframes tooltip-in {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 /* A glow: `shadow-glow-<blur-px>`, colored by the standard `shadow-<color>` utilities. */

@@ -10,6 +10,7 @@ import { cn } from '@/utils'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
 import { SimpleIcon } from './primitives/SimpleIcon'
+import { Tooltip } from './primitives/Tooltip'
 import { Section } from './Section'
 
 // Matches the ink-muted theme token in src/styles/index.css.
@@ -40,39 +41,47 @@ const ProjectCard = ({ project }: { project: Project }) => {
       data-testid="project-card">
       <div className="flex items-center justify-center gap-2">
         <h4 className="font-semibold">
-          <Link href={project.href} newTab>
-            <span id={nameId}>{project.name}</span>
-          </Link>
+          <Tooltip content={project.href}>
+            <Link href={project.href} newTab data-testid="project-name-link">
+              <span id={nameId}>{project.name}</span>
+            </Link>
+          </Tooltip>
         </h4>
-        <SimpleIcon
-          slug={TYPE_ICONS[project.type].slug}
-          color={TYPE_ICON_COLOR}
-          title={TYPE_ICONS[project.type].title}
-          size={14}
-          className="size-3.5"
-        />
+        <Tooltip content={TYPE_ICONS[project.type].title}>
+          <SimpleIcon
+            slug={TYPE_ICONS[project.type].slug}
+            color={TYPE_ICON_COLOR}
+            alt={TYPE_ICONS[project.type].title}
+            size={14}
+            className="size-3.5"
+            data-testid="project-type-icon"
+          />
+        </Tooltip>
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
-      <Link
-        id={repoLinkId}
-        // Every card's link reads "repo", so name the project it's for.
-        aria-labelledby={`${nameId} ${repoLinkId}`}
-        href={repoUrl(project.repo)}
-        newTab
-        tone="muted"
-        className="text-xs">
-        {counts && (
-          <>
-            {formatCount(counts.commits, 'commit')} <Separator />{' '}
-            {formatCount(counts.prs, 'PR')} <Separator />{' '}
-          </>
-        )}
-        repo{' '}
-        <ExternalLink
-          aria-hidden="true"
-          className="inline-block size-[1em] align-[-0.125em]"
-        />
-      </Link>
+      <Tooltip content="GitHub Repository">
+        <Link
+          id={repoLinkId}
+          // Every card's link reads "repo", so name the project it's for.
+          aria-labelledby={`${nameId} ${repoLinkId}`}
+          href={repoUrl(project.repo)}
+          newTab
+          tone="muted"
+          className="text-xs"
+          data-testid="project-repo-link">
+          {counts && (
+            <>
+              {formatCount(counts.commits, 'commit')} <Separator />{' '}
+              {formatCount(counts.prs, 'PR')} <Separator />{' '}
+            </>
+          )}
+          repo{' '}
+          <ExternalLink
+            aria-hidden="true"
+            className="inline-block size-[1em] align-[-0.125em]"
+          />
+        </Link>
+      </Tooltip>
       {project.screenshot && (
         <img
           src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
