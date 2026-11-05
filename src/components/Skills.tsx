@@ -1,6 +1,6 @@
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
-import { SimpleIcon } from './primitives/SimpleIcon'
+import { DevIcon } from './primitives/DevIcon'
 import { Section } from './Section'
 
 // Mirror the surface and ink theme tokens in src/styles/index.css.
@@ -10,6 +10,12 @@ const CHIP_INK = 'f0f4fa'
 /** Below this contrast against the chip, a brand color is too dark to see. */
 const MIN_ICON_CONTRAST = 2
 
+/**
+ * How bright a color looks, from 0 for black to 1 for white, per WCAG 2.
+ *
+ * Unlike the raw RGB values, it weights each channel by how bright the eye
+ * sees it, so a green and a blue of the same value don't count as alike.
+ */
 const relativeLuminance = (hex: string) => {
   const [r, g, b] = [0, 2, 4].map((i) => {
     const channel = Number.parseInt(hex.slice(i, i + 2), 16) / 255
@@ -20,6 +26,12 @@ const relativeLuminance = (hex: string) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
+/**
+ * The WCAG contrast ratio of two hex colors, from 1 (identical) to 21.
+ *
+ * Used to catch a brand color, like a near-black logo, that would all but
+ * vanish on the dark chip behind it.
+ */
 const contrast = (a: string, b: string) => {
   const [light, dark] = [relativeLuminance(a), relativeLuminance(b)].sort(
     (x, y) => y - x
@@ -49,17 +61,6 @@ const skillIconColor = ({ logoColor, path }: SkillBadge) => {
     : CHIP_INK
 }
 
-/**
- * Devicon's logo for a skill, in its original colors.
- *
- * The fallback for one Simple Icons lacks, like Playwright, whose logo it
- * withdrew. Pinned, since jsDelivr serves the package as published.
- */
-const fallbackIconUrl = (skill: SkillBadge) => {
-  const slug = skillIconSlug(skill)
-  return `https://cdn.jsdelivr.net/npm/devicon@2.18.0/icons/${slug}/${slug}-original.svg`
-}
-
 export const Skills = () => (
   <Section icon="🌟" title="Skills" data-testid="skills">
     {SKILLS.map((group) => (
@@ -85,22 +86,11 @@ export const Skills = () => (
                     <span
                       key={skill.alt}
                       className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm">
-                      <SimpleIcon
+                      <DevIcon
                         slug={skillIconSlug(skill)}
                         color={skillIconColor(skill)}
                         size={14}
                         className="size-3.5"
-                        // Simple Icons lacks a few logos, so try Devicon's;
-                        // if it lacks one too, hide the image and keep the name.
-                        onError={(event) => {
-                          const img = event.currentTarget
-                          if (img.dataset.fallback) {
-                            img.hidden = true
-                            return
-                          }
-                          img.dataset.fallback = 'devicon'
-                          img.src = fallbackIconUrl(skill)
-                        }}
                       />
                       {skill.alt}
                     </span>
