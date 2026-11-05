@@ -77,8 +77,9 @@ const ProjectCard = ({
         'has-focus-visible:border-orange-400 has-focus-visible:shadow-glow-24 has-focus-visible:shadow-orange-500'
       )}
       data-testid="project-card">
-      <div className="flex items-center justify-center gap-2">
-        <h4 className="font-semibold">
+      {/* Equal side columns center the name on the card, with the icon beside it. */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <h4 className="col-start-2 font-semibold">
           <Tooltip content={project.href}>
             <Link href={project.href} newTab>
               <span id={nameId}>{project.name}</span>
