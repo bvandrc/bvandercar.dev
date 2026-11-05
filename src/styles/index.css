@@ -53,6 +53,8 @@
     background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* The arrow over plain text too, not the I-beam; links keep their hand. */
+    cursor: default;
     -webkit-font-smoothing: antialiased;
   }
 
