@@ -42,7 +42,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
       <div className="flex items-center justify-center gap-2">
         <h4 className="font-semibold">
           <Tooltip content={project.href}>
-            <Link href={project.href} newTab data-testid="project-name-link">
+            <Link href={project.href} newTab>
               <span id={nameId}>{project.name}</span>
             </Link>
           </Tooltip>
@@ -54,7 +54,6 @@ const ProjectCard = ({ project }: { project: Project }) => {
             alt={TYPE_ICONS[project.type].title}
             size={14}
             className="size-3.5"
-            data-testid="project-type-icon"
           />
         </Tooltip>
       </div>
