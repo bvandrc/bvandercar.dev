@@ -2,7 +2,7 @@ import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
 import { cn } from '@/utils'
-import { SimpleIcon } from './primitives/SimpleIcon'
+import { BrandIcon } from './primitives/BrandIcon'
 
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,
@@ -26,7 +26,7 @@ const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) =>
   typeof icon === 'string' ? (
     <span aria-hidden="true">{icon}</span>
   ) : (
-    <SimpleIcon
+    <BrandIcon
       slug={icon.slug}
       color={icon.color}
       // The h2 em; the class matches the heading at either level.

@@ -7,9 +7,9 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { cn } from '@/utils'
+import { BrandIcon } from './primitives/BrandIcon'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
-import { SimpleIcon } from './primitives/SimpleIcon'
 import { Tooltip } from './primitives/Tooltip'
 import { Section } from './Section'
 
@@ -48,7 +48,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           </Tooltip>
         </h4>
         <Tooltip content={TYPE_ICONS[project.type].title}>
-          <SimpleIcon
+          <BrandIcon
             slug={TYPE_ICONS[project.type].slug}
             color={TYPE_ICON_COLOR}
             alt={TYPE_ICONS[project.type].title}

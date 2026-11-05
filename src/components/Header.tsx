@@ -1,7 +1,8 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
+import { GITHUB_ICON_SLUG } from '@/lib/icons'
 import { Badge } from './primitives/Badge'
+import { BrandIcon } from './primitives/BrandIcon'
 import { Link } from './primitives/Link'
-import { SimpleIcon } from './primitives/SimpleIcon'
 import { Tooltip } from './primitives/Tooltip'
 
 // Matches the accent theme token in src/styles/index.css, as the link text does.
@@ -44,8 +45,8 @@ export const Header = () => (
         newTab
         className="inline-flex items-center gap-2"
         data-testid="header-github-link">
-        <SimpleIcon
-          slug="github"
+        <BrandIcon
+          slug={GITHUB_ICON_SLUG}
           color={GITHUB_ICON_COLOR}
           size={16}
           className="size-4"

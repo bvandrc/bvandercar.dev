@@ -251,6 +251,9 @@ importers:
       lighthouse-audit-utils:
         specifier: ^1
         version: 1.2.4(@playwright/test@1.64.1)(lighthouse@13.5.0(@opentelemetry/core@2.12.0(@opentelemetry/api@1.10.0))(supports-color@10.2.2))
+      simple-icons:
+        specifier: ^16
+        version: 16.36.0
       tailwindcss:
         specifier: ^4
         version: 4.3.3
@@ -2703,6 +2706,10 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
+
+  simple-icons@16.36.0:
+    resolution: {integrity: sha512-+VNPPkqSOLidFeSgBKUWX4n50WPpDC09hav+BgS26anIF1oQOlGBb8LvwGR+6fYRjo+B6CiKzNBceMPkSVXANQ==}
+    engines: {node: '>=0.12.18'}
 
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
@@ -5244,6 +5251,8 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 24.19.2
+
+  simple-icons@16.36.0: {}
 
   source-map-js@1.2.2: {}
 
