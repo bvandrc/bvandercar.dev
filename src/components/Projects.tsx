@@ -7,9 +7,9 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { cn } from '@/utils'
+import { BrandIcon } from './primitives/BrandIcon'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
-import { SimpleIcon } from './primitives/SimpleIcon'
 import { Section } from './Section'
 
 // Matches the ink-muted theme token in src/styles/index.css.
@@ -44,7 +44,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
             <span id={nameId}>{project.name}</span>
           </Link>
         </h4>
-        <SimpleIcon
+        <BrandIcon
           slug={TYPE_ICONS[project.type].slug}
           color={TYPE_ICON_COLOR}
           title={TYPE_ICONS[project.type].title}

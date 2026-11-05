@@ -4,8 +4,9 @@ import a11yPlugin from 'colord/plugins/a11y'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
+import { skillIconSlug } from '@/lib/icons'
 import { cn } from '@/utils'
-import { DevIcon } from './primitives/DevIcon'
+import { BrandIcon } from './primitives/BrandIcon'
 import { Section } from './Section'
 
 // Adds colord's WCAG contrast and luminance methods.
@@ -17,10 +18,6 @@ const CHIP_INK = 'f0f4fa'
 
 /** Below this WCAG contrast ratio against the chip, a brand color is too dark to see. */
 const MIN_ICON_CONTRAST = 2
-
-// Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
-const skillIconSlug = ({ logo }: SkillBadge) =>
-  logo.toLowerCase().replaceAll('-', '')
 
 /**
  * A skill logo's brand color, from its shields.io badge.
@@ -74,7 +71,7 @@ export const Skills = () => (
                         // Glows orange on hover, like the project cards.
                         'hover:border-orange-400 hover:shadow-glow-12 hover:shadow-orange-500'
                       )}>
-                      <DevIcon
+                      <BrandIcon
                         slug={skillIconSlug(skill)}
                         color={skillIconColor(skill)}
                         size={14}

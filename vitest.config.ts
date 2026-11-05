@@ -1,7 +1,10 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
 
+import { iconsPlugin } from './scripts/icons-plugin'
+
 export default defineConfig({
+  plugins: [iconsPlugin()],
   resolve: {
     // The tsconfig path aliases, which vite.config.ts resolves for the build.
     alias: {

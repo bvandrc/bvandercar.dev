@@ -77,6 +77,7 @@
     "happy-dom": "^21",
     "lighthouse": "^13",
     "lighthouse-audit-utils": "^1",
+    "simple-icons": "^16",
     "tailwindcss": "^4",
     "type-fest": "^5",
     "typescript": "^7",
