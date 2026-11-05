@@ -13,17 +13,8 @@ export type SectionProps = Omit<
   title: string
   /** `h2` for a page section, `h3` for a group within one. */
   level?: 'h2' | 'h3'
-  /** `start` left-aligns the heading from sm up; below sm it stays centred. */
-  align?: 'center' | 'start'
-  /** Extra classes for the heading itself. */
-  headingClassName?: string
   children: React.ReactNode
 }
-
-const ALIGN_CLASSES = {
-  center: 'justify-center',
-  start: 'justify-center sm:justify-start',
-} satisfies Record<NonNullable<SectionProps['align']>, string>
 
 const HEADING_CLASSES = {
   h2: 'text-2xl font-semibold tracking-tight',
@@ -43,8 +34,6 @@ export const Section = ({
   icon,
   title,
   level = 'h2',
-  align = 'center',
-  headingClassName,
   className,
   children,
   ...props
@@ -59,10 +48,8 @@ export const Section = ({
       <Heading
         id={headingId}
         className={cn(
-          'flex items-center gap-3',
-          ALIGN_CLASSES[align],
-          HEADING_CLASSES[level],
-          headingClassName
+          'flex items-center justify-center gap-3',
+          HEADING_CLASSES[level]
         )}>
         <HeadingMark icon={icon} />
         <span>{title}</span>

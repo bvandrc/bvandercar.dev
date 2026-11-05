@@ -1,6 +1,5 @@
 import { SKILLS } from '@/generated/profile/content/skills'
 import type { SkillBadge } from '@/generated/profile/content/types'
-import { cn } from '@/utils'
 import { Section } from './primitives/Section'
 import { SimpleIcon } from './primitives/SimpleIcon'
 
@@ -69,20 +68,10 @@ export const Skills = () => (
         icon={group.icon}
         title={group.title}
         level="h3"
-        align="start"
-        // From sm up, start the heading where the skills column does: past
-        // the 9rem label column and the 1.25rem gap.
-        headingClassName="sm:pl-[10.25rem]"
         // From sm up, as wide as the table below (its two columns and gap),
         // so the heading's offset lines up with the table's skills column.
-        className="flex flex-col gap-3 sm:mx-auto sm:w-full sm:max-w-[42.25rem]">
-        <dl
-          className={cn(
-            'flex flex-col gap-4',
-            // From sm up, a two-column table like the README's, with the same
-            // columns in every group so they line up: labels right-aligned, skills beside.
-            'sm:mx-auto sm:grid sm:grid-cols-[9rem_minmax(0,32rem)] sm:items-center sm:gap-x-5 sm:gap-y-3'
-          )}>
+        className="flex flex-col gap-3">
+        <dl className="flex flex-col gap-3">
           {group.rows.map((row) => {
             // The label's line breaks are for the README's narrow column.
             const label = row.label.replaceAll('\n', ' ')
@@ -91,11 +80,9 @@ export const Skills = () => (
               // two cells join the table's grid.
               <div
                 key={label}
-                className="flex flex-col items-center gap-2 sm:contents">
-                <dt className="text-sm text-ink-muted sm:text-right">
-                  {label}
-                </dt>
-                <dd className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-3">
+                <dt className="shrink-0 text-sm text-ink-muted">{label}</dt>
+                <dd className="flex flex-wrap justify-center gap-2">
                   {row.lines.flat().map((skill) => (
                     <span
                       key={skill.alt}
