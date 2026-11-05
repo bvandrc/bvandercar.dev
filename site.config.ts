@@ -14,3 +14,35 @@ export const BASE_PATH = '/'
 
 /** Public URL of the deployed site. */
 export const SITE_URL = `https://bvandercar.dev${BASE_PATH}`
+
+// Google Analytics (react-ga4) loads gtag.js and sends hits to these origins.
+const GA_SCRIPT_ORIGINS = 'https://*.googletagmanager.com'
+const GA_HIT_ORIGINS =
+  'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
+
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  `script-src 'self' ${GA_SCRIPT_ORIGINS}`,
+  `connect-src 'self' ${GA_HIT_ORIGINS}`,
+  `img-src 'self' data: ${GA_HIT_ORIGINS}`,
+  "style-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ')
+
+/**
+ * Security headers sent with every response.
+ *
+ * The build writes them to `dist/_headers` for Cloudflare, and `vite preview`
+ * sends them too, so CI's ZAP scan sees what production serves.
+ */
+export const SECURITY_HEADERS = {
+  'Content-Security-Policy': CONTENT_SECURITY_POLICY,
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy':
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+} as const satisfies Record<string, string>
