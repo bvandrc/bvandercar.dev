@@ -7,7 +7,7 @@ Blake Vandercar's personal developer site — skills, projects, and a short "abo
 - **Base path**: `site.config.ts` holds `BASE_PATH`/`SITE_URL` and is imported by `vite.config.ts` and `playwright.config.ts`. The site is served from the domain root today, but in app code still build asset URLs from `import.meta.env.BASE_URL` (see `Header.tsx`) so they keep working if that ever changes.
 - **Security headers**: `SECURITY_HEADERS` in `site.config.ts` is the one source for the CSP and other headers. The build writes it to `dist/_headers` for Cloudflare, and `vite preview` sends it, so CI's ZAP scan checks it. A new third-party script, font, image, or request origin must be added to the CSP there, or the browser blocks it in production.
 
-- **Icons**: `public/favicon.svg` and `design/preview.svg` are the sources. After changing either, run `pnpm icons` and commit the PNGs and `favicon.ico` it writes to `public/`.
+- **Generated images**: `favicon.ico`, the touch and manifest PNGs, and `preview.png` (the social preview) are not committed. `vite-plugins/web-assets.tsx` renders them from `public/favicon.svg` and `public/logo.svg` at build time, and the dev server serves them from memory. Edit the SVGs, or the preview card in that plugin; never add a rendered copy to `public/`.
 
 ## Code conventions
 

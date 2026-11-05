@@ -23,5 +23,5 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "vitest/globals"]
   },
-  "include": ["src", "./*.ts"]
+  "include": ["src", "./*.ts", "vite-plugins"]
 }
