@@ -1,5 +1,4 @@
 import { useId } from 'react'
-import { pick } from 'es-toolkit'
 import type { MergeExclusive } from 'type-fest'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
@@ -43,7 +42,8 @@ const HeadingIcon = ({ source }: { source: HeadingIconProps }) => {
   }
   return (
     <BrandIcon
-      {...pick(source.icon, ['slug', 'color'])}
+      slug={source.icon.slug}
+      color={source.icon.color}
       // The h2 em; the class matches the heading at either level.
       size={24}
       className="size-[1em]"
