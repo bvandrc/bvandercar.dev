@@ -75,4 +75,5 @@ index.html        HTML entry point (title, meta, og tags)
 - **CI** — lint, type check, unit tests, and the three Playwright suites on every push and PR
 - **PR CI** — pull-request-only jobs: the changed-line count, written to the run's job summary
 - **Deploy** — once CI passes on the default branch, build and publish `dist` to Cloudflare with Wrangler
+- **Preview** — on every PR, upload the build as a Cloudflare version (not deployed) and comment its preview URL, stable per PR as `pr-<number>`
 - **Production Lighthouse** — audits the live site 15 minutes after each deploy

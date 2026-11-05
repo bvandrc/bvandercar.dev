@@ -1,5 +1,5 @@
 // Cloudflare Workers config: serves the Vite build as static assets, deployed
-// by .github/workflows/deploy.yml.
+// by .github/workflows/deploy.yml and previewed per PR by preview.yml.
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "bvandercar-dev",
@@ -8,5 +8,9 @@
     "directory": "./dist"
   },
   // Attaches the domain on deploy, creating its DNS record and certificate.
-  "routes": [{ "pattern": "bvandercar.dev", "custom_domain": true }]
+  "routes": [{ "pattern": "bvandercar.dev", "custom_domain": true }],
+  // The live site is only on the custom domain, but each uploaded version
+  // gets a workers.dev preview URL; .github/workflows/preview.yml uses these.
+  "workers_dev": false,
+  "preview_urls": true
 }
