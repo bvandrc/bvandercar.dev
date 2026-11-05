@@ -2,6 +2,7 @@ import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/types'
 import { cn } from '@/utils'
+import { SimpleIcon } from './SimpleIcon'
 
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,
@@ -34,11 +35,7 @@ const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) =>
   typeof icon === 'string' ? (
     <span aria-hidden="true">{icon}</span>
   ) : (
-    <img
-      src={`https://cdn.simpleicons.org/${icon.slug}/${icon.color}`}
-      alt=""
-      className="size-[1em]"
-    />
+    <SimpleIcon slug={icon.slug} color={icon.color} className="size-[1em]" />
   )
 
 /** A titled section, labelled by its own heading. */

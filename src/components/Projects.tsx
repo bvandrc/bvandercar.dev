@@ -6,6 +6,7 @@ import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
 import { Section } from './primitives/Section'
+import { SimpleIcon } from './primitives/SimpleIcon'
 
 type TypeIcon = {
   /** Simple Icons slug, as bvandrc's README uses for the same type */
@@ -42,8 +43,9 @@ const ProjectCard = ({ project }: { project: Project }) => {
             {project.name}
           </Link>
         </h4>
-        <img
-          src={`https://cdn.simpleicons.org/${TYPE_ICONS[project.type].slug}/${TYPE_ICON_COLOR}`}
+        <SimpleIcon
+          slug={TYPE_ICONS[project.type].slug}
+          color={TYPE_ICON_COLOR}
           alt={TYPE_ICONS[project.type].title}
           title={TYPE_ICONS[project.type].title}
           width={14}

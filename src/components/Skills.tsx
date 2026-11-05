@@ -2,6 +2,7 @@ import { SKILLS } from '@/generated/profile/content/skills'
 import type { SkillBadge } from '@/generated/profile/content/types'
 import { cn } from '@/utils'
 import { Section } from './primitives/Section'
+import { SimpleIcon } from './primitives/SimpleIcon'
 
 // Mirror the surface and ink theme tokens in src/styles/index.css.
 const CHIP_BACKGROUND = '141a25'
@@ -27,29 +28,26 @@ const contrast = (a: string, b: string) => {
   return (light + 0.05) / (dark + 0.05)
 }
 
-/**
- * The Simple Icons URL for a skill's logo, in its brand color.
- *
- * The color comes from its shields.io badge: the logo color where that's a
- * real color, else the badge's background, since a white or black logo was
- * only ever drawn on that. One too dark for the chip uses the chip's ink.
- */
 // Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
 const skillIconSlug = ({ logo }: SkillBadge) =>
   logo.toLowerCase().replaceAll('-', '')
 
-const skillIconUrl = (skill: SkillBadge) => {
-  const { logoColor, path } = skill
+/**
+ * A skill logo's brand color, from its shields.io badge.
+ *
+ * The badge's logo color where that's a real color, else its background,
+ * since a white or black logo was only ever drawn on that. One too dark for
+ * the chip uses the chip's ink.
+ */
+const skillIconColor = ({ logoColor, path }: SkillBadge) => {
   const logoHex = decodeURIComponent(logoColor).replace('#', '')
   const badgeHex = decodeURIComponent(path).match(
     /-#?([0-9a-f]{6})(?:\.svg)?$/i
   )?.[1]
   const brand = /^[0-9a-f]{6}$/i.test(logoHex) ? logoHex : badgeHex
-  const color =
-    brand && contrast(brand, CHIP_BACKGROUND) >= MIN_ICON_CONTRAST
-      ? brand
-      : CHIP_INK
-  return `https://cdn.simpleicons.org/${skillIconSlug(skill)}/${color}`
+  return brand && contrast(brand, CHIP_BACKGROUND) >= MIN_ICON_CONTRAST
+    ? brand
+    : CHIP_INK
 }
 
 /**
@@ -102,9 +100,9 @@ export const Skills = () => (
                     <span
                       key={skill.alt}
                       className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm">
-                      <img
-                        src={skillIconUrl(skill)}
-                        alt=""
+                      <SimpleIcon
+                        slug={skillIconSlug(skill)}
+                        color={skillIconColor(skill)}
                         width={14}
                         height={14}
                         className="size-3.5"
