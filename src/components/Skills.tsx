@@ -10,14 +10,14 @@ export const Skills = () => (
         title={group.title}
         level="h3"
         className="flex flex-col gap-3">
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[8rem_1fr]">
+        <dl className="flex flex-col gap-4">
           {group.rows.map((row) => {
             // The label's line breaks are for the README's narrow column.
             const label = row.label.replaceAll('\n', ' ')
             return (
-              <div key={label} className="contents">
-                <dt className="text-sm text-ink-muted sm:pt-1">{label}</dt>
-                <dd className="flex flex-wrap gap-2">
+              <div key={label} className="flex flex-col items-center gap-2">
+                <dt className="text-sm text-ink-muted">{label}</dt>
+                <dd className="flex flex-wrap justify-center gap-2">
                   {row.lines.flat().map((skill) => (
                     <span
                       key={skill.alt}

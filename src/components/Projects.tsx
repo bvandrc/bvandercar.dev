@@ -4,13 +4,24 @@ import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Section } from './Section'
 
-const TYPE_LABELS = {
-  react: 'React',
-  npm: 'npm package',
-  github: 'GitHub Action',
-  python: 'Python',
-  arduino: 'Arduino',
-} as const satisfies Record<ProjectType, string>
+type TypeIcon = {
+  /** Simple Icons slug, as bvandrc's README uses for the same type */
+  slug: string
+  /** Alt text and tooltip */
+  title: string
+}
+
+const TYPE_ICONS = {
+  react: { slug: 'react', title: 'React' },
+  npm: { slug: 'npm', title: 'npm package' },
+  github: { slug: 'github', title: 'GitHub Action' },
+  python: { slug: 'python', title: 'Python' },
+  arduino: { slug: 'arduino', title: 'Arduino' },
+  worker: { slug: 'cloudflareworkers', title: 'Cloudflare Worker' },
+} as const satisfies Record<ProjectType, TypeIcon>
+
+// Matches the ink-muted theme token in src/styles/index.css.
+const TYPE_ICON_COLOR = '9fb0c8'
 
 const LINK_CLASSES = 'text-accent hover:text-accent-hover'
 
@@ -24,7 +35,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
   const counts = REPO_COUNTS[project.repo]
   return (
     <Card className="flex h-full flex-col gap-3" data-testid="project-card">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+      <div className="flex items-center justify-center gap-2">
         <h4 className="font-semibold">
           <a
             href={project.href}
@@ -35,9 +46,15 @@ const ProjectCard = ({ project }: { project: Project }) => {
             {project.name}
           </a>
         </h4>
-        <span className="text-xs text-ink-muted">
-          {TYPE_LABELS[project.type]}
-        </span>
+        <img
+          src={`https://cdn.simpleicons.org/${TYPE_ICONS[project.type].slug}/${TYPE_ICON_COLOR}`}
+          alt={TYPE_ICONS[project.type].title}
+          title={TYPE_ICONS[project.type].title}
+          width={14}
+          height={14}
+          className="size-3.5"
+          data-testid="project-card-type-icon"
+        />
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
       <a

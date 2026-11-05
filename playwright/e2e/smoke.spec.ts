@@ -38,6 +38,15 @@ test('profile content renders', async ({ page }) => {
     'href',
     /^https:\/\//
   )
+  // Each type icon names its type for screen readers. Its image comes from a
+  // third-party CDN, so loading it is left out of the test.
+  await expect(page.getByTestId(CARD.TYPE_ICON)).toHaveCount(
+    await page.getByTestId(CARD.SELF).count()
+  )
+  await expect(page.getByTestId(CARD.TYPE_ICON).first()).toHaveAttribute(
+    'alt',
+    /\S/
+  )
   await expect(page.getByTestId(CARD.REPO_LINK).first()).toHaveAttribute(
     'href',
     /^https:\/\/github\.com\/bvandrc\//

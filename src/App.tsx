@@ -6,7 +6,7 @@ import { Projects } from './components/Projects'
 import { Skills } from './components/Skills'
 
 export const App = () => (
-  <div className="mx-auto flex min-h-dvh max-w-4xl flex-col gap-10 px-5 py-12">
+  <div className="mx-auto flex min-h-dvh max-w-4xl flex-col gap-10 px-5 py-12 text-center">
     <Header />
     <main className="flex flex-col gap-14" data-testid="main">
       <Projects />

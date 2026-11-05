@@ -12,6 +12,7 @@ export const SELECTORS = {
     CARD: {
       SELF: 'project-card',
       NAME: 'project-card-name',
+      TYPE_ICON: 'project-card-type-icon',
       REPO_LINK: 'project-card-repo-link',
       SCREENSHOT: 'project-card-screenshot',
     },
