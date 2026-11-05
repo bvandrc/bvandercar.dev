@@ -3,15 +3,15 @@ import { Badge } from './primitives/Badge'
 
 export const Header = () => (
   <header className="flex flex-col items-center gap-3" data-testid="header">
-    <img
-      src={`${import.meta.env.BASE_URL}logo.svg`}
-      alt=""
-      width={40}
-      height={40}
-      className="size-10"
-      data-testid="header-logo"
-    />
     <div className="flex flex-wrap items-center justify-center gap-3">
+      <img
+        src={`${import.meta.env.BASE_URL}logo.svg`}
+        alt=""
+        width={40}
+        height={40}
+        className="size-10"
+        data-testid="header-logo"
+      />
       <h1
         className="text-3xl font-semibold tracking-tight"
         data-testid="header-title">
