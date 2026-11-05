@@ -1,13 +1,21 @@
-import { useState } from 'react'
-import { useEasedScrollIntoView, useTimer } from '@bvandrc/react-toolkit'
+import { useEffect } from 'react'
+import {
+  useEasedScrollIntoView,
+  useMaybeControlled,
+  useTimer,
+} from '@bvandrc/react-toolkit'
 import { Collapsible } from 'radix-ui'
+import type { RequireAllOrNone } from 'type-fest'
 
 import { cn } from '@/utils'
 import { Icon } from './primitives/Icon'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
   Pick<React.ComponentProps<'button'>, 'aria-describedby'> &
-  Pick<Collapsible.CollapsibleProps, 'onOpenChange'> & {
+  // Both or neither: `onOpenChange` alone would leave nothing to open it.
+  RequireAllOrNone<
+    Pick<Collapsible.CollapsibleProps, 'open' | 'onOpenChange'>
+  > & {
     /** The page to show. */
     src: string
     /** What the page is, which names the frame for screen readers. */
@@ -25,31 +33,36 @@ const SCROLL_DELAY_MS = 50
  * A live page in an iframe, collapsed behind a toggle until asked for.
  *
  * The frame mounts only while open, so a closed preview loads nothing. Its
- * origin must be in the CSP's `frame-src`, in `site.config.ts`.
+ * origin must be in the CSP's `frame-src`, in `site.config.ts`. Pass `open`
+ * with `onOpenChange` to open and close it from outside as well.
  */
 export const LivePreview = ({
   src,
   title,
   scale = 1,
   pulse = false,
+  open: controlledOpen,
   onOpenChange,
   className,
   'aria-describedby': describedBy,
 }: LivePreviewProps) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useMaybeControlled(
+    controlledOpen,
+    onOpenChange,
+    false
+  )
   const { scrollIntoView } = useEasedScrollIntoView()
   const scrollTimer = useTimer()
+  useEffect(() => {
+    if (!open) {
+      // Closed before the scroll ran: don't scroll to a preview going away.
+      scrollTimer.clear()
+    }
+  }, [open, scrollTimer])
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen)
-        if (!nextOpen) {
-          // Closed before the scroll ran: don't scroll to a preview going away.
-          scrollTimer.clear()
-        }
-        onOpenChange?.(nextOpen)
-      }}
+      onOpenChange={setOpen}
       className={cn('flex flex-col gap-2', className)}
       data-testid="live-preview">
       <Collapsible.Trigger
