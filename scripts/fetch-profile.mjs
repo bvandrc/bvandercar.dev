@@ -7,11 +7,33 @@
  * branch or commit other than main.
  */
 
+import { execFileSync } from 'node:child_process'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 
+const REPO_URL = 'https://github.com/bvandrc/bvandrc'
 const REF = process.env.PROFILE_REF || 'main'
-const RAW_BASE = `https://raw.githubusercontent.com/bvandrc/bvandrc/${REF}`
+
+/** Resolves a branch or tag to its commit; a full commit hash passes through. */
+const resolveCommit = (ref) => {
+  if (/^[0-9a-f]{40}$/.test(ref)) {
+    return ref
+  }
+  // raw.githubusercontent.com caches a branch URL for minutes after a push,
+  // and its edges don't expire together, so reading by branch can return
+  // old files. A commit URL never changes, so resolve the branch first.
+  const output = execFileSync('git', ['ls-remote', REPO_URL, ref], {
+    encoding: 'utf8',
+  })
+  const commit = output.match(/^([0-9a-f]{40})\s/)?.[1]
+  if (!commit) {
+    throw new Error(`${REPO_URL} has no ref "${ref}"`)
+  }
+  return commit
+}
+
+const COMMIT = resolveCommit(REF)
+const RAW_BASE = `https://raw.githubusercontent.com/bvandrc/bvandrc/${COMMIT}`
 const OUT_DIR = 'src/generated/profile'
 
 // Repo path → path under OUT_DIR. The content files import each other
@@ -27,7 +49,7 @@ const MODULES = {
 const download = async (repoPath) => {
   const response = await fetch(`${RAW_BASE}/${repoPath}`)
   if (!response.ok) {
-    throw new Error(`${repoPath}@${REF}: HTTP ${response.status}`)
+    throw new Error(`${repoPath}@${COMMIT}: HTTP ${response.status}`)
   }
   return Buffer.from(await response.arrayBuffer())
 }
@@ -60,5 +82,5 @@ await Promise.all(
 )
 
 console.log(
-  `profile: ${Object.keys(MODULES).length} modules and ${screenshots.length} screenshots from bvandrc@${REF}`
+  `profile: ${Object.keys(MODULES).length} modules and ${screenshots.length} screenshots from bvandrc@${REF} (${COMMIT.slice(0, 7)})`
 )
