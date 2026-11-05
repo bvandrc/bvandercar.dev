@@ -44,8 +44,7 @@ export const Skills = () => (
     {SKILLS.map((group) => (
       <Section
         key={group.title}
-        icon={group.icon}
-        title={group.title}
+        {...pick(group, ['icon', 'title'])}
         level="h3"
         className="flex flex-col gap-3">
         <dl className="flex flex-col gap-3">

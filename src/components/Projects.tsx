@@ -148,8 +148,7 @@ export const Projects = () => {
       {PROJECTS.map((group) => (
         <Section
           key={group.title}
-          icon={group.icon}
-          title={group.title}
+          {...pick(group, ['icon', 'title'])}
           level="h3"
           className="flex flex-col gap-3">
           {group.intro && <p className="text-ink-muted">{group.intro}</p>}
