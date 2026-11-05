@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-import type { SectionLogo } from '@/generated/profile/content/types'
+import type { SectionLogo } from '@/generated/profile/content/projects'
 import { cn } from '@/utils'
 import { SimpleIcon } from './SimpleIcon'
 

@@ -1,8 +1,8 @@
 import { ExternalLink } from 'lucide-react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
+import type { Project } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
-import type { Project } from '@/generated/profile/content/types'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'

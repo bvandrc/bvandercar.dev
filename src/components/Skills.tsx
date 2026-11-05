@@ -1,5 +1,5 @@
+import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
-import type { SkillBadge } from '@/generated/profile/content/types'
 import { Section } from './primitives/Section'
 import { SimpleIcon } from './primitives/SimpleIcon'
 
