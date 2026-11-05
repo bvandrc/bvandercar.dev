@@ -23,8 +23,8 @@ const iconSrc = (icon: VirtualIcon, color: string) =>
       )}`
 
 /**
- * A brand's logo: Simple Icons' in the given color, or for the few it lacks, a
- * fallback in the brand's own colors.
+ * A brand's logo: Simple Icons' in the given color, or for the few it lacks,
+ * Devicon's in the brand's own colors.
  *
  * Given only one of `alt` and `title`, it uses that for both. Given neither,
  * it is decorative. A slug with no logo renders nothing, so it's best beside

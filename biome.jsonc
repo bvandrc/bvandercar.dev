@@ -43,8 +43,6 @@
       "!!**/coverage",
       "!!**/dist",
       "!!src/generated",
-      // Vendored logos, kept byte for byte as published.
-      "!!src/assets/icons",
       "!**/node_modules",
       "!**/playwright/results"
     ]

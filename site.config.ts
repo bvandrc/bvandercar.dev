@@ -20,6 +20,9 @@ const GA_SCRIPT_ORIGINS = 'https://*.googletagmanager.com'
 const GA_HIT_ORIGINS =
   'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 
+// Devicon's logos, for the few Simple Icons lacks.
+const DEVICON_ORIGIN = 'https://cdn.jsdelivr.net'
+
 // Cloudflare Web Analytics, which Cloudflare injects into every page, loads its
 // beacon from the first origin and reports to the second.
 const CLOUDFLARE_BEACON_ORIGIN = 'https://static.cloudflareinsights.com'
@@ -29,7 +32,7 @@ const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   `script-src 'self' ${GA_SCRIPT_ORIGINS} ${CLOUDFLARE_BEACON_ORIGIN}`,
   `connect-src 'self' ${GA_HIT_ORIGINS} ${CLOUDFLARE_REPORT_ORIGIN}`,
-  `img-src 'self' data: ${GA_HIT_ORIGINS}`,
+  `img-src 'self' data: ${GA_HIT_ORIGINS} ${DEVICON_ORIGIN}`,
   "style-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
