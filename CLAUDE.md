@@ -2,7 +2,7 @@
 
 Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to Cloudflare (Workers static assets, configured in `wrangler.jsonc`) by `.github/workflows/deploy.yml`.
 
-- **Stack**: React 18 + Vite + TypeScript, Tailwind v4, Biome, Vitest + Testing Library for unit/component tests, Playwright for e2e/a11y/Lighthouse.
+- **Stack**: React 19 + Vite + TypeScript, Tailwind v4, Biome, Vitest + Testing Library for unit/component tests, Playwright for e2e/a11y/Lighthouse.
 - **Layout**: `src/` is the app, with unit tests in `__tests__/` folders beside the modules they cover; `playwright/` is the browser suites; `shared/test-support/` holds test helpers either suite can import, like the test-id registry in `selectors.ts` (alias `~/test-support/*`).
 - **Base path**: `site.config.ts` holds `BASE_PATH`/`SITE_URL` and is imported by `vite.config.ts` and `playwright.config.ts`. The site is served from the domain root today, but in app code still build asset URLs from `import.meta.env.BASE_URL` (see `Header.tsx`) so they keep working if that ever changes.
 - **Security headers**: `SECURITY_HEADERS` in `site.config.ts` is the one source for the CSP and other headers. The build writes it to `dist/_headers` for Cloudflare, and `vite preview` sends it, so CI's ZAP scan checks it. A new third-party script, font, image, or request origin must be added to the CSP there, or the browser blocks it in production.
