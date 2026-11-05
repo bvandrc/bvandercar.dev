@@ -10,7 +10,7 @@ export const App = () => (
   <TooltipProvider>
     <div className="mx-auto flex min-h-dvh max-w-4xl flex-col gap-6 px-5 py-12 text-center">
       <Header />
-      <main className="flex flex-col gap-14" data-testid="main">
+      <main className="flex flex-col gap-10" data-testid="main">
         <Projects />
         <Skills />
         <BeyondCode />
