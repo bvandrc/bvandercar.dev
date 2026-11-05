@@ -1,15 +1,14 @@
 name: Preview
 
 # Uploads each PR's build as a Cloudflare version, without deploying it, and
-# comments its preview URL on the PR. The `pr-<number>` alias keeps one stable
-# URL per PR across pushes.
+# links its preview URL from the PR's "View deployment" button, which posts no
+# comment. The `pr-<number>` alias keeps one stable URL per PR across pushes.
 
 on:
   pull_request:
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -21,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     # A fork PR gets no secrets, so it can't upload.
     if: github.event.pull_request.head.repo.full_name == github.repository
+    environment:
+      name: preview
+      url: ${{ steps.upload.outputs.url }}
 
     steps:
       - name: Checkout repo
@@ -50,16 +52,4 @@ jobs:
             exit 1
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
-
-      - name: Comment preview URL
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          URL: ${{ steps.upload.outputs.url }}
-        # Edits this workflow's earlier comment rather than adding one per push.
-        run: |
-          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none \
-            --body "**Preview:** $URL
-
-          Built from $HEAD_SHA."
+          echo "**Preview:** $url" >> "$GITHUB_STEP_SUMMARY"
