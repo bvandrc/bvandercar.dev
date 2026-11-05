@@ -26,9 +26,9 @@ const iconSrc = (icon: VirtualIcon, color: string) =>
  * A brand's logo: Simple Icons' in the given color, or for the few it lacks,
  * Devicon's in the brand's own colors.
  *
- * Given only one of `alt` and `title`, it uses that for both. Given neither,
- * it is decorative. A slug with no logo renders nothing, so it's best beside
- * the brand's name.
+ * A `title` doubles as the alt text, but `alt` alone shows no native tooltip.
+ * Given neither, it is decorative. A slug with no logo renders nothing, so
+ * it's best beside the brand's name.
  */
 export const BrandIcon = ({
   slug,
@@ -50,7 +50,7 @@ export const BrandIcon = ({
       width={width}
       height={height}
       alt={alt ?? title ?? ''}
-      title={title ?? alt}
+      title={title}
       {...props}
     />
   )
