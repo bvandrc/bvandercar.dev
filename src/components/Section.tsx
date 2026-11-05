@@ -2,7 +2,7 @@ import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
 import { cn } from '@/utils'
-import { SimpleIcon } from './SimpleIcon'
+import { SimpleIcon } from './primitives/SimpleIcon'
 
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,

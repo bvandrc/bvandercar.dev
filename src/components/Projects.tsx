@@ -6,8 +6,8 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
-import { Section } from './primitives/Section'
 import { SimpleIcon } from './primitives/SimpleIcon'
+import { Section } from './Section'
 
 // Matches the ink-muted theme token in src/styles/index.css.
 const TYPE_ICON_COLOR = '9fb0c8'

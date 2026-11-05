@@ -1,5 +1,5 @@
 import { BEYOND_CODE } from '@/generated/profile/content/about'
-import { Section } from './primitives/Section'
+import { Section } from './Section'
 
 export const BeyondCode = () => (
   <Section icon="🎉" title="Beyond Code" data-testid="beyond-code">
