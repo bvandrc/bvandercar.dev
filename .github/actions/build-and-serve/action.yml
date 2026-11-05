@@ -9,7 +9,7 @@ inputs:
   base-path:
     description: Base path the app is served under (must match BASE_PATH in site.config.ts)
     required: false
-    default: /bvandrc-project-template-react-frontend/
+    default: /bvandercar.dev/
 
 runs:
   using: composite

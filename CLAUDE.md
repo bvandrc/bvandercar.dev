@@ -1,6 +1,6 @@
 ## Project
 
-Starter template for React frontends, deployed to GitHub Pages by `.github/workflows/deploy.yml`.
+Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to GitHub Pages by `.github/workflows/deploy.yml`.
 
 - **Stack**: React 18 + Vite + TypeScript, Tailwind v4, Biome, Vitest + Testing Library for unit/component tests, Playwright for e2e/a11y/Lighthouse.
 - **Layout**: `src/` is the app, with unit tests in `__tests__/` folders beside the modules they cover; `playwright/` is the browser suites; `shared/test-support/` holds test helpers either suite can import, like the test-id registry in `selectors.ts` (alias `~/test-support/*`).

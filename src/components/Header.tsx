@@ -11,11 +11,10 @@ export const Header = () => (
     <h1
       className="text-3xl font-semibold tracking-tight"
       data-testid="header-title">
-      React Frontend Template
+      Blake Vandercar
     </h1>
     <p className="max-w-prose text-ink-muted" data-testid="header-tagline">
-      A Vite + React + TypeScript starter, pre-wired with Tailwind, Biome, and
-      Playwright suites for end-to-end, accessibility, and Lighthouse checks.
+      Software developer.
     </p>
   </header>
 )

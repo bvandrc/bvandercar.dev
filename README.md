@@ -1,6 +1,8 @@
-# React Frontend Template
+# bvandercar.dev
 
-A starting point for a static React frontend deployed to GitHub Pages.
+Blake Vandercar's personal developer site: skills, projects, and a little about me. Deployed to GitHub Pages at <https://bvandrc.github.io/bvandercar.dev/>.
+
+Built on:
 
 - **Vite 8** + **React 18** + **TypeScript**
 - **Tailwind CSS 4** via `@tailwindcss/vite`, with theme tokens in [src/styles/index.css](src/styles/index.css)
@@ -8,8 +10,6 @@ A starting point for a static React frontend deployed to GitHub Pages.
 - **Vitest** + **Testing Library** for unit and component tests
 - **Playwright** suites for end-to-end, accessibility (axe), and Lighthouse checks
 - **GitHub Actions** for CI, GitHub Pages deploys, and post-deploy Lighthouse audits
-
-The committed app is a placeholder. Replace it with your own.
 
 ## Scripts
 
@@ -38,7 +38,6 @@ The Playwright suites run against `vite preview`, so build first (`pnpm build`) 
     setup-playwright/ Composite action: Playwright browser cache + install
   workflows/      CI, PR-only CI, deploy, and production Lighthouse
 public/
-  CNAME           Custom domain for GitHub Pages (only needed for GH pages)
   favicon.svg     Browser tab icon
   logo.svg        In-app logo
   preview.svg     og:image / social preview
@@ -48,12 +47,10 @@ public/
 src/
   components/
     primitives/   Presentational building blocks (Button, Card, Badge)
-    ...           Feature components composed from primitives
+    ...           Page sections composed from primitives
     __tests__/    Unit tests, beside the modules they cover (in every src/ folder)
-  constants/      Shared enums and constants
   hooks/          camelCase files, e.g. useMobile.ts
   styles/         Tailwind entrypoint and theme tokens
-  types/          Shared types
   utils/          Shared helpers
 playwright/
   e2e/            e2e tests
