@@ -36,7 +36,6 @@ export const Tooltip = ({ content, children }: TooltipProps) => (
         className="z-50 max-w-xs animate-tooltip-in rounded-md border border-border bg-surface px-2 py-1 text-xs break-words text-ink shadow-lg"
         data-testid="tooltip">
         {content}
-        <RadixTooltip.Arrow width={10} height={5} className="fill-border" />
       </RadixTooltip.Content>
     </RadixTooltip.Portal>
   </RadixTooltip.Root>
