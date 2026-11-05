@@ -18,6 +18,7 @@ test('home page loads', async ({ page }) => {
         .evaluate((img: HTMLImageElement) => img.naturalWidth)
     )
     .toBeGreaterThan(0)
+  await expect(page.getByTestId(HEADER.STATUS)).toHaveText('Under construction')
   await expect(page.getByTestId(MAIN)).toBeVisible()
   await expect(page.getByTestId(FOOTER.GITHUB_LINK)).toHaveAttribute(
     'href',

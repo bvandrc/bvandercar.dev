@@ -1,6 +1,6 @@
 # bvandercar.dev
 
-Blake Vandercar's personal developer site: skills, projects, and a little about me. Live at <https://bvandercar.dev/>, served by Cloudflare.
+My personal developer site: skills, projects, and a little about me. Live at <https://bvandercar.dev/>, served by Cloudflare.
 
 Built on:
 

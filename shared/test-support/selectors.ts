@@ -4,6 +4,7 @@ export const SELECTORS = {
     LOGO: 'header-logo',
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
+    STATUS: 'header-status',
   },
   MAIN: 'main',
   FOOTER: {
