@@ -4,8 +4,7 @@
  *
  * Copies its src/content/ and src/generated/repo-counts.ts to
  * src/generated/profile/, and the screenshots the projects reference to
- * public/, all gitignored. Set PROFILE_REF to read a branch or commit other
- * than main.
+ * public/, all gitignored. Reads PROFILE_REF_DEFAULT, or PROFILE_REF if set.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -14,7 +13,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const REPO_URL = 'https://github.com/bvandrc/bvandrc'
-const REF = process.env.PROFILE_REF || 'main'
+// The bvandrc branch this site's content is developed on, so a change there
+// reaches every build here without merging to bvandrc's main first. Set this
+// back to 'main' once that branch is merged.
+const PROFILE_REF_DEFAULT = 'feat/bvandercar-dev-content'
+const REF = process.env.PROFILE_REF || PROFILE_REF_DEFAULT
 const OUT_DIR = 'src/generated/profile'
 
 const git = (...args: string[]) =>
