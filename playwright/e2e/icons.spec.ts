@@ -14,9 +14,13 @@ test('icons, manifest, and social preview resolve', async ({
       'link[rel~="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]'
     )
     .evaluateAll((links: HTMLLinkElement[]) => links.map(({ href }) => href))
+  // .ico, SVG, and touch icons, plus the manifest.
   expect(headUrls).toHaveLength(4)
 
-  const manifestUrl = new URL('site.webmanifest', page.url())
+  const manifestUrl = new URL(
+    (await page.locator('link[rel="manifest"]').getAttribute('href')) ?? '',
+    page.url()
+  )
   const manifest: { icons: { src: string }[] } = await (
     await request.get(manifestUrl.href)
   ).json()

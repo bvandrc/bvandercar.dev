@@ -1,16 +1,20 @@
 /**
- * @fileoverview Vite plugin that renders the site's raster icons and social
- * preview from SVG, so no rendered image is committed.
+ * @fileoverview Vite plugin that generates the site's raster icons, web app
+ * manifest, and social preview from SVG, so no rendered image is committed.
  */
 
 import { readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import { Resvg } from '@resvg/resvg-js'
+import { generateHtmlMarkup } from '@vite-pwa/assets-generator/api/generate-html-markup'
+import { generateManifestIconsEntry } from '@vite-pwa/assets-generator/api/generate-manifest-icons-entry'
+import { instructions } from '@vite-pwa/assets-generator/api/instructions'
+import { minimal2023Preset } from '@vite-pwa/assets-generator/presets/minimal-2023'
 import satori from 'satori'
-import type { Plugin } from 'vite'
+import type { HtmlTagDescriptor, Plugin } from 'vite'
 
 const FAVICON_SVG_PATH = 'public/favicon.svg'
 const LOGO_SVG_PATH = 'public/logo.svg'
+const MANIFEST_FILE_NAME = 'site.webmanifest'
 
 // Mirrors the theme tokens in src/styles/index.css.
 const COLORS = {
@@ -19,44 +23,42 @@ const COLORS = {
   INK_MUTED: '#9fb0c8',
 }
 
-const ICO_SIZES = [16, 32, 48]
+const MANIFEST = {
+  name: 'Blake Vandercar',
+  short_name: 'bvandercar',
+  description:
+    'My personal developer site: skills, projects, and a little about me.',
+  start_url: './',
+  scope: './',
+  display: 'browser',
+  background_color: COLORS.CANVAS,
+  theme_color: COLORS.CANVAS,
+}
 
-// Resolves from the project root: Vite bundles its config, which leaves
-// `import.meta.url` undefined here.
-const require = createRequire(`${process.cwd()}/package.json`)
+const ICON_PRESET = {
+  ...minimal2023Preset,
+  // The favicon's tile is already the icon's background, so no padding.
+  transparent: { ...minimal2023Preset.transparent, padding: 0 },
+  // iOS and Android mask these to their own shape; the canvas color fills
+  // behind the tile's rounded corners so the mask sees one solid tile.
+  apple: {
+    sizes: [180],
+    padding: 0,
+    resizeOptions: { background: COLORS.CANVAS },
+  },
+  maskable: {
+    sizes: [512],
+    resizeOptions: { background: COLORS.CANVAS },
+  },
+}
 
 const readFont = (weight: 400 | 600) =>
   readFile(
-    require.resolve(`@fontsource/inter/files/inter-latin-${weight}-normal.woff`)
+    `node_modules/@fontsource/inter/files/inter-latin-${weight}-normal.woff`
   )
 
-const renderPng = (svg: string, width: number) =>
-  new Resvg(svg, { fitTo: { mode: 'width', value: width } }).render().asPng()
-
-/** Packs PNGs into an .ico, which may hold PNG data directly since Vista. */
-const buildIco = (pngs: { size: number; data: Buffer }[]) => {
-  const header = Buffer.alloc(6)
-  header.writeUInt16LE(1, 2) // type: icon
-  header.writeUInt16LE(pngs.length, 4)
-
-  let offset = header.length + pngs.length * 16
-  const entries = pngs.map(({ size, data }) => {
-    const entry = Buffer.alloc(16)
-    // Width and height are one byte each; every size here is under 256.
-    entry.writeUInt8(size, 0)
-    entry.writeUInt8(size, 1)
-    entry.writeUInt16LE(1, 4) // color planes
-    entry.writeUInt16LE(32, 6) // bits per pixel
-    entry.writeUInt32LE(data.length, 8)
-    entry.writeUInt32LE(offset, 12)
-    offset += data.length
-    return entry
-  })
-
-  return Buffer.concat([header, ...entries, ...pngs.map(({ data }) => data)])
-}
-
-const renderPreview = async (logoSvg: string) => {
+const renderPreview = async () => {
+  const logoSvg = await readFile(LOGO_SVG_PATH)
   const svg = await satori(
     <div
       style={{
@@ -70,7 +72,7 @@ const renderPreview = async (logoSvg: string) => {
         fontFamily: 'Inter',
       }}>
       <img
-        src={`data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`}
+        src={`data:image/svg+xml;base64,${logoSvg.toString('base64')}`}
         width={192}
         height={192}
         alt=""
@@ -93,62 +95,94 @@ const renderPreview = async (logoSvg: string) => {
       ],
     }
   )
-  return renderPng(svg, 1200)
+  return new Resvg(svg).render().asPng()
 }
 
-/** Renders every generated asset, keyed by its path under the site root. */
-const renderWebAssets = async (): Promise<Record<string, Buffer>> => {
-  const faviconSvg = await readFile(FAVICON_SVG_PATH, 'utf8')
-  const logoSvg = await readFile(LOGO_SVG_PATH, 'utf8')
+const generateWebAssets = async (base: string) => {
+  const faviconSvg = await readFile(FAVICON_SVG_PATH)
+  const iconInstructions = await instructions({
+    imageResolver: () => faviconSvg,
+    imageName: 'favicon.svg',
+    preset: ICON_PRESET,
+    htmlLinks: { xhtml: false, includeId: false },
+    basePath: base,
+    resolveSvgName: (name) => name,
+  })
 
-  // iOS and Android mask icons to their own shape, so those get square corners.
-  const squareSvg = faviconSvg.replace(' rx="14"', '')
-  // A maskable icon's mark must sit inside the central 80% circle that
-  // survives any mask shape, so the mark shrinks while the background fills.
-  const maskableSvg = squareSvg.replace(
-    /(<rect[^>]*\/>)([\s\S]*)(<\/svg>)/,
-    '$1<g transform="translate(32 32) scale(0.75) translate(-32 -32)">$2</g>$3'
-  )
-
-  return {
-    'favicon.ico': buildIco(
-      ICO_SIZES.map((size) => ({ size, data: renderPng(faviconSvg, size) }))
-    ),
-    'apple-touch-icon.png': renderPng(squareSvg, 180),
-    'icon-192.png': renderPng(faviconSvg, 192),
-    'icon-512.png': renderPng(faviconSvg, 512),
-    'icon-maskable-512.png': renderPng(maskableSvg, 512),
-    'preview.png': await renderPreview(logoSvg),
+  const files = new Map<string, Buffer>()
+  const { favicon, transparent, maskable, apple } = iconInstructions
+  for (const icon of Object.values({
+    ...favicon,
+    ...transparent,
+    ...maskable,
+    ...apple,
+  })) {
+    // The SVG favicon is already served from public/.
+    if (icon.mimeType !== 'image/svg+xml') {
+      files.set(icon.name, await icon.buffer())
+    }
   }
+
+  const manifest = {
+    ...MANIFEST,
+    ...generateManifestIconsEntry('object', iconInstructions),
+  }
+  files.set(MANIFEST_FILE_NAME, Buffer.from(JSON.stringify(manifest, null, 2)))
+  files.set('preview.png', await renderPreview())
+
+  const headLinks = [
+    ...generateHtmlMarkup(iconInstructions),
+    `<link rel="manifest" href="${base}${MANIFEST_FILE_NAME}">`,
+  ]
+
+  return { files, headLinks }
 }
 
 const CONTENT_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon',
   '.png': 'image/png',
+  '.webmanifest': 'application/manifest+json',
 }
 
+/** Turns a raw `<link …>` string into a tag Vite can inject. */
+const toLinkTag = (markup: string): HtmlTagDescriptor => ({
+  tag: 'link',
+  attrs: Object.fromEntries(
+    [...markup.matchAll(/(\w[\w-]*)="([^"]*)"/g)].map(([, name, value]) => [
+      name,
+      value,
+    ])
+  ),
+  injectTo: 'head',
+})
+
 /**
- * Renders the favicon.ico, touch and manifest icons, and social preview
- * from `public/favicon.svg` and `public/logo.svg`.
+ * Generates the favicon.ico, touch and manifest icons, web app manifest, and
+ * social preview, and links them from `<head>`.
  *
- * `vite build` writes them to `dist`, and the dev server serves them from
- * memory, so the same URLs work in both.
+ * Icons come from `public/favicon.svg` via `@vite-pwa/assets-generator`; the
+ * preview card is laid out with satori around `public/logo.svg`. `vite build`
+ * writes them to `dist`, and the dev server serves them from memory.
  */
 export const webAssets = (): Plugin => {
-  let assets: Promise<Record<string, Buffer>> | undefined
-  // Rendered once per process, on first use.
+  let base = '/'
+  let assets: ReturnType<typeof generateWebAssets> | undefined
+  // Generated once per process, on first use.
   const getAssets = () => {
-    assets ??= renderWebAssets()
+    assets ??= generateWebAssets(base)
     return assets
   }
 
   return {
     name: 'web-assets',
+    configResolved(config) {
+      base = config.base
+    },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const { pathname } = new URL(req.url ?? '/', 'http://localhost')
-        const name = pathname.slice(server.config.base.length)
-        const data = (await getAssets())[name]
+        const name = pathname.slice(base.length)
+        const data = (await getAssets()).files.get(name)
         if (!data) {
           next()
           return
@@ -160,8 +194,11 @@ export const webAssets = (): Plugin => {
         res.end(data)
       })
     },
+    async transformIndexHtml() {
+      return (await getAssets()).headLinks.map(toLinkTag)
+    },
     async generateBundle() {
-      for (const [fileName, source] of Object.entries(await getAssets())) {
+      for (const [fileName, source] of (await getAssets()).files) {
         this.emitFile({ type: 'asset', fileName, source })
       }
     },
