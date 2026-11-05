@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { ExternalLink } from 'lucide-react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
@@ -18,14 +19,19 @@ const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 const formatCount = (count: number, noun: string) =>
   `${count.toLocaleString('en-US')} ${count === 1 ? noun : `${noun}s`}`
 
+/** A visual divider, which screen readers would otherwise read as "middle dot". */
+const Separator = () => <span aria-hidden="true">·</span>
+
 const ProjectCard = ({ project }: { project: Project }) => {
   const counts = REPO_COUNTS[project.repo]
+  const nameId = useId()
+  const repoLinkId = useId()
   return (
     <Card className="flex h-full flex-col gap-3" data-testid="project-card">
       <div className="flex items-center justify-center gap-2">
         <h4 className="font-semibold">
           <Link href={project.href} newTab>
-            {project.name}
+            <span id={nameId}>{project.name}</span>
           </Link>
         </h4>
         <SimpleIcon
@@ -38,12 +44,19 @@ const ProjectCard = ({ project }: { project: Project }) => {
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
       <Link
+        id={repoLinkId}
+        // Every card's link reads "repo", so name the project it's for.
+        aria-labelledby={`${nameId} ${repoLinkId}`}
         href={repoUrl(project.repo)}
         newTab
         tone="muted"
         className="text-xs">
-        {counts &&
-          `${formatCount(counts.commits, 'commit')} · ${formatCount(counts.prs, 'PR')} · `}
+        {counts && (
+          <>
+            {formatCount(counts.commits, 'commit')} <Separator />{' '}
+            {formatCount(counts.prs, 'PR')} <Separator />{' '}
+          </>
+        )}
         repo{' '}
         <ExternalLink
           aria-hidden="true"
@@ -72,7 +85,8 @@ export const Projects = () => (
         level="h3"
         className="flex flex-col gap-3">
         {group.intro && <p className="text-ink-muted">{group.intro}</p>}
-        <ul className="grid gap-4 md:grid-cols-2">
+        {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
+        <ul role="list" className="grid gap-4 md:grid-cols-2">
           {group.projects.map((project) => (
             <li key={project.repo}>
               <ProjectCard project={project} />
