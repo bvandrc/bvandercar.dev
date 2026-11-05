@@ -15,7 +15,8 @@ export const Skills = () => (
           className={cn(
             'flex flex-col gap-4',
             // From sm up, a two-column table like the README's, with the same
-            // columns in every group so they line up: labels right-aligned, skills beside.
+            // columns in every group so they line up: labels right-aligned, skills
+            // centred beside them.
             'sm:mx-auto sm:grid sm:grid-cols-[9rem_minmax(0,32rem)] sm:items-center sm:gap-x-5 sm:gap-y-3'
           )}>
           {group.rows.map((row) => {
@@ -30,7 +31,7 @@ export const Skills = () => (
                 <dt className="text-sm text-ink-muted sm:text-right">
                   {label}
                 </dt>
-                <dd className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                <dd className="flex flex-wrap justify-center gap-2">
                   {row.lines.flat().map((skill) => (
                     <span
                       key={skill.alt}
