@@ -2,11 +2,17 @@ import { render, screen } from '@testing-library/react'
 
 import { BrandIcon } from '../BrandIcon'
 
-// What the build would find, without reaching Devicon.
+// A one-color logo, as Simple Icons' are, and a multicolor one, as Devicon's.
 vi.mock('virtual:icons', () => ({
-  ICONS: {
-    react: { path: 'M0 0h24v24H0z' },
-    playwright: { src: 'https://cdn.example/playwright.svg' },
+  BRAND_ICONS: {
+    react: {
+      viewBox: '0 0 24 24',
+      body: '<path fill="currentColor" d="M0 0h24v24H0z"/>',
+    },
+    playwright: {
+      viewBox: '0 0 128 128',
+      body: '<path fill="#2ead33" d="M0 0h128v128H0z"/>',
+    },
   },
 }))
 
@@ -16,20 +22,20 @@ const getIconSvg = (img: HTMLElement) =>
   )
 
 describe('BrandIcon', () => {
-  it("draws Simple Icons' logo in the given color", () => {
+  it('draws a one-color logo in the given color', () => {
     render(<BrandIcon slug="react" color="61dafb" size={14} alt="React" />)
     const svg = getIconSvg(screen.getByRole('img', { name: 'React' }))
-    expect(svg).toMatch(/^<svg [^>]*fill="#61dafb"><path d="M0 0h24v24H0z"/)
+    expect(svg).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" color="#61dafb"><path fill="currentColor" d="M0 0h24v24H0z"/></svg>'
+    )
   })
 
-  it("shows Devicon's logo, in its own colors, where Simple Icons lacks one", () => {
+  it('draws a multicolor logo in its own colors, in its own viewBox', () => {
     render(
-      <BrandIcon slug="playwright" color="2ead33" size={14} alt="Playwright" />
+      <BrandIcon slug="playwright" color="000000" size={14} alt="Playwright" />
     )
-    expect(screen.getByRole('img', { name: 'Playwright' })).toHaveProperty(
-      'src',
-      'https://cdn.example/playwright.svg'
-    )
+    const svg = getIconSvg(screen.getByRole('img', { name: 'Playwright' }))
+    expect(svg).toMatch(/viewBox="0 0 128 128"[^>]*><path fill="#2ead33"/)
   })
 
   it('renders nothing for a slug with no logo', () => {
