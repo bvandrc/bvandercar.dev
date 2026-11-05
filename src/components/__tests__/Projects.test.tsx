@@ -7,15 +7,13 @@ import { Projects } from '../Projects'
 
 const { TOGGLE } = SELECTORS.LIVE_PREVIEW
 
-const renderProjects = () => renderWithProviders(<Projects />)
-
 const getPulses = () =>
   screen.getAllByTestId(TOGGLE).map((toggle) => toggle.dataset.pulse)
 
 describe('Projects', () => {
   it('pulses every preview toggle until any one is opened', async () => {
     const user = userEvent.setup()
-    renderProjects()
+    renderWithProviders(<Projects />)
     // More than one, or stopping "the others" would prove nothing.
     expect(getPulses().length).toBeGreaterThan(1)
     expect(new Set(getPulses())).toEqual(new Set(['true']))
@@ -26,11 +24,11 @@ describe('Projects', () => {
 
   it('pulses again on a new visit', async () => {
     const user = userEvent.setup()
-    const { unmount } = renderProjects()
+    const { unmount } = renderWithProviders(<Projects />)
     await user.click(screen.getAllByTestId(TOGGLE)[0])
     unmount()
 
-    renderProjects()
+    renderWithProviders(<Projects />)
     expect(new Set(getPulses())).toEqual(new Set(['true']))
   })
 })
