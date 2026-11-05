@@ -1,12 +1,14 @@
 import { useId } from 'react'
 
+import type { SectionLogo } from '@/generated/profile/content/types'
 import { cn } from '@/utils'
 
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,
   'title' | 'children'
 > & {
-  emoji: string
+  /** An emoji, or a Simple Icons logo in its brand color, shown on both sides. */
+  icon: string | SectionLogo
   title: string
   /** `h2` for a page section, `h3` for a group within one. */
   level?: 'h2' | 'h3'
@@ -18,40 +20,21 @@ const HEADING_CLASSES = {
   h3: 'text-lg font-semibold',
 } satisfies Record<NonNullable<SectionProps['level']>, string>
 
-type Logo = {
-  /** Simple Icons slug */
-  slug: string
-  /** Brand color, as hex without the `#` */
-  color: string
-}
-
-/**
- * Emoji drawn as a brand logo instead.
- *
- * Keyed by the emoji the profile content uses, which the GitHub README keeps.
- */
-const EMOJI_LOGOS: Partial<Record<string, Logo>> = {
-  '⚛️': { slug: 'react', color: '61DAFB' },
-}
-
-/** A heading's emoji, or the brand logo that stands in for it; decorative either way. */
-const HeadingMark = ({ emoji }: { emoji: string }) => {
-  const logo = EMOJI_LOGOS[emoji]
-  if (!logo) {
-    return <span aria-hidden="true">{emoji}</span>
-  }
-  return (
+/** A heading's emoji, or the brand logo in its place; decorative either way. */
+const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) =>
+  typeof icon === 'string' ? (
+    <span aria-hidden="true">{icon}</span>
+  ) : (
     <img
-      src={`https://cdn.simpleicons.org/${logo.slug}/${logo.color}`}
+      src={`https://cdn.simpleicons.org/${icon.slug}/${icon.color}`}
       alt=""
       className="size-[1em]"
     />
   )
-}
 
 /** A titled section, labelled by its own heading. */
 export const Section = ({
-  emoji,
+  icon,
   title,
   level = 'h2',
   className,
@@ -71,9 +54,9 @@ export const Section = ({
           'flex items-center justify-center gap-3',
           HEADING_CLASSES[level]
         )}>
-        <HeadingMark emoji={emoji} />
+        <HeadingMark icon={icon} />
         <span>{title}</span>
-        <HeadingMark emoji={emoji} />
+        <HeadingMark icon={icon} />
       </Heading>
       {children}
     </section>

@@ -50,11 +50,11 @@ const skillIconUrl = ({ logo, logoColor, path }: SkillBadge) => {
 }
 
 export const Skills = () => (
-  <Section emoji="🌟" title="Skills" data-testid="skills">
+  <Section icon="🌟" title="Skills" data-testid="skills">
     {SKILLS.map((group) => (
       <Section
         key={group.title}
-        emoji={group.emoji}
+        icon={group.icon}
         title={group.title}
         level="h3"
         className="flex flex-col gap-3">

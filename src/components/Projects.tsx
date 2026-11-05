@@ -78,11 +78,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
 }
 
 export const Projects = () => (
-  <Section emoji="💎" title="Projects" data-testid="projects">
+  <Section icon="💎" title="Projects" data-testid="projects">
     {PROJECTS.map((group) => (
       <Section
         key={group.title}
-        emoji={group.emoji}
+        icon={group.icon}
         title={group.title}
         level="h3"
         className="flex flex-col gap-3">
