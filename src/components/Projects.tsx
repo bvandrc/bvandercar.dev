@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
@@ -41,7 +41,18 @@ const gridLayout = ({ projects }: ProjectSection): GridLayout =>
 /** A visual divider, which screen readers would otherwise read as "middle dot". */
 const Separator = () => <span aria-hidden="true">·</span>
 
-const ProjectCard = ({ project }: { project: Project }) => {
+type ProjectCardProps = {
+  project: Project
+  /** Whether a live preview's toggle pulses, to draw the eye to it. */
+  pulsePreview: boolean
+  onPreviewOpen: () => void
+}
+
+const ProjectCard = ({
+  project,
+  pulsePreview,
+  onPreviewOpen,
+}: ProjectCardProps) => {
   const counts = REPO_COUNTS[project.repo]
   const nameId = useId()
   const repoLinkId = useId()
@@ -104,6 +115,12 @@ const ProjectCard = ({ project }: { project: Project }) => {
           scale={project.embed.scale}
           // Every card's toggle reads the same, so name the project it's for.
           aria-describedby={nameId}
+          pulse={pulsePreview}
+          onOpenChange={(open) => {
+            if (open) {
+              onPreviewOpen()
+            }
+          }}
           className="mt-auto"
         />
       ) : (
@@ -120,28 +137,36 @@ const ProjectCard = ({ project }: { project: Project }) => {
   )
 }
 
-export const Projects = () => (
-  <Section
-    icon={SECTIONS.PROJECTS.icon}
-    title={SECTIONS.PROJECTS.title}
-    data-testid="projects">
-    {PROJECTS.map((group) => (
-      <Section
-        key={group.title}
-        icon={group.icon}
-        title={group.title}
-        level="h3"
-        className="flex flex-col gap-3">
-        {group.intro && <p className="text-ink-muted">{group.intro}</p>}
-        {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
-        <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
-          {group.projects.map((project) => (
-            <li key={project.repo}>
-              <ProjectCard project={project} />
-            </li>
-          ))}
-        </ul>
-      </Section>
-    ))}
-  </Section>
-)
+export const Projects = () => {
+  // Every preview toggle pulses on each page visit, until any one is opened.
+  const [previewOpened, setPreviewOpened] = useState(false)
+  return (
+    <Section
+      icon={SECTIONS.PROJECTS.icon}
+      title={SECTIONS.PROJECTS.title}
+      data-testid="projects">
+      {PROJECTS.map((group) => (
+        <Section
+          key={group.title}
+          icon={group.icon}
+          title={group.title}
+          level="h3"
+          className="flex flex-col gap-3">
+          {group.intro && <p className="text-ink-muted">{group.intro}</p>}
+          {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
+          <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
+            {group.projects.map((project) => (
+              <li key={project.repo}>
+                <ProjectCard
+                  project={project}
+                  pulsePreview={!previewOpened}
+                  onPreviewOpen={() => setPreviewOpened(true)}
+                />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ))}
+    </Section>
+  )
+}

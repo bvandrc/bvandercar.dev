@@ -28,6 +28,16 @@
     }
   }
 
+  /* Pulses an accent glow around an element, to draw the eye to it. */
+  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+
+  @keyframes glow-pulse {
+    50% {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 12px var(--color-accent);
+    }
+  }
+
   /* Grows a collapsible's content open, and shrinks it closed, to the height Radix measures. */
   --animate-collapsible-open: collapsible-open 300ms ease-out;
   --animate-collapsible-close: collapsible-close 300ms ease-out;

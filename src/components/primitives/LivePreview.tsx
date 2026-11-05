@@ -6,13 +6,16 @@ import { Collapsible } from 'radix-ui'
 import { cn } from '@/utils'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
-  Pick<React.ComponentProps<'button'>, 'aria-describedby'> & {
+  Pick<React.ComponentProps<'button'>, 'aria-describedby'> &
+  Pick<Collapsible.CollapsibleProps, 'onOpenChange'> & {
     /** The page to show. */
     src: string
     /** What the page is, which names the frame for screen readers. */
     title: string
     /** How far to shrink the page, so more of its layout fits: 0.5 is half size. */
     scale?: number
+    /** Pulses a glow around the toggle, to draw the eye to it. */
+    pulse?: boolean
   }
 
 /**
@@ -25,6 +28,8 @@ export const LivePreview = ({
   src,
   title,
   scale = 1,
+  pulse = false,
+  onOpenChange,
   className,
   'aria-describedby': describedBy,
 }: LivePreviewProps) => {
@@ -33,15 +38,20 @@ export const LivePreview = ({
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        onOpenChange?.(nextOpen)
+      }}
       className={cn('flex flex-col gap-2', className)}
       data-testid="live-preview">
       <Collapsible.Trigger
         aria-describedby={describedBy}
         className={cn(
           'group inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm',
-          'transition-colors hover:border-accent hover:text-accent'
+          'transition-colors hover:border-accent hover:text-accent',
+          'data-[pulse=true]:animate-glow-pulse'
         )}
+        data-pulse={pulse}
         data-testid="live-preview-toggle">
         <ChevronRight
           aria-hidden="true"

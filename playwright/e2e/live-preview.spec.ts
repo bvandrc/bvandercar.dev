@@ -23,3 +23,23 @@ test('a project live preview loads its site once opened', async ({ page }) => {
       .getByText(MOCK_FRAMED_PAGE_TEXT)
   ).toBeVisible()
 })
+
+test('the preview toggles pulse on each visit until one is opened', async ({
+  page,
+}) => {
+  await mockFramedPages(page)
+  await page.goto('/')
+
+  const toggles = page.getByTestId(LIVE_PREVIEW.TOGGLE)
+  await expect(toggles.first()).toHaveAttribute('data-pulse', 'true')
+  await expect(toggles.last()).toHaveAttribute('data-pulse', 'true')
+
+  // Opening any one stops them all, the others included.
+  await toggles.first().click()
+  await expect(toggles.first()).toHaveAttribute('data-pulse', 'false')
+  await expect(toggles.last()).toHaveAttribute('data-pulse', 'false')
+
+  // A new visit starts the pulse again.
+  await page.reload()
+  await expect(toggles.first()).toHaveAttribute('data-pulse', 'true')
+})
