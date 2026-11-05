@@ -1,20 +1,20 @@
 {
-  "name": "bvandrc-project-template-react-frontend",
+  "name": "bvandercar.dev",
   "version": "1.0.0",
   "private": true,
-  "description": "Vite + React + TypeScript starter with Tailwind, Biome, and Playwright e2e/a11y/Lighthouse suites",
+  "description": "My personal developer site: skills, projects, and a little about me",
   "keywords": [
-    "react",
-    "template",
-    "vite"
+    "personal-website",
+    "portfolio",
+    "react"
   ],
-  "homepage": "https://bvandrc.github.io/bvandrc-project-template-react-frontend/",
+  "homepage": "https://bvandercar.dev",
   "bugs": {
-    "url": "https://github.com/bvandrc/bvandrc-project-template-react-frontend/issues"
+    "url": "https://github.com/bvandrc/bvandercar.dev/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bvandrc/bvandrc-project-template-react-frontend.git"
+    "url": "git+https://github.com/bvandrc/bvandercar.dev.git"
   },
   "author": "Blake Vandercar",
   "license": "ISC",
@@ -49,8 +49,8 @@
     "@bvandrc/react-toolkit": "^2",
     "clsx": "^2",
     "es-toolkit": "^1",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^19",
+    "react-dom": "^19",
     "react-ga4": "^3",
     "tailwind-merge": "^3",
     "ts-extras": "^1",
@@ -64,8 +64,8 @@
     "@testing-library/react": "^16",
     "@testing-library/user-event": "^14",
     "@types/node": "^24",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
     "axe-core": "^4",
     "happy-dom": "^21",
@@ -75,6 +75,7 @@
     "type-fest": "^5",
     "typescript": "^7",
     "vite": "^8",
-    "vitest": "^5"
+    "vitest": "^5",
+    "wrangler": "^4"
   }
 }

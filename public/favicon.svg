@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="React Frontend Template">
-  <title>React Frontend Template</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Blake Vandercar">
+  <title>Blake Vandercar</title>
   <rect width="64" height="64" rx="14" fill="#0b0f17" />
-  <path d="M20 44V20h11a8 8 0 0 1 2.6 15.6L40 44h-6.6l-5.6-8H26v8z" fill="#7cc4ff" />
-  <path d="M26 26v5h5a2.5 2.5 0 0 0 0-5z" fill="#0b0f17" />
+  <path d="M16 18v28M16 18h7a7 7 0 0 1 0 14h-7M16 32h8a7 7 0 0 1 0 14h-8M35 18l7 28 7-28" fill="none" stroke="#7cc4ff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

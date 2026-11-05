@@ -1,6 +1,7 @@
-# React Frontend Template
+# Blake Vandercar
 
-> A Vite + React + TypeScript starter with Tailwind CSS, Biome, and Playwright suites for end-to-end, accessibility, and Lighthouse checks.
+> Personal developer site for Blake Vandercar: skills, projects, and a little about me.
 
 ## Links
-- [Website](https://bvandrc.github.io/bvandrc-project-template-react-frontend/)
+- [Website](https://bvandercar.dev/)
+- [GitHub](https://github.com/bvandrc)

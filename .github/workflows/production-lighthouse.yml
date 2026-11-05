@@ -9,7 +9,7 @@ on:
       target_url:
         description: URL to audit
         required: false
-        default: https://bvandrc.github.io/bvandrc-project-template-react-frontend/
+        default: https://bvandercar.dev/
 
 concurrency:
   group: ${{ github.workflow }}
@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 60
 
     env:
-      PLAYWRIGHT_BASE_URL: ${{ inputs.target_url || 'https://bvandrc.github.io/bvandrc-project-template-react-frontend/' }}
+      PLAYWRIGHT_BASE_URL: ${{ inputs.target_url || 'https://bvandercar.dev/' }}
 
     steps:
       - name: Checkout repo

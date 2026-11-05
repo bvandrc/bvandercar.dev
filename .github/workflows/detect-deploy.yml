@@ -29,7 +29,7 @@ jobs:
         id: detect-deploy
         uses: bvandrc/detect-deploy@v1
         with:
-          url: https://bvandrc.github.io/bvandrc-project-template-react-frontend/
+          url: https://bvandercar.dev/
           interval-seconds: 20
           max-seconds: 300 # 5 minutes
 

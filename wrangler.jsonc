@@ -1,0 +1,12 @@
+// Cloudflare Workers config: serves the Vite build as static assets, deployed
+// by .github/workflows/deploy.yml.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bvandercar-dev",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist"
+  },
+  // Attaches the domain on deploy, creating its DNS record and certificate.
+  "routes": [{ "pattern": "bvandercar.dev", "custom_domain": true }]
+}

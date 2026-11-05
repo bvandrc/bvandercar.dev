@@ -1,3 +1,5 @@
+import { Badge } from './primitives/Badge'
+
 export const Header = () => (
   <header className="flex flex-col gap-3" data-testid="header">
     <img
@@ -8,14 +10,18 @@ export const Header = () => (
       className="size-10"
       data-testid="header-logo"
     />
-    <h1
-      className="text-3xl font-semibold tracking-tight"
-      data-testid="header-title">
-      React Frontend Template
-    </h1>
+    <div className="flex flex-wrap items-center gap-3">
+      <h1
+        className="text-3xl font-semibold tracking-tight"
+        data-testid="header-title">
+        Blake Vandercar
+      </h1>
+      <Badge tone="caution" data-testid="header-status">
+        Under construction
+      </Badge>
+    </div>
     <p className="max-w-prose text-ink-muted" data-testid="header-tagline">
-      A Vite + React + TypeScript starter, pre-wired with Tailwind, Biome, and
-      Playwright suites for end-to-end, accessibility, and Lighthouse checks.
+      Software developer.
     </p>
   </header>
 )

@@ -1,4 +1,7 @@
-name: Build & Deploy
+name: Deploy
+
+# Deploys to Cloudflare once CI passes on main. Needs the repo secrets
+# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 
 on:
   workflow_run:
@@ -11,18 +14,24 @@ permissions:
 
 # Let a running deploy finish rather than cancelling it mid-publish.
 concurrency:
-  group: pages
+  group: deploy
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: production
+      url: https://bvandercar.dev/
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          # The commit CI passed on, not whatever main has moved to since.
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -30,23 +39,9 @@ jobs:
       - name: Build project
         run: pnpm build
 
-      - name: Upload production-ready build files
-        uses: actions/upload-pages-artifact@v5
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
         with:
-          path: ./dist
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          packageManager: pnpm
