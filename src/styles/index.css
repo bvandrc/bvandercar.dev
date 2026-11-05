@@ -16,6 +16,15 @@
   --color-tone-positive: #7ee0a8;
   --color-tone-caution: #ff5a2c;
   --color-tone-neutral: #c4b5fd;
+
+  /* Blends the caution orange to a lighter orange and back. */
+  --animate-caution-pulse: caution-pulse 2s ease-in-out infinite;
+
+  @keyframes caution-pulse {
+    50% {
+      color: var(--color-orange-300);
+    }
+  }
 }
 
 /* A glow: `shadow-glow-<blur-px>`, colored by the standard `shadow-<color>` utilities. */

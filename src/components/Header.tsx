@@ -25,7 +25,7 @@ export const Header = () => (
     </div>
     <Badge
       tone="caution"
-      className="px-3 py-1 text-sm"
+      className="animate-caution-pulse px-3 py-1 text-sm"
       data-testid="header-status">
       <span aria-hidden="true">🚧</span> Under construction{' '}
       <span aria-hidden="true">🚧</span>
