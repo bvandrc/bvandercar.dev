@@ -1,0 +1,42 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+
+import { SELECTORS } from '~/test-support/selectors'
+import { LivePreview } from '../LivePreview'
+
+const { TOGGLE, FRAME } = SELECTORS.LIVE_PREVIEW
+
+const SRC = 'https://example.com/'
+
+describe('LivePreview', () => {
+  it('loads no frame until opened', () => {
+    render(<LivePreview src={SRC} title="Example" />)
+    expect(screen.queryByTestId(FRAME)).toBeNull()
+  })
+
+  it('shows the page in a named frame once opened, and drops it once closed', async () => {
+    const user = userEvent.setup()
+    render(<LivePreview src={SRC} title="Example" />)
+
+    await user.click(screen.getByTestId(TOGGLE))
+    expect(screen.getByTestId(FRAME)).toMatchObject({
+      src: SRC,
+      title: 'Example live preview',
+    })
+
+    await user.click(screen.getByTestId(TOGGLE))
+    expect(screen.queryByTestId(FRAME)).toBeNull()
+  })
+
+  it('draws the page at 1/scale its frame, shrunk back to fit', async () => {
+    const user = userEvent.setup()
+    render(<LivePreview src={SRC} title="Example" scale={0.5} />)
+
+    await user.click(screen.getByTestId(TOGGLE))
+    expect(screen.getByTestId(FRAME).style).toMatchObject({
+      width: '200%',
+      height: '200%',
+      transform: 'scale(0.5)',
+    })
+  })
+})

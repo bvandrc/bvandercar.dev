@@ -2,7 +2,10 @@ import { useId } from 'react'
 import { ExternalLink } from 'lucide-react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
-import type { Project } from '@/generated/profile/content/projects'
+import type {
+  Project,
+  ProjectSection,
+} from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
@@ -10,6 +13,7 @@ import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
+import { LivePreview } from './primitives/LivePreview'
 import { Tooltip } from './primitives/Tooltip'
 import { Section } from './Section'
 
@@ -21,6 +25,18 @@ const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 /** `formatCount(1, 'PR')` → `'1 PR'`, `formatCount(654, 'PR')` → `'654 PRs'`. */
 const formatCount = (count: number, noun: string) =>
   `${count.toLocaleString('en-US')} ${count === 1 ? noun : `${noun}s`}`
+
+type GridLayout = 'preview' | 'pairs'
+
+// A group with a live preview takes the full width, so the page inside it has
+// room; the rest pair up from md.
+const GRID_CLASSES = {
+  preview: 'grid gap-4',
+  pairs: 'grid gap-4 md:grid-cols-2',
+} satisfies Record<GridLayout, string>
+
+const gridLayout = ({ projects }: ProjectSection): GridLayout =>
+  projects.some(({ embed }) => embed) ? 'preview' : 'pairs'
 
 /** A visual divider, which screen readers would otherwise read as "middle dot". */
 const Separator = () => <span aria-hidden="true">·</span>
@@ -81,13 +97,24 @@ const ProjectCard = ({ project }: { project: Project }) => {
           />
         </Link>
       </Tooltip>
-      {project.screenshot && (
-        <img
-          src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
-          alt={`${project.name} screenshot`}
-          loading="lazy"
-          className="mt-auto w-full rounded-md border border-border"
+      {project.embed ? (
+        <LivePreview
+          src={project.href}
+          title={project.name}
+          scale={project.embed.scale}
+          // Every card's toggle reads the same, so name the project it's for.
+          aria-describedby={nameId}
+          className="mt-auto"
         />
+      ) : (
+        project.screenshot && (
+          <img
+            src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
+            alt={`${project.name} screenshot`}
+            loading="lazy"
+            className="mt-auto w-full rounded-md border border-border"
+          />
+        )
       )}
     </Card>
   )
@@ -107,7 +134,7 @@ export const Projects = () => (
         className="flex flex-col gap-3">
         {group.intro && <p className="text-ink-muted">{group.intro}</p>}
         {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
-        <ul role="list" className="grid gap-4 md:grid-cols-2">
+        <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
           {group.projects.map((project) => (
             <li key={project.repo}>
               <ProjectCard project={project} />
