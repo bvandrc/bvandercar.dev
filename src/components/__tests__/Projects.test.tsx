@@ -1,18 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { Projects } from '../Projects'
-import { TooltipProvider } from '../primitives/Tooltip'
 
 const { TOGGLE } = SELECTORS.LIVE_PREVIEW
 
-const renderProjects = () =>
-  render(
-    <TooltipProvider>
-      <Projects />
-    </TooltipProvider>
-  )
+const renderProjects = () => renderWithProviders(<Projects />)
 
 const getPulses = () =>
   screen.getAllByTestId(TOGGLE).map((toggle) => toggle.dataset.pulse)
