@@ -7,7 +7,7 @@ import { SKILLS } from '@/generated/profile/content/skills'
 import { skillIconSlug } from '@/lib/icons'
 import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
-import { Section } from './Section'
+import { Section, SubSection } from './Section'
 
 // Adds colord's WCAG contrast and luminance methods.
 extend([a11yPlugin])
@@ -44,12 +44,7 @@ export const Skills = () => (
     title={SECTIONS.SKILLS.title}
     data-testid="skills">
     {SKILLS.map((group) => (
-      <Section
-        key={group.title}
-        icon={group.icon}
-        title={group.title}
-        level="h3"
-        className="flex flex-col gap-3">
+      <SubSection key={group.title} icon={group.icon} title={group.title}>
         <dl className="flex flex-col gap-3">
           {group.rows.map((row) => {
             // The label's line breaks are for the README's narrow column.
@@ -85,7 +80,7 @@ export const Skills = () => (
             )
           })}
         </dl>
-      </Section>
+      </SubSection>
     ))}
   </Section>
 )

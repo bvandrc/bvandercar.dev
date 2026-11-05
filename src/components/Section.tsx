@@ -1,5 +1,4 @@
 import { useId } from 'react'
-import type { MergeExclusive } from 'type-fest'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
 import type { GlyphName } from '@/lib/icons'
@@ -7,79 +6,85 @@ import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Icon } from './primitives/Icon'
 
-/** A heading's icon, shown on both sides of its title. */
-type HeadingIconProps = MergeExclusive<
-  /** An emoji, or a Simple Icons logo in its brand color. */
-  { icon: string | SectionLogo },
-  /** An interface glyph, in the site's orange. */
-  { glyph: GlyphName }
->
-
-export type SectionProps = Omit<
-  React.HTMLAttributes<HTMLElement>,
+type TitledSectionProps = Omit<
+  React.ComponentProps<'section'>,
   'title' | 'children'
-> &
-  HeadingIconProps & {
-    title: string
-    /** `h2` for a page section, `h3` for a group within one. */
-    level?: 'h2' | 'h3'
-    children: React.ReactNode
-  }
+> & {
+  level: 'h2' | 'h3'
+  /** Drawn on both sides of the title, and decorative. */
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
+}
 
 const HEADING_CLASSES = {
   h2: 'text-2xl font-semibold tracking-tight',
   h3: 'text-lg font-semibold',
-} satisfies Record<NonNullable<SectionProps['level']>, string>
+} satisfies Record<TitledSectionProps['level'], string>
 
-/** A heading's glyph, emoji, or brand logo; decorative either way. */
-const HeadingIcon = ({ source }: { source: HeadingIconProps }) => {
-  // Read off `source` rather than destructured, which keeps the union narrowing.
-  if (source.glyph !== undefined) {
-    return <Icon name={source.glyph} className="shrink-0 text-orange-400" />
-  }
-  if (typeof source.icon === 'string') {
-    return <span aria-hidden="true">{source.icon}</span>
-  }
-  return (
-    <BrandIcon
-      slug={source.icon.slug}
-      color={source.icon.color}
-      // The h2 em; the class matches the heading at either level.
-      size={24}
-      className="size-[1em]"
-    />
-  )
-}
-
-/** A titled section, labelled by its own heading. */
-export const Section = (props: SectionProps) => {
-  const {
-    icon,
-    glyph,
-    title,
-    level = 'h2',
-    className,
-    children,
-    ...sectionProps
-  } = props
+/** A section labelled by its own heading, which shows the icon on both sides. */
+const TitledSection = ({
+  level: Heading,
+  icon,
+  title,
+  children,
+  ...props
+}: TitledSectionProps) => {
   const headingId = useId()
-  const Heading = level
   return (
-    <section
-      aria-labelledby={headingId}
-      className={className ?? 'flex flex-col gap-5'}
-      {...sectionProps}>
+    <section aria-labelledby={headingId} {...props}>
       <Heading
         id={headingId}
         className={cn(
           'flex items-center justify-center gap-3',
-          HEADING_CLASSES[level]
+          HEADING_CLASSES[Heading]
         )}>
-        <HeadingIcon source={props} />
+        {icon}
         <span>{title}</span>
-        <HeadingIcon source={props} />
+        {icon}
       </Heading>
       {children}
     </section>
   )
 }
+
+export type SectionProps = Omit<TitledSectionProps, 'level' | 'icon'> & {
+  glyph: GlyphName
+}
+
+/** A top-level page section: an h2 with an interface glyph in the site's orange. */
+export const Section = ({ glyph, className, ...props }: SectionProps) => (
+  <TitledSection
+    level="h2"
+    icon={<Icon name={glyph} className="shrink-0 text-orange-400" />}
+    className={cn('flex flex-col gap-5', className)}
+    {...props}
+  />
+)
+
+export type SubSectionProps = Omit<TitledSectionProps, 'level' | 'icon'> & {
+  /** An emoji, or a Simple Icons logo in its brand color. */
+  icon: string | SectionLogo
+}
+
+/** A group within a section: an h3 with an emoji or a brand logo. */
+export const SubSection = ({ icon, className, ...props }: SubSectionProps) => (
+  <TitledSection
+    level="h3"
+    icon={
+      typeof icon === 'string' ? (
+        <span aria-hidden="true">{icon}</span>
+      ) : (
+        <BrandIcon
+          slug={icon.slug}
+          color={icon.color}
+          // The h3's em, at the 1.125rem of `text-lg`; the class keeps it there.
+          size={18}
+          className="size-[1em]"
+        />
+      )
+    }
+    className={cn('flex flex-col gap-3', className)}
+    {...props}
+  />
+)
