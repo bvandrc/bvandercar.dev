@@ -7,8 +7,8 @@ import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Icon } from './primitives/Icon'
 
-/** A heading's mark, shown on both sides of its title. */
-type HeadingMarkProps = MergeExclusive<
+/** A heading's icon, shown on both sides of its title. */
+type HeadingIconProps = MergeExclusive<
   /** An emoji, or a Simple Icons logo in its brand color. */
   { icon: string | SectionLogo },
   /** An interface glyph, in the site's orange. */
@@ -19,7 +19,7 @@ export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,
   'title' | 'children'
 > &
-  HeadingMarkProps & {
+  HeadingIconProps & {
     title: string
     /** `h2` for a page section, `h3` for a group within one. */
     level?: 'h2' | 'h3'
@@ -32,18 +32,18 @@ const HEADING_CLASSES = {
 } satisfies Record<NonNullable<SectionProps['level']>, string>
 
 /** A heading's glyph, emoji, or brand logo; decorative either way. */
-const HeadingMark = ({ mark }: { mark: HeadingMarkProps }) => {
-  // Read off `mark` rather than destructured, which keeps the union narrowing.
-  if (mark.glyph !== undefined) {
-    return <Icon name={mark.glyph} className="shrink-0 text-orange-400" />
+const HeadingIcon = ({ source }: { source: HeadingIconProps }) => {
+  // Read off `source` rather than destructured, which keeps the union narrowing.
+  if (source.glyph !== undefined) {
+    return <Icon name={source.glyph} className="shrink-0 text-orange-400" />
   }
-  if (typeof mark.icon === 'string') {
-    return <span aria-hidden="true">{mark.icon}</span>
+  if (typeof source.icon === 'string') {
+    return <span aria-hidden="true">{source.icon}</span>
   }
   return (
     <BrandIcon
-      slug={mark.icon.slug}
-      color={mark.icon.color}
+      slug={source.icon.slug}
+      color={source.icon.color}
       // The h2 em; the class matches the heading at either level.
       size={24}
       className="size-[1em]"
@@ -75,9 +75,9 @@ export const Section = (props: SectionProps) => {
           'flex items-center justify-center gap-3',
           HEADING_CLASSES[level]
         )}>
-        <HeadingMark mark={props} />
+        <HeadingIcon source={props} />
         <span>{title}</span>
-        <HeadingMark mark={props} />
+        <HeadingIcon source={props} />
       </Heading>
       {children}
     </section>
