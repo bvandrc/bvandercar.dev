@@ -12,6 +12,6 @@ declare module 'virtual:icons' {
   /** Logos keyed by slug, for every slug in `ICON_SLUGS` that has one. */
   export const BRAND_ICONS: Partial<Record<string, VirtualIcon>>
 
-  /** Lucide's glyphs, for every name in `UI_ICON_NAMES`. */
+  /** Interface glyphs, for every name in `UI_ICON_NAMES`. */
   export const UI_ICONS: Record<import('@/lib/icons').UiIconName, VirtualIcon>
 }

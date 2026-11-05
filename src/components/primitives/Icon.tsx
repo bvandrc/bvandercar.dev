@@ -11,7 +11,7 @@ export type IconProps = Omit<
 }
 
 /**
- * A Lucide glyph, drawn in the text color around it and decorative.
+ * An interface glyph, drawn in the text color around it and decorative.
  *
  * It is 1em square unless a class sizes it.
  */

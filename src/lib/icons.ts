@@ -18,11 +18,25 @@ export const skillIconSlug = ({ logo }: SkillBadge) =>
 /**
  * Every interface glyph the site shows, by its Lucide name.
  *
- * The build bundles exactly these, and fails on a name Lucide doesn't have.
+ * A `material-symbols:` prefix takes the glyph from Material Symbols instead.
+ * The build bundles exactly these, and fails on a name its set doesn't have.
  */
-export const UI_ICON_NAMES = ['chevron-right', 'external-link'] as const
+export const UI_ICON_NAMES = [
+  'chevron-right',
+  'external-link',
+  'material-symbols:deployed-code-outline',
+  'party-popper',
+  'wrench',
+] as const
 
 export type UiIconName = (typeof UI_ICON_NAMES)[number]
+
+/** The glyph beside each top-level section's heading on the site. */
+export const SECTION_ICONS = {
+  PROJECTS: 'material-symbols:deployed-code-outline',
+  SKILLS: 'wrench',
+  BEYOND_CODE: 'party-popper',
+} satisfies Record<'PROJECTS' | 'SKILLS' | 'BEYOND_CODE', UiIconName>
 
 /**
  * Every logo slug the site shows.

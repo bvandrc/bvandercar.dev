@@ -1,15 +1,20 @@
 import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
+import type { UiIconName } from '@/lib/icons'
 import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
+import { Icon } from './primitives/Icon'
+
+/** An interface glyph for a heading, drawn in the site's orange. */
+export type SectionGlyph = { glyph: UiIconName }
 
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,
   'title' | 'children'
 > & {
-  /** An emoji, or a Simple Icons logo in its brand color, shown on both sides. */
-  icon: string | SectionLogo
+  /** An emoji, a Simple Icons logo in its brand color, or an orange glyph, shown on both sides. */
+  icon: string | SectionLogo | SectionGlyph
   title: string
   /** `h2` for a page section, `h3` for a group within one. */
   level?: 'h2' | 'h3'
@@ -21,11 +26,15 @@ const HEADING_CLASSES = {
   h3: 'text-lg font-semibold',
 } satisfies Record<NonNullable<SectionProps['level']>, string>
 
-/** A heading's emoji, or the brand logo in its place; decorative either way. */
-const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) =>
-  typeof icon === 'string' ? (
-    <span aria-hidden="true">{icon}</span>
-  ) : (
+/** A heading's emoji, glyph, or brand logo; decorative either way. */
+const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) => {
+  if (typeof icon === 'string') {
+    return <span aria-hidden="true">{icon}</span>
+  }
+  if ('glyph' in icon) {
+    return <Icon name={icon.glyph} className="shrink-0 text-orange-400" />
+  }
+  return (
     <BrandIcon
       slug={icon.slug}
       color={icon.color}
@@ -34,6 +43,7 @@ const HeadingMark = ({ icon }: { icon: SectionProps['icon'] }) =>
       className="size-[1em]"
     />
   )
+}
 
 /** A titled section, labelled by its own heading. */
 export const Section = ({

@@ -11,6 +11,9 @@ const RESOLVED_ID = `\0${VIRTUAL_ID}`
 
 const SLUGS_MODULE = 'src/lib/icons.ts'
 
+// The prefix on a UI glyph's name that takes it from Material Symbols, not Lucide.
+const MATERIAL_SYMBOLS_PREFIX = 'material-symbols:'
+
 // Slugs for skills that aren't a brand, so no logo set has them: each is drawn
 // with a generic icon instead, as [set, name].
 const GENERIC_LOGOS: Partial<Record<string, [IconifyJSON, string]>> = {
@@ -68,9 +71,11 @@ export const iconsPlugin = (): Plugin => ({
       }
     )
     const uiIcons = module.UI_ICON_NAMES.map((name): [string, VirtualIcon] => {
-      const icon = getIcon(LUCIDE, name)
+      const icon = name.startsWith(MATERIAL_SYMBOLS_PREFIX)
+        ? getIcon(MATERIAL_SYMBOLS, name.slice(MATERIAL_SYMBOLS_PREFIX.length))
+        : getIcon(LUCIDE, name)
       if (!icon) {
-        this.error(`No Lucide icon named "${name}"`)
+        this.error(`No icon named "${name}"`)
       }
       return [name, icon]
     })
