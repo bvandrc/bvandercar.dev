@@ -34,9 +34,12 @@ const contrast = (a: string, b: string) => {
  * real color, else the badge's background, since a white or black logo was
  * only ever drawn on that. One too dark for the chip uses the chip's ink.
  */
-const skillIconUrl = ({ logo, logoColor, path }: SkillBadge) => {
-  // Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
-  const slug = logo.toLowerCase().replaceAll('-', '')
+// Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
+const skillIconSlug = ({ logo }: SkillBadge) =>
+  logo.toLowerCase().replaceAll('-', '')
+
+const skillIconUrl = (skill: SkillBadge) => {
+  const { logoColor, path } = skill
   const logoHex = decodeURIComponent(logoColor).replace('#', '')
   const badgeHex = decodeURIComponent(path).match(
     /-#?([0-9a-f]{6})(?:\.svg)?$/i
@@ -46,7 +49,18 @@ const skillIconUrl = ({ logo, logoColor, path }: SkillBadge) => {
     brand && contrast(brand, CHIP_BACKGROUND) >= MIN_ICON_CONTRAST
       ? brand
       : CHIP_INK
-  return `https://cdn.simpleicons.org/${slug}/${color}`
+  return `https://cdn.simpleicons.org/${skillIconSlug(skill)}/${color}`
+}
+
+/**
+ * Devicon's logo for a skill, in its original colors.
+ *
+ * The fallback for one Simple Icons lacks, like Playwright, whose logo it
+ * withdrew. Pinned, since jsDelivr serves the package as published.
+ */
+const fallbackIconUrl = (skill: SkillBadge) => {
+  const slug = skillIconSlug(skill)
+  return `https://cdn.jsdelivr.net/npm/devicon@2.18.0/icons/${slug}/${slug}-original.svg`
 }
 
 export const Skills = () => (
@@ -57,7 +71,10 @@ export const Skills = () => (
         icon={group.icon}
         title={group.title}
         level="h3"
-        className="flex flex-col gap-3">
+        align="start"
+        // From sm up, as wide as the table below (its two columns and gap),
+        // so the left-aligned heading lines up with the table's edge.
+        className="flex flex-col gap-3 sm:mx-auto sm:w-full sm:max-w-[42.25rem]">
         <dl
           className={cn(
             'flex flex-col gap-4',
@@ -88,10 +105,16 @@ export const Skills = () => (
                         width={14}
                         height={14}
                         className="size-3.5"
-                        // Simple Icons lacks a few logos (Playwright's was
-                        // withdrawn); hide the broken image and keep the name.
+                        // Simple Icons lacks a few logos, so try Devicon's;
+                        // if it lacks one too, hide the image and keep the name.
                         onError={(event) => {
-                          event.currentTarget.hidden = true
+                          const img = event.currentTarget
+                          if (img.dataset.fallback) {
+                            img.hidden = true
+                            return
+                          }
+                          img.dataset.fallback = 'devicon'
+                          img.src = fallbackIconUrl(skill)
                         }}
                       />
                       {skill.alt}
