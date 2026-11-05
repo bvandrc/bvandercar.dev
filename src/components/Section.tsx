@@ -1,5 +1,7 @@
 import { useId } from 'react'
 
+import { cn } from '@/utils'
+
 export type SectionProps = Omit<
   React.HTMLAttributes<HTMLElement>,
   'title' | 'children'
@@ -42,7 +44,7 @@ const HeadingMark = ({ emoji }: { emoji: string }) => {
     <img
       src={`https://cdn.simpleicons.org/${logo.slug}/${logo.color}`}
       alt=""
-      className="inline-block size-[1em] align-[-0.125em]"
+      className="size-[1em]"
     />
   )
 }
@@ -63,8 +65,15 @@ export const Section = ({
       aria-labelledby={headingId}
       className={className ?? 'flex flex-col gap-5'}
       {...props}>
-      <Heading id={headingId} className={HEADING_CLASSES[level]}>
-        <HeadingMark emoji={emoji} /> {title} <HeadingMark emoji={emoji} />
+      <Heading
+        id={headingId}
+        className={cn(
+          'flex items-center justify-center gap-3',
+          HEADING_CLASSES[level]
+        )}>
+        <HeadingMark emoji={emoji} />
+        <span>{title}</span>
+        <HeadingMark emoji={emoji} />
       </Heading>
       {children}
     </section>
