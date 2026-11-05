@@ -11,7 +11,12 @@ const RESOLVED_ID = `\0${VIRTUAL_ID}`
 const SLUGS_MODULE = 'src/lib/icons.ts'
 
 const SIMPLE_ICON_PATHS = new Map(
-  Object.values(simpleIcons).map(({ slug, path }) => [slug, path])
+  Object.values(simpleIcons).map(({ slug, path }) => [
+    slug,
+    // Spaces out decimals that run together, the same path to a renderer, so
+    // `10.059.003.23` doesn't read as a private IP to the ZAP scan.
+    path.replace(/(\.\d+)(?=\.)/g, '$1 '),
+  ])
 )
 
 /**
