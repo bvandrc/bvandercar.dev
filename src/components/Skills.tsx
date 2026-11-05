@@ -72,8 +72,11 @@ export const Skills = () => (
         title={group.title}
         level="h3"
         align="start"
+        // From sm up, start the heading where the skills column does: past
+        // the 9rem label column and the 1.25rem gap.
+        headingClassName="sm:pl-[10.25rem]"
         // From sm up, as wide as the table below (its two columns and gap),
-        // so the left-aligned heading lines up with the table's edge.
+        // so the heading's offset lines up with the table's skills column.
         className="flex flex-col gap-3 sm:mx-auto sm:w-full sm:max-w-[42.25rem]">
         <dl
           className={cn(

@@ -14,6 +14,8 @@ export type SectionProps = Omit<
   level?: 'h2' | 'h3'
   /** `start` left-aligns the heading from sm up; below sm it stays centred. */
   align?: 'center' | 'start'
+  /** Extra classes for the heading itself. */
+  headingClassName?: string
   children: React.ReactNode
 }
 
@@ -45,6 +47,7 @@ export const Section = ({
   title,
   level = 'h2',
   align = 'center',
+  headingClassName,
   className,
   children,
   ...props
@@ -61,7 +64,8 @@ export const Section = ({
         className={cn(
           'flex items-center gap-3',
           ALIGN_CLASSES[align],
-          HEADING_CLASSES[level]
+          HEADING_CLASSES[level],
+          headingClassName
         )}>
         <HeadingMark icon={icon} />
         <span>{title}</span>
