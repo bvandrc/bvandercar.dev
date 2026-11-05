@@ -1,43 +1,20 @@
+import { colord, extend } from 'colord'
+import a11yPlugin from 'colord/plugins/a11y'
+
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
 import { DevIcon } from './primitives/DevIcon'
 import { Section } from './Section'
 
+// Adds colord's WCAG contrast and luminance methods.
+extend([a11yPlugin])
+
 // Mirror the surface and ink theme tokens in src/styles/index.css.
 const CHIP_BACKGROUND = '141a25'
 const CHIP_INK = 'f0f4fa'
 
-/** Below this contrast against the chip, a brand color is too dark to see. */
+/** Below this WCAG contrast ratio against the chip, a brand color is too dark to see. */
 const MIN_ICON_CONTRAST = 2
-
-/**
- * How bright a color looks, from 0 for black to 1 for white, per WCAG 2.
- *
- * Unlike the raw RGB values, it weights each channel by how bright the eye
- * sees it, so a green and a blue of the same value don't count as alike.
- */
-const relativeLuminance = (hex: string) => {
-  const [r, g, b] = [0, 2, 4].map((i) => {
-    const channel = Number.parseInt(hex.slice(i, i + 2), 16) / 255
-    return channel <= 0.039_28
-      ? channel / 12.92
-      : ((channel + 0.055) / 1.055) ** 2.4
-  })
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b
-}
-
-/**
- * The WCAG contrast ratio of two hex colors, from 1 (identical) to 21.
- *
- * Used to catch a brand color, like a near-black logo, that would all but
- * vanish on the dark chip behind it.
- */
-const contrast = (a: string, b: string) => {
-  const [light, dark] = [relativeLuminance(a), relativeLuminance(b)].sort(
-    (x, y) => y - x
-  )
-  return (light + 0.05) / (dark + 0.05)
-}
 
 // Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
 const skillIconSlug = ({ logo }: SkillBadge) =>
@@ -55,8 +32,9 @@ const skillIconColor = ({ logoColor, path }: SkillBadge) => {
   const badgeHex = decodeURIComponent(path).match(
     /-#?([0-9a-f]{6})(?:\.svg)?$/i
   )?.[1]
-  const brand = /^[0-9a-f]{6}$/i.test(logoHex) ? logoHex : badgeHex
-  return brand && contrast(brand, CHIP_BACKGROUND) >= MIN_ICON_CONTRAST
+  const brand = colord(`#${logoHex}`).isValid() ? logoHex : badgeHex
+  return brand &&
+    colord(`#${brand}`).contrast(`#${CHIP_BACKGROUND}`) >= MIN_ICON_CONTRAST
     ? brand
     : CHIP_INK
 }

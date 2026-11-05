@@ -51,6 +51,7 @@
     "@bvandrc/react-toolkit": "^2",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
+    "colord": "^2",
     "es-toolkit": "^1",
     "lucide-react": "^1",
     "react": "^19",
