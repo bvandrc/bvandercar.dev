@@ -43,6 +43,7 @@ const MODULES = {
   'src/content/about.ts': 'content/about.ts',
   'src/content/projects.ts': 'content/projects.ts',
   'src/content/skills.ts': 'content/skills.ts',
+  'src/content/project-types.ts': 'content/project-types.ts',
   'src/generated/repo-counts.ts': 'repo-counts.ts',
 }
 

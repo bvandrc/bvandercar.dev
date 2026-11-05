@@ -1,28 +1,13 @@
 import { ExternalLink } from 'lucide-react'
 
+import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { PROJECTS } from '@/generated/profile/content/projects'
-import type { Project, ProjectType } from '@/generated/profile/content/types'
+import type { Project } from '@/generated/profile/content/types'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
 import { Link } from './primitives/Link'
 import { Section } from './primitives/Section'
 import { SimpleIcon } from './primitives/SimpleIcon'
-
-type TypeIcon = {
-  /** Simple Icons slug, as bvandrc's README uses for the same type */
-  slug: string
-  /** Alt text and tooltip */
-  title: string
-}
-
-const TYPE_ICONS = {
-  react: { slug: 'react', title: 'React' },
-  npm: { slug: 'npm', title: 'npm package' },
-  github: { slug: 'github', title: 'GitHub Action' },
-  python: { slug: 'python', title: 'Python' },
-  arduino: { slug: 'arduino', title: 'Arduino' },
-  worker: { slug: 'cloudflareworkers', title: 'Cloudflare Worker' },
-} as const satisfies Record<ProjectType, TypeIcon>
 
 // Matches the ink-muted theme token in src/styles/index.css.
 const TYPE_ICON_COLOR = '9fb0c8'
