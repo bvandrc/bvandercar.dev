@@ -51,6 +51,7 @@
     "@bvandrc/react-toolkit": "^2",
     "clsx": "^2",
     "es-toolkit": "^1",
+    "lucide-react": "^1",
     "react": "^19",
     "react-dom": "^19",
     "react-ga4": "^3",

@@ -1,8 +1,9 @@
+import { ExternalLink } from 'lucide-react'
+
 import { PROJECTS } from '@/generated/profile/content/projects'
 import type { Project, ProjectType } from '@/generated/profile/content/types'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { Card } from './primitives/Card'
-import { ExternalLinkIcon } from './primitives/ExternalLinkIcon'
 import { Section } from './Section'
 
 type TypeIcon = {
@@ -63,7 +64,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
         className="text-xs text-ink-muted hover:text-accent">
         {counts &&
           `${formatCount(counts.commits, 'commit')} · ${formatCount(counts.prs, 'PR')} · `}
-        repo <ExternalLinkIcon />
+        repo{' '}
+        <ExternalLink
+          aria-hidden="true"
+          className="inline-block size-[1em] align-[-0.125em]"
+        />
       </a>
       {project.screenshot && (
         <img
