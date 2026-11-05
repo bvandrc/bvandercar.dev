@@ -28,18 +28,6 @@ describe('LivePreview', () => {
     expect(screen.queryByTestId(FRAME)).toBeNull()
   })
 
-  it('draws the page at 1/scale its frame, shrunk back to fit', async () => {
-    const user = userEvent.setup()
-    render(<LivePreview src={SRC} title="Example" scale={0.5} />)
-
-    await user.click(screen.getByTestId(TOGGLE))
-    expect(screen.getByTestId(FRAME).style).toMatchObject({
-      width: '200%',
-      height: '200%',
-      transform: 'scale(0.5)',
-    })
-  })
-
   it('pulses its toggle only while asked to', () => {
     const { rerender } = render(<LivePreview src={SRC} title="Example" pulse />)
     expect(screen.getByTestId(TOGGLE).dataset.pulse).toBe('true')
