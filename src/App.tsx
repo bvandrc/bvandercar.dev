@@ -3,7 +3,6 @@ import './styles/index.css'
 import { BeyondCode } from './components/BeyondCode'
 import { Header } from './components/Header'
 import { Projects } from './components/Projects'
-import { Link } from './components/primitives/Link'
 import { Skills } from './components/Skills'
 
 export const App = () => (
@@ -14,12 +13,5 @@ export const App = () => (
       <Skills />
       <BeyondCode />
     </main>
-    <footer
-      className="mt-auto border-t border-border pt-5 text-sm text-ink-muted"
-      data-testid="footer">
-      <Link href="https://github.com/bvandrc" data-testid="footer-github-link">
-        github.com/bvandrc
-      </Link>
-    </footer>
   </div>
 )
