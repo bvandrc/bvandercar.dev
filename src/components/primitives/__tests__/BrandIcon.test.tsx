@@ -40,7 +40,7 @@ describe('BrandIcon', () => {
 
   it('renders nothing for a slug with no logo', () => {
     const { container } = render(
-      <BrandIcon slug="accessibility" color="0170ea" size={14} />
+      <BrandIcon slug="unknown" color="0170ea" size={14} />
     )
     expect(container.innerHTML).toBe('')
   })
