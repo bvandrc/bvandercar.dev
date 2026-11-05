@@ -56,8 +56,19 @@ const ProjectCard = ({
   const counts = REPO_COUNTS[project.repo]
   const nameId = useId()
   const repoLinkId = useId()
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const changePreviewOpen = (open: boolean) => {
+    setPreviewOpen(open)
+    if (open) {
+      onPreviewOpen()
+    }
+  }
   return (
     <Card
+      // A click anywhere else on a card with a live preview toggles it too.
+      onSurfaceClick={
+        project.embed ? () => changePreviewOpen(!previewOpen) : undefined
+      }
       className={cn(
         'flex h-full flex-col gap-3',
         'transition-[box-shadow,border-color] duration-200',
@@ -116,11 +127,8 @@ const ProjectCard = ({
           // Every card's toggle reads the same, so name the project it's for.
           aria-describedby={nameId}
           pulse={pulsePreview}
-          onOpenChange={(open) => {
-            if (open) {
-              onPreviewOpen()
-            }
-          }}
+          open={previewOpen}
+          onOpenChange={changePreviewOpen}
           className="mt-auto"
         />
       ) : (

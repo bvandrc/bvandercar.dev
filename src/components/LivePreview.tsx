@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useEasedScrollIntoView, useTimer } from '@bvandrc/react-toolkit'
 import { ChevronRight } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
@@ -7,7 +7,7 @@ import { cn } from '@/utils'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
   Pick<React.ComponentProps<'button'>, 'aria-describedby'> &
-  Pick<Collapsible.CollapsibleProps, 'onOpenChange'> & {
+  Pick<Collapsible.CollapsibleProps, 'open' | 'onOpenChange'> & {
     /** The page to show. */
     src: string
     /** What the page is, which names the frame for screen readers. */
@@ -25,29 +25,36 @@ const SCROLL_DELAY_MS = 50
  * A live page in an iframe, collapsed behind a toggle until asked for.
  *
  * The frame mounts only while open, so a closed preview loads nothing. Its
- * origin must be in the CSP's `frame-src`, in `site.config.ts`.
+ * origin must be in the CSP's `frame-src`, in `site.config.ts`. Pass `open`
+ * with `onOpenChange` to open and close it from outside as well.
  */
 export const LivePreview = ({
   src,
   title,
   scale = 1,
   pulse = false,
+  open: controlledOpen,
   onOpenChange,
   className,
   'aria-describedby': describedBy,
 }: LivePreviewProps) => {
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  // Reports each change whether or not `open` is passed, unlike
+  // `useMaybeControlled`, which takes `onOpenChange` alone as control.
+  const open = controlledOpen ?? uncontrolledOpen
   const { scrollIntoView } = useEasedScrollIntoView()
   const scrollTimer = useTimer()
+  useEffect(() => {
+    if (!open) {
+      // Closed before the scroll ran: don't scroll to a preview going away.
+      scrollTimer.clear()
+    }
+  }, [open, scrollTimer])
   return (
     <Collapsible.Root
       open={open}
       onOpenChange={(nextOpen) => {
-        setOpen(nextOpen)
-        if (!nextOpen) {
-          // Closed before the scroll ran: don't scroll to a preview going away.
-          scrollTimer.clear()
-        }
+        setUncontrolledOpen(nextOpen)
         onOpenChange?.(nextOpen)
       }}
       className={cn('flex flex-col gap-2', className)}

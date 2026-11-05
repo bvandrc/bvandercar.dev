@@ -47,4 +47,21 @@ describe('LivePreview', () => {
     await user.click(screen.getByTestId(TOGGLE))
     expect(onOpenChange.mock.calls).toEqual([[true], [false]])
   })
+
+  it('opens and closes as its open prop says, when given one', () => {
+    const { rerender } = render(
+      <LivePreview src={SRC} title="Example" open onOpenChange={vi.fn()} />
+    )
+    expect(screen.getByTestId(FRAME)).toBeDefined()
+
+    rerender(
+      <LivePreview
+        src={SRC}
+        title="Example"
+        open={false}
+        onOpenChange={vi.fn()}
+      />
+    )
+    expect(screen.queryByTestId(FRAME)).toBeNull()
+  })
 })
