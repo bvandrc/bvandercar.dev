@@ -1,7 +1,7 @@
 import { Tooltip as RadixTooltip } from 'radix-ui'
 
 /** Delay before a hovered trigger shows its tooltip, in ms; Radix's 700 feels sluggish. */
-const OPEN_DELAY = 300
+const OPEN_DELAY = 150
 
 /** Shares one open delay across every tooltip, so moving between triggers skips it. */
 export const TooltipProvider = ({

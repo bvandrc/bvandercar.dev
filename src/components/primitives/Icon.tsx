@@ -1,22 +1,27 @@
 import { UI_ICONS } from 'virtual:icons'
 
-import type { UiIconName } from '@/lib/icons'
+import type { GlyphName } from '@/lib/icons'
 
 export type IconProps = Omit<
   React.ComponentProps<'svg'>,
   'children' | 'viewBox' | 'dangerouslySetInnerHTML'
 > & {
-  /** A name from `UI_ICON_NAMES` in `src/lib/icons.ts` */
-  name: UiIconName
+  /** A name from `GLYPH_NAMES` in `src/lib/icons.ts` */
+  name: GlyphName
 }
 
 /**
- * A Lucide glyph, drawn in the text color around it and decorative.
+ * An interface glyph, drawn in the text color around it and decorative.
  *
- * It is 1em square unless a class sizes it.
+ * It is 1em square unless a class sizes it. A name the build didn't bundle
+ * renders nothing.
  */
 export const Icon = ({ name, ...props }: IconProps) => {
-  const { body, viewBox } = UI_ICONS[name]
+  const icon = UI_ICONS[name]
+  if (!icon) {
+    return null
+  }
+  const { body, viewBox } = icon
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

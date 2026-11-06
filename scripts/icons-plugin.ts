@@ -11,6 +11,20 @@ const RESOLVED_ID = `\0${VIRTUAL_ID}`
 
 const SLUGS_MODULE = 'src/lib/icons.ts'
 
+// The prefixes on a glyph's name that take it from another set than Lucide.
+const GLYPH_SETS: Record<string, IconifyJSON> = {
+  'material-symbols:': MATERIAL_SYMBOLS,
+  'simple-icons:': SIMPLE_ICONS,
+}
+
+/** A glyph by its name: Lucide's, or a prefixed set's. */
+const getGlyph = (name: string) => {
+  const prefix = Object.keys(GLYPH_SETS).find((p) => name.startsWith(p))
+  return prefix
+    ? getIcon(GLYPH_SETS[prefix], name.slice(prefix.length))
+    : getIcon(LUCIDE, name)
+}
+
 // Slugs for skills that aren't a brand, so no logo set has them: each is drawn
 // with a generic icon instead, as [set, name].
 const GENERIC_LOGOS: Partial<Record<string, [IconifyJSON, string]>> = {
@@ -34,7 +48,7 @@ const getIcon = (set: IconifyJSON, name: string): VirtualIcon | undefined => {
 
 /**
  * Serves `virtual:icons`: the logos for `ICON_SLUGS`, and the glyphs for
- * `UI_ICON_NAMES`, in `src/lib/icons.ts`.
+ * `GLYPH_NAMES`, in `src/lib/icons.ts`.
  *
  * All come from Iconify's sets and are bundled, only those, so the page
  * fetches no icon. A logo is Simple Icons' where it has one, including those
@@ -67,10 +81,10 @@ export const iconsPlugin = (): Plugin => ({
         return []
       }
     )
-    const uiIcons = module.UI_ICON_NAMES.map((name): [string, VirtualIcon] => {
-      const icon = getIcon(LUCIDE, name)
+    const uiIcons = module.GLYPH_NAMES.map((name): [string, VirtualIcon] => {
+      const icon = getGlyph(name)
       if (!icon) {
-        this.error(`No Lucide icon named "${name}"`)
+        this.error(`No icon named "${name}"`)
       }
       return [name, icon]
     })

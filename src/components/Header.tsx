@@ -1,15 +1,15 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
-import { GITHUB_ICON_SLUG, LINKEDIN_ICON_SLUG } from '@/lib/icons'
+import type { UiIconName } from '@/lib/icons'
 import { Badge } from './primitives/Badge'
-import { BrandIcon, type BrandIconProps } from './primitives/BrandIcon'
+import { Icon } from './primitives/Icon'
 import { Link, type LinkProps } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
 
 type HeaderSocialLinkProps = Pick<LinkProps, 'href'> & {
   /** The tooltip, naming the profile the link goes to. */
   tooltip: string
-  /** The site's logo, shown before the text. */
-  iconSlug: BrandIconProps['slug']
+  /** The site's logo, shown before the text in the link's own color. */
+  icon: UiIconName
   children: React.ReactNode
 }
 
@@ -17,19 +17,12 @@ type HeaderSocialLinkProps = Pick<LinkProps, 'href'> & {
 const HeaderSocialLink = ({
   href,
   tooltip,
-  iconSlug,
+  icon,
   children,
 }: HeaderSocialLinkProps) => (
   <Tooltip content={tooltip}>
     <Link href={href} newTab className="inline-flex items-center gap-2">
-      <BrandIcon
-        slug={iconSlug}
-        // Matches the accent theme token in src/styles/index.css, as the link
-        // text does.
-        color="22d3ee"
-        size={16}
-        className="size-4"
-      />
+      <Icon name={icon} className="size-4" />
       {children}
     </Link>
   </Tooltip>
@@ -70,13 +63,13 @@ export const Header = () => (
       <HeaderSocialLink
         href="https://github.com/bvandrc"
         tooltip="GitHub Profile"
-        iconSlug={GITHUB_ICON_SLUG}>
+        icon="simple-icons:github">
         github.com/bvandrc
       </HeaderSocialLink>
       <HeaderSocialLink
         href="https://www.linkedin.com/in/blake-vandercar"
         tooltip="LinkedIn Profile"
-        iconSlug={LINKEDIN_ICON_SLUG}>
+        icon="simple-icons:linkedin">
         LinkedIn
       </HeaderSocialLink>
     </div>

@@ -15,7 +15,7 @@ import { Card } from './primitives/Card'
 import { Icon } from './primitives/Icon'
 import { Link } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
-import { Section } from './Section'
+import { Section, SubSection } from './Section'
 
 // Matches the ink-muted theme token in src/styles/index.css.
 const TYPE_ICON_COLOR = '9fb0c8'
@@ -155,16 +155,15 @@ export const Projects = () => {
   const [previewOpened, setPreviewOpened] = useState(false)
   return (
     <Section
-      icon={SECTIONS.PROJECTS.icon}
+      glyph={SECTIONS.PROJECTS.glyph}
       title={SECTIONS.PROJECTS.title}
       data-testid="projects">
       {PROJECTS.map((group) => (
-        <Section
+        <SubSection
           key={group.title}
-          icon={group.icon}
-          title={group.title}
-          level="h3"
-          className="flex flex-col gap-3">
+          // React Websites has its logo and no glyph; every other group, a glyph.
+          icon={group.glyph ?? group.icon}
+          title={group.title}>
           {group.intro && <p className="text-ink-muted">{group.intro}</p>}
           {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
           <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
@@ -178,7 +177,7 @@ export const Projects = () => {
               </li>
             ))}
           </ul>
-        </Section>
+        </SubSection>
       ))}
     </Section>
   )
