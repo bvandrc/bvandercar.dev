@@ -24,12 +24,15 @@ export const UI_ICON_NAMES = ['chevron-right', 'external-link'] as const
 
 export type UiIconName = (typeof UI_ICON_NAMES)[number]
 
-/** The glyphs the profile content gives the section headings. */
-export const SECTION_GLYPHS = uniq(
-  Object.values(SECTIONS).flatMap(({ glyph }: SectionHeading) => glyph ?? [])
-)
+/** The glyphs the profile content gives the section and group headings. */
+export const SECTION_GLYPHS = uniq([
+  ...Object.values(SECTIONS).flatMap(
+    ({ glyph }: SectionHeading) => glyph ?? []
+  ),
+  ...[...PROJECTS, ...SKILLS].flatMap(({ glyph }) => glyph?.name ?? []),
+])
 
-/** A glyph the build bundles: an interface glyph, or a section heading's. */
+/** A glyph the build bundles: an interface glyph, or a heading's. */
 export type GlyphName = UiIconName | NonNullable<SectionHeading['glyph']>
 
 /**

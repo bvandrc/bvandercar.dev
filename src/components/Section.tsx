@@ -1,6 +1,10 @@
 import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
+import type {
+  GlyphColor,
+  GroupGlyph,
+} from '@/generated/profile/content/sections'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
@@ -67,29 +71,61 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
   />
 )
 
+// Each written out in full so Tailwind generates it, since the names come from content.
+const GLYPH_COLOR_CLASSES = {
+  amber: 'text-amber-400',
+  brown: 'text-[#a7723d]',
+  green: 'text-green-400',
+  sky: 'text-sky-400',
+  violet: 'text-violet-300',
+  yellow: 'text-yellow-300',
+} satisfies Record<GlyphColor, string>
+
 export type SubSectionProps = SectionPropsCommon & {
-  /** An emoji, or a Simple Icons logo in its brand color. */
+  /** An emoji, or a Simple Icons logo in its brand color, drawn without a `glyph`. */
   icon: string | SectionLogo
+  /** An interface glyph in its own color, drawn in place of `icon`. */
+  glyph?: GroupGlyph
 }
 
-/** A group within a section: an h3 with an emoji or a brand logo. */
-export const SubSection = ({ icon, className, ...props }: SubSectionProps) => (
+/** A group heading's glyph in its color, or else its emoji or brand logo. */
+const SubSectionIcon = ({
+  icon,
+  glyph,
+}: Pick<SubSectionProps, 'icon' | 'glyph'>) => {
+  if (glyph) {
+    return (
+      <Icon
+        name={glyph.name}
+        className={cn('shrink-0', GLYPH_COLOR_CLASSES[glyph.color])}
+      />
+    )
+  }
+  if (typeof icon === 'string') {
+    return <span aria-hidden="true">{icon}</span>
+  }
+  return (
+    <BrandIcon
+      slug={icon.slug}
+      color={icon.color}
+      // The h3's em, at the 1.125rem of `text-lg`; the class keeps it there.
+      size={18}
+      className="size-[1em]"
+    />
+  )
+}
+
+/** A group within a section: an h3 with a colored glyph, an emoji, or a brand logo. */
+export const SubSection = ({
+  icon,
+  glyph,
+  className,
+  ...props
+}: SubSectionProps) => (
   <TitledSection
     level="h3"
     headingClassName="text-lg font-semibold"
-    icon={
-      typeof icon === 'string' ? (
-        <span aria-hidden="true">{icon}</span>
-      ) : (
-        <BrandIcon
-          slug={icon.slug}
-          color={icon.color}
-          // The h3's em, at the 1.125rem of `text-lg`; the class keeps it there.
-          size={18}
-          className="size-[1em]"
-        />
-      )
-    }
+    icon={<SubSectionIcon icon={icon} glyph={glyph} />}
     className={cn('flex flex-col gap-3', className)}
     {...props}
   />

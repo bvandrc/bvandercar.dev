@@ -146,7 +146,11 @@ export const Projects = () => {
       title={SECTIONS.PROJECTS.title}
       data-testid="projects">
       {PROJECTS.map((group) => (
-        <SubSection key={group.title} icon={group.icon} title={group.title}>
+        <SubSection
+          key={group.title}
+          icon={group.icon}
+          glyph={group.glyph}
+          title={group.title}>
           {group.intro && <p className="text-ink-muted">{group.intro}</p>}
           {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
           <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
