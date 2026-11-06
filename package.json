@@ -48,7 +48,7 @@
     "pw:report": "playwright show-report playwright/results/html"
   },
   "dependencies": {
-    "@bvandrc/react-toolkit": "^2",
+    "@bvandrc/react-toolkit": "^2.2",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
     "colord": "^2",

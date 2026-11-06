@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
-  useEasedScrollIntoView,
   useMaybeControlled,
+  useScrollIntoView,
   useTimer,
 } from '@bvandrc/react-toolkit'
 import { Collapsible } from 'radix-ui'
@@ -54,7 +54,7 @@ export const LivePreview = ({
     onOpenChange,
     false
   )
-  const { scrollIntoView } = useEasedScrollIntoView()
+  const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
   useEffect(() => {
     if (!open) {
