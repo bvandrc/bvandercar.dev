@@ -130,7 +130,7 @@ const ProjectCard = ({
           // Every card's toggle reads the same, so name the project it's for.
           aria-describedby={nameId}
           pulse={pulsePreview}
-          // Opening eases the whole card on screen, not just the preview.
+          // Opening centers the whole card on screen, not just the preview.
           scrollTargetRef={cardRef}
           open={previewOpen}
           onOpenChange={changePreviewOpen}
@@ -164,7 +164,9 @@ export const Projects = () => {
           // React Websites has its logo and no glyph; every other group, a glyph.
           icon={group.glyph ?? group.icon}
           title={group.title}>
-          {group.intro && <p className="text-ink-muted">{group.intro}</p>}
+          {group.intro && (
+            <p className="font-semibold text-ink-muted">{group.intro}</p>
+          )}
           {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
           <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
             {group.projects.map((project) => (
