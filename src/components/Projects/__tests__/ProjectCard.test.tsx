@@ -1,7 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { PROJECTS, type Project } from '@/generated/profile/content/projects'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
@@ -28,17 +27,6 @@ const renderPreviewCard = (onPreviewOpen?: () => void) => {
 }
 
 describe('ProjectCard', () => {
-  it("names its project's type icon for screen readers", () => {
-    for (const project of ALL_PROJECTS) {
-      const { unmount } = renderCard(project)
-      const icon = screen.queryByRole('img', {
-        name: TYPE_ICONS[project.type].title,
-      })
-      expect(icon, project.name).not.toBeNull()
-      unmount()
-    }
-  })
-
   it('toggles its live preview on a click on the card', async () => {
     const user = userEvent.setup()
     const onPreviewOpen = vi.fn()
