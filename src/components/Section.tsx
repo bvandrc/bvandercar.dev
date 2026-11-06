@@ -14,6 +14,8 @@ type TitledSectionProps = Omit<
   level: 'h2' | 'h3'
   /** The heading's type, and any spacing that differs from the default. */
   headingClassName: string
+  /** Classes for the title's own box, between the two icons. */
+  titleClassName?: string
   /** Drawn on both sides of the title, and decorative. */
   icon: React.ReactNode
   title: string
@@ -24,6 +26,7 @@ type TitledSectionProps = Omit<
 const TitledSection = ({
   level: Heading,
   headingClassName,
+  titleClassName,
   icon,
   title,
   children,
@@ -39,7 +42,7 @@ const TitledSection = ({
           headingClassName
         )}>
         {icon}
-        <span>{title}</span>
+        <span className={titleClassName}>{title}</span>
         {icon}
       </Heading>
       {children}
@@ -50,7 +53,7 @@ const TitledSection = ({
 /** What `Section` and `SubSection` both take: everything but what each sets itself. */
 type SectionPropsCommon = Omit<
   TitledSectionProps,
-  'level' | 'headingClassName' | 'icon'
+  'level' | 'headingClassName' | 'titleClassName' | 'icon'
 >
 
 export type SectionProps = SectionPropsCommon & {
@@ -61,7 +64,14 @@ export type SectionProps = SectionPropsCommon & {
 export const Section = ({ glyph, className, ...props }: SectionProps) => (
   <TitledSection
     level="h2"
-    headingClassName="gap-7.5 text-2xl font-semibold tracking-tight"
+    headingClassName="text-2xl font-semibold tracking-tight"
+    titleClassName={cn(
+      'flex items-center gap-3',
+      // An orange rule from each icon to the title, padded by the gaps on both
+      // its sides: 12px, a 36px line, and 12px make 60px from icon to text.
+      "before:h-0.5 before:w-9 before:rounded-full before:bg-orange-400 before:content-['']",
+      "after:h-0.5 after:w-9 after:rounded-full after:bg-orange-400 after:content-['']"
+    )}
     icon={
       <Icon name={glyph} className="size-[1.25em] shrink-0 text-orange-400" />
     }
