@@ -1,6 +1,5 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
 import type { UiIconName } from '@/lib/icons'
-import { Badge } from './primitives/Badge'
 import { Icon } from './primitives/Icon'
 import { Link, type LinkProps } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
@@ -45,13 +44,6 @@ export const Header = () => (
         Blake Vandercar
       </h1>
     </div>
-    <Badge
-      tone="caution"
-      className="animate-caution-pulse px-3 py-1 text-sm"
-      data-testid="header-status">
-      <span aria-hidden="true">🚧</span> Under construction{' '}
-      <span aria-hidden="true">🚧</span>
-    </Badge>
     <div
       className="flex max-w-prose flex-col items-center gap-1 text-ink-muted"
       data-testid="header-tagline">
