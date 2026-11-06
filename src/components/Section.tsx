@@ -11,20 +11,18 @@ type TitledSectionProps = Omit<
   'title' | 'children'
 > & {
   level: 'h2' | 'h3'
+  /** The heading's type size and weight. */
+  headingClassName: string
   /** Drawn on both sides of the title, and decorative. */
   icon: React.ReactNode
   title: string
   children: React.ReactNode
 }
 
-const HEADING_CLASSES = {
-  h2: 'text-2xl font-semibold tracking-tight',
-  h3: 'text-lg font-semibold',
-} satisfies Record<TitledSectionProps['level'], string>
-
 /** A section labelled by its own heading, which shows the icon on both sides. */
 const TitledSection = ({
   level: Heading,
+  headingClassName,
   icon,
   title,
   children,
@@ -37,7 +35,7 @@ const TitledSection = ({
         id={headingId}
         className={cn(
           'flex items-center justify-center gap-3',
-          HEADING_CLASSES[Heading]
+          headingClassName
         )}>
         {icon}
         <span>{title}</span>
@@ -48,7 +46,10 @@ const TitledSection = ({
   )
 }
 
-export type SectionProps = Omit<TitledSectionProps, 'level' | 'icon'> & {
+export type SectionProps = Omit<
+  TitledSectionProps,
+  'level' | 'headingClassName' | 'icon'
+> & {
   glyph: GlyphName
 }
 
@@ -56,13 +57,17 @@ export type SectionProps = Omit<TitledSectionProps, 'level' | 'icon'> & {
 export const Section = ({ glyph, className, ...props }: SectionProps) => (
   <TitledSection
     level="h2"
+    headingClassName="text-2xl font-semibold tracking-tight"
     icon={<Icon name={glyph} className="shrink-0 text-orange-400" />}
     className={cn('flex flex-col gap-5', className)}
     {...props}
   />
 )
 
-export type SubSectionProps = Omit<TitledSectionProps, 'level' | 'icon'> & {
+export type SubSectionProps = Omit<
+  TitledSectionProps,
+  'level' | 'headingClassName' | 'icon'
+> & {
   /** An emoji, or a Simple Icons logo in its brand color. */
   icon: string | SectionLogo
 }
@@ -71,6 +76,7 @@ export type SubSectionProps = Omit<TitledSectionProps, 'level' | 'icon'> & {
 export const SubSection = ({ icon, className, ...props }: SubSectionProps) => (
   <TitledSection
     level="h3"
+    headingClassName="text-lg font-semibold"
     icon={
       typeof icon === 'string' ? (
         <span aria-hidden="true">{icon}</span>
