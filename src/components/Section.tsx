@@ -82,15 +82,15 @@ const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) =>
       name={icon.name}
       // SVG's own `color` attribute, which the CSP allows where an inline style isn't.
       color={`#${icon.color}`}
-      className="shrink-0"
+      className="size-[1.25em] shrink-0"
     />
   ) : (
     <BrandIcon
       slug={icon.slug}
       color={icon.color}
-      // The h3's em, at the 1.125rem of `text-lg`; the class keeps it there.
-      size={18}
-      className="size-[1em]"
+      // 1.25 of the h3's em, at the 1.125rem of `text-lg`; the class keeps it there.
+      size={23}
+      className="size-[1.25em]"
     />
   )
 
