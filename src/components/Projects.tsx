@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react'
+import { useIsMobile } from '@bvandrc/react-toolkit'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type {
@@ -8,7 +9,6 @@ import type {
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { useIsMobile } from '@/hooks/useMobile'
 import { cn } from '@/utils'
 import { LivePreview } from './LivePreview'
 import { BrandIcon } from './primitives/BrandIcon'
