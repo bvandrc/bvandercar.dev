@@ -15,8 +15,8 @@
   --color-accent: #22d3ee;
   --color-accent-hover: #67e8f9;
   --color-accent-ink: #042f35;
-  /* The accent, less saturated, for a quieter link. */
-  --color-link-soft: #55daee;
+  /* A muted violet for a link set apart from the accent ones, at 6.6:1 on the surface. */
+  --color-link-violet: #bc88f7;
   --color-tone-positive: #7ee0a8;
   --color-tone-caution: #ff5a2c;
   --color-tone-neutral: #c4b5fd;
