@@ -130,7 +130,7 @@ const ProjectCard = ({
           // Every card's toggle reads the same, so name the project it's for.
           aria-describedby={nameId}
           pulse={pulsePreview}
-          // Opening eases the whole card on screen, not just the preview.
+          // Opening centers the whole card on screen, not just the preview.
           scrollTargetRef={cardRef}
           open={previewOpen}
           onOpenChange={changePreviewOpen}

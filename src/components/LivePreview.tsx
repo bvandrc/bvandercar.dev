@@ -24,7 +24,7 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     scale?: number
     /** Pulses a glow around the toggle, to draw the eye to it. */
     pulse?: boolean
-    /** What to bring on screen once opened, such as a card around it; defaults to the preview itself. */
+    /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
   }
 
@@ -90,12 +90,13 @@ export const LivePreview = ({
           'data-[state=closed]:animate-collapsible-close data-[state=open]:animate-collapsible-open'
         )}
         onAnimationEnd={(event) => {
-          // Shortly after it finishes opening, bring the whole preview, or
-          // whatever holds it, on screen.
+          // Shortly after it finishes opening, center the preview, or
+          // whatever holds it, on screen; one too tall to fit lines its top
+          // up with the top of the screen instead.
           if (open && event.target === event.currentTarget) {
             const target = scrollTargetRef?.current ?? event.currentTarget
             scrollTimer.start(
-              () => scrollIntoView(target, 'nearest'),
+              () => scrollIntoView(target, 'center'),
               SCROLL_DELAY_MS
             )
           }
