@@ -11,6 +11,7 @@ export const SELECTORS = {
     SELF: 'projects',
     CARD: 'project-card',
     REPO_LINK: 'project-repo-link',
+    COUNTS: 'project-counts',
   },
   SKILLS: {
     SELF: 'skills',

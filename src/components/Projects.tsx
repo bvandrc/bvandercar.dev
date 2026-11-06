@@ -1,5 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { useIsMobile } from '@bvandrc/react-toolkit'
+import { objectEntries } from 'ts-extras'
+import type { ValueOf } from 'type-fest'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type {
@@ -9,7 +11,8 @@ import type {
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { formatCount } from '@/lib/format-count'
+import { formatCompactCount, formatCount } from '@/lib/format-count'
+import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import { LivePreview } from './LivePreview'
 import { BrandIcon } from './primitives/BrandIcon'
@@ -24,6 +27,16 @@ const TYPE_ICON_COLOR = '9fb0c8'
 
 const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 
+type RepoCounts = NonNullable<ValueOf<typeof REPO_COUNTS>>
+
+// The GitHub profile README's counts, in its order, with Lucide's take on its
+// Octicons to match this site's other glyphs.
+const COUNT_KINDS = {
+  commits: { glyph: 'git-commit-horizontal', noun: 'commit' },
+  prs: { glyph: 'git-pull-request', noun: 'PR' },
+  downloads: { glyph: 'download', noun: 'download' },
+} satisfies Record<keyof RepoCounts, { glyph: GlyphName; noun: string }>
+
 type GridLayout = 'preview' | 'pairs'
 
 // A group with a live preview takes the full width, so the page inside it has
@@ -36,8 +49,45 @@ const GRID_CLASSES = {
 const gridLayout = ({ projects }: ProjectSection): GridLayout =>
   projects.some(({ embed }) => embed) ? 'preview' : 'pairs'
 
-/** A visual divider, which screen readers would otherwise read as "middle dot". */
-const Separator = () => <span aria-hidden="true">·</span>
+/**
+ * A repo's counts as glyphs with shortened numbers, in full as alt text and on
+ * hover, like "3,120 downloads".
+ *
+ * Renders nothing for a repo with no counts.
+ */
+const ProjectCounts = ({ repo }: { repo: string }) => {
+  const counts = REPO_COUNTS[repo]
+  if (!counts) {
+    return null
+  }
+  const shown = objectEntries(COUNT_KINDS).flatMap(
+    ([kind, { glyph, noun }]) => {
+      const count = counts[kind]
+      return count === undefined ? [] : [{ kind, glyph, noun, count }]
+    }
+  )
+  const label = shown
+    .map(({ count, noun }) => formatCount(count, noun))
+    .join(', ')
+  return (
+    <Tooltip content={label}>
+      {/* An image, like the profile README's badge, so its name can be the
+          full counts rather than the shortened ones it shows. */}
+      <span
+        role="img"
+        aria-label={label}
+        className="inline-flex items-center gap-2.5 text-ink-muted"
+        data-testid="project-counts">
+        {shown.map(({ kind, glyph, count }) => (
+          <span key={kind} className="inline-flex items-center gap-1">
+            <Icon name={glyph} className="size-[1.1em]" />
+            {formatCompactCount(count)}
+          </span>
+        ))}
+      </span>
+    </Tooltip>
+  )
+}
 
 type ProjectCardProps = {
   project: Project
@@ -51,7 +101,6 @@ const ProjectCard = ({
   pulsePreview,
   onPreviewOpen,
 }: ProjectCardProps) => {
-  const counts = REPO_COUNTS[project.repo]
   const nameId = useId()
   const repoLinkId = useId()
   const cardRef = useRef<HTMLDivElement>(null)
@@ -100,34 +149,25 @@ const ProjectCard = ({
         </Tooltip>
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
-      <Tooltip content="GitHub Repository">
-        <Link
-          id={repoLinkId}
-          // Every card's link reads "repo", so name the project it's for.
-          aria-labelledby={`${nameId} ${repoLinkId}`}
-          href={repoUrl(project.repo)}
-          newTab
-          tone="muted"
-          className="text-xs"
-          data-testid="project-repo-link">
-          {counts && (
-            <>
-              {formatCount(counts.commits, 'commit')} <Separator />{' '}
-              {formatCount(counts.prs, 'PR')} <Separator />{' '}
-              {counts.downloads !== undefined && (
-                <>
-                  {formatCount(counts.downloads, 'download')} <Separator />{' '}
-                </>
-              )}
-            </>
-          )}
-          repo{' '}
-          <Icon
-            name="external-link"
-            className="inline-block size-[1em] align-[-0.125em]"
-          />
-        </Link>
-      </Tooltip>
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
+        <ProjectCounts repo={project.repo} />
+        <Tooltip content="GitHub Repository">
+          <Link
+            id={repoLinkId}
+            // Every card's link reads "repo", so name the project it's for.
+            aria-labelledby={`${nameId} ${repoLinkId}`}
+            href={repoUrl(project.repo)}
+            newTab
+            tone="muted"
+            data-testid="project-repo-link">
+            repo{' '}
+            <Icon
+              name="external-link"
+              className="inline-block size-[1em] align-[-0.125em]"
+            />
+          </Link>
+        </Tooltip>
+      </div>
       {project.embed ? (
         <LivePreview
           src={project.href}

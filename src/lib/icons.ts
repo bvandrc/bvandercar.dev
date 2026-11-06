@@ -17,6 +17,9 @@ export const skillIconSlug = ({ logo }: SkillBadge) =>
 export const UI_ICON_NAMES = [
   'chevron-right',
   'external-link',
+  'git-commit-horizontal',
+  'git-pull-request',
+  'download',
   'simple-icons:github',
   'simple-icons:linkedin',
 ] as const

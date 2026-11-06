@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { formatCount } from '@/lib/format-count'
+import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { Projects } from '../Projects'
 
-const { LIVE_PREVIEW } = SELECTORS
+const { LIVE_PREVIEW, TOOLTIP } = SELECTORS
 const { TOGGLE } = LIVE_PREVIEW
-const { CARD, REPO_LINK } = SELECTORS.PROJECTS
+const { CARD, REPO_LINK, COUNTS } = SELECTORS.PROJECTS
 
 const getPreviewCard = () => {
   const card = screen
@@ -61,21 +61,51 @@ describe('Projects', () => {
     }
   })
 
-  it("shows a project's downloads beside its commits and PRs, where it has any", () => {
+  it("shows a project's counts shortened, and in full as its name and tooltip", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<Projects />)
+    // A project with downloads in the thousands, so they're shortened.
+    const projects = PROJECTS.flatMap((group) => group.projects)
+    const index = projects.findIndex(
+      ({ repo }) => (REPO_COUNTS[repo]?.downloads ?? 0) >= 1000
+    )
+    const repoCounts = REPO_COUNTS[projects[index]?.repo ?? '']
+    if (!repoCounts?.downloads) {
+      throw new Error('No project has downloads in the thousands')
+    }
+    const { commits, prs, downloads } = repoCounts
+    const counts = within(screen.getAllByTestId(CARD)[index]).getByTestId(
+      COUNTS
+    )
+    const LABEL = [
+      formatCount(commits, 'commit'),
+      formatCount(prs, 'PR'),
+      formatCount(downloads, 'download'),
+    ].join(', ')
+
+    expect(counts.textContent).toContain(formatCompactCount(downloads))
+    expect(counts.textContent).not.toContain('download')
+    expect(counts.getAttribute('aria-label')).toBe(LABEL)
+    await user.hover(counts)
+    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(LABEL)
+  })
+
+  it('names downloads only for a project that has them', () => {
     renderWithProviders(<Projects />)
     const projects = PROJECTS.flatMap((group) => group.projects)
-    const links = screen.getAllByTestId(REPO_LINK)
-    // At least one of each, or either branch could go untested.
+    const cards = screen.getAllByTestId(CARD)
     const downloads = projects.map(({ repo }) => REPO_COUNTS[repo]?.downloads)
-    expect(downloads.some((count) => count === undefined)).toBe(true)
+    // At least one of each, or either branch could go untested.
+    expect(downloads).toContain(undefined)
     expect(downloads.some((count) => count !== undefined)).toBe(true)
     for (const [index, { name }] of projects.entries()) {
-      const count = downloads[index]
-      const text = links[index].textContent
-      if (count === undefined) {
-        expect(text, name).not.toMatch(/download/)
+      const label = within(cards[index])
+        .queryByTestId(COUNTS)
+        ?.getAttribute('aria-label')
+      if (downloads[index] === undefined) {
+        expect(label ?? '', name).not.toMatch(/download/)
       } else {
-        expect(text, name).toContain(formatCount(count, 'download'))
+        expect(label, name).toMatch(/download/)
       }
     }
   })
