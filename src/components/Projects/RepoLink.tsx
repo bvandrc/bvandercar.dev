@@ -29,8 +29,8 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
       aria-describedby={nameId}
       href={repoUrl(repo)}
       newTab
-      // GitHub's link blue, like the profile README's repo link.
-      tone="github"
+      // Quieter than the project's name link above it, until hovered.
+      tone="slate"
       className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
       onPointerDown={() => {
         pointerDownRef.current = true

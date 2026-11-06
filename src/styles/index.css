@@ -15,9 +15,8 @@
   --color-accent: #22d3ee;
   --color-accent-hover: #67e8f9;
   --color-accent-ink: #042f35;
-  /* GitHub's dark-theme link blue, which the profile README's "repo" link uses. */
-  --color-github-link: #2f81f7;
-  --color-github-link-hover: #4493f8;
+  /* A muted slate blue for a quieter link, at 4.9:1 on the surface. */
+  --color-link-slate: #7088b8;
   --color-tone-positive: #7ee0a8;
   --color-tone-caution: #ff5a2c;
   --color-tone-neutral: #c4b5fd;
