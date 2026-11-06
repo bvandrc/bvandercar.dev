@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type {
@@ -56,6 +56,7 @@ const ProjectCard = ({
   const counts = REPO_COUNTS[project.repo]
   const nameId = useId()
   const repoLinkId = useId()
+  const cardRef = useRef<HTMLDivElement>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -65,6 +66,7 @@ const ProjectCard = ({
   }
   return (
     <Card
+      ref={cardRef}
       // A click anywhere else on a card with a live preview toggles it too.
       onSurfaceClick={
         project.embed ? () => changePreviewOpen(!previewOpen) : undefined
@@ -128,6 +130,8 @@ const ProjectCard = ({
           // Every card's toggle reads the same, so name the project it's for.
           aria-describedby={nameId}
           pulse={pulsePreview}
+          // Opening eases the whole card on screen, not just the preview.
+          scrollTargetRef={cardRef}
           open={previewOpen}
           onOpenChange={changePreviewOpen}
           className="mt-auto"

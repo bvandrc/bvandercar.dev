@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
-  useEasedScrollIntoView,
   useMaybeControlled,
+  useScrollIntoView,
   useTimer,
 } from '@bvandrc/react-toolkit'
 import { Collapsible } from 'radix-ui'
@@ -24,6 +24,8 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     scale?: number
     /** Pulses a glow around the toggle, to draw the eye to it. */
     pulse?: boolean
+    /** What to bring on screen once opened, such as a card around it; defaults to the preview itself. */
+    scrollTargetRef?: React.RefObject<HTMLElement | null>
   }
 
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
@@ -41,6 +43,7 @@ export const LivePreview = ({
   title,
   scale = 1,
   pulse = false,
+  scrollTargetRef,
   open: controlledOpen,
   onOpenChange,
   className,
@@ -51,7 +54,7 @@ export const LivePreview = ({
     onOpenChange,
     false
   )
-  const { scrollIntoView } = useEasedScrollIntoView()
+  const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
   useEffect(() => {
     if (!open) {
@@ -87,11 +90,12 @@ export const LivePreview = ({
           'data-[state=closed]:animate-collapsible-close data-[state=open]:animate-collapsible-open'
         )}
         onAnimationEnd={(event) => {
-          // Shortly after it finishes opening, bring the whole preview on screen.
+          // Shortly after it finishes opening, bring the whole preview, or
+          // whatever holds it, on screen.
           if (open && event.target === event.currentTarget) {
-            const preview = event.currentTarget
+            const target = scrollTargetRef?.current ?? event.currentTarget
             scrollTimer.start(
-              () => scrollIntoView(preview, 'nearest'),
+              () => scrollIntoView(target, 'nearest'),
               SCROLL_DELAY_MS
             )
           }
