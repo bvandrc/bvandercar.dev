@@ -56,7 +56,12 @@ export const ProjectCard = ({
       data-testid="project-card">
       {/* Equal side columns center the name on the card, with the icon beside it. */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <h4 className="col-start-2 font-semibold">
+        <h4
+          className={cn(
+            'col-start-2 font-semibold',
+            // A size up, on the 24px line the name had before, so the card keeps its height.
+            'text-lg leading-6'
+          )}>
           <Tooltip content={project.href}>
             <Link href={project.href} newTab>
               <span id={nameId}>{project.name}</span>
