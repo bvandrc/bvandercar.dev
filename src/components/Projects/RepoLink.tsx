@@ -29,8 +29,8 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
       aria-describedby={nameId}
       href={repoUrl(repo)}
       newTab
-      // Set apart from the project's name link above it, until hovered.
-      tone="violet"
+      // Quieter than the project's name link above it, until hovered.
+      tone="subtle"
       className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
       onPointerDown={() => {
         pointerDownRef.current = true
