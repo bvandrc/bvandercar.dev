@@ -74,15 +74,16 @@ describe('Projects', () => {
       throw new Error('No project has downloads in the thousands')
     }
     const { commits, prs, downloads } = repoCounts
-    const counts = within(screen.getAllByTestId(CARD)[index]).getByTestId(
-      COUNTS
-    )
+    const card = screen.getAllByTestId(CARD)[index]
+    const counts = within(card).getByTestId(COUNTS)
     const LABEL = [
       formatCount(commits, 'commit'),
       formatCount(prs, 'PR'),
       formatCount(downloads, 'download'),
     ].join(', ')
 
+    // Part of the one link to the repo, not a tab stop of its own.
+    expect(within(card).getByTestId(REPO_LINK).contains(counts)).toBe(true)
     expect(counts.textContent).toContain(formatCompactCount(downloads))
     expect(counts.textContent).not.toContain('download')
     expect(counts.getAttribute('aria-label')).toBe(LABEL)
@@ -108,6 +109,25 @@ describe('Projects', () => {
         expect(label, name).toMatch(/download/)
       }
     }
+  })
+
+  it('shows the repo tooltip on keyboard focus of the repo link, not on a click', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<Projects />)
+    const link = screen.getAllByTestId(REPO_LINK)[0]
+    // jsdom can't open a link's new tab, so keep it from trying.
+    link.addEventListener('click', (event) => event.preventDefault())
+
+    await user.click(link)
+    expect(document.activeElement).toBe(link)
+    expect(screen.queryByTestId(TOOLTIP)).toBeNull()
+
+    await user.tab()
+    await user.tab({ shift: true })
+    expect(document.activeElement).toBe(link)
+    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(
+      'GitHub Repository'
+    )
   })
 
   it('toggles a live preview on a click on its card', async () => {

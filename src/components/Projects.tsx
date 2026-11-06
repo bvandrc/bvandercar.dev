@@ -76,7 +76,7 @@ const ProjectCounts = ({ repo }: { repo: string }) => {
       <span
         role="img"
         aria-label={label}
-        className="inline-flex items-center gap-2.5 text-ink-muted"
+        className="inline-flex items-center gap-2.5"
         data-testid="project-counts">
         {shown.map(({ kind, glyph, count }) => (
           <span key={kind} className="inline-flex items-center gap-1">
@@ -86,6 +86,59 @@ const ProjectCounts = ({ repo }: { repo: string }) => {
         ))}
       </span>
     </Tooltip>
+  )
+}
+
+type RepoLinkProps = {
+  repo: string
+  /** The `id` of the project's name, which describes the link */
+  nameId: string
+}
+
+/**
+ * A project's link to its GitHub repo: its counts, then "repo".
+ *
+ * Each part shows its own tooltip on hover, and keyboard focus on the link
+ * shows the "repo" one.
+ */
+const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
+  const [repoTooltipOpen, setRepoTooltipOpen] = useState(false)
+  const pointerDownRef = useRef(false)
+  return (
+    <Link
+      // Its name is its counts in full, then "repo", which needs the project
+      // beside it. A label naming the project too would no longer contain the
+      // counts as shown, like "70.3K", which voice control users would say.
+      aria-describedby={nameId}
+      href={repoUrl(repo)}
+      newTab
+      tone="muted"
+      className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
+      onPointerDown={() => {
+        pointerDownRef.current = true
+      }}
+      // A click focuses the link too, which opens no tooltip, the same as
+      // Radix's own triggers.
+      onFocus={() => setRepoTooltipOpen(!pointerDownRef.current)}
+      onBlur={() => {
+        pointerDownRef.current = false
+        setRepoTooltipOpen(false)
+      }}
+      data-testid="project-repo-link">
+      <ProjectCounts repo={repo} />
+      <Tooltip
+        content="GitHub Repository"
+        open={repoTooltipOpen}
+        onOpenChange={setRepoTooltipOpen}>
+        <span>
+          repo{' '}
+          <Icon
+            name="external-link"
+            className="inline-block size-[1em] align-[-0.125em]"
+          />
+        </span>
+      </Tooltip>
+    </Link>
   )
 }
 
@@ -102,7 +155,6 @@ const ProjectCard = ({
   onPreviewOpen,
 }: ProjectCardProps) => {
   const nameId = useId()
-  const repoLinkId = useId()
   const cardRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -149,25 +201,9 @@ const ProjectCard = ({
         </Tooltip>
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
-      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
-        <ProjectCounts repo={project.repo} />
-        <Tooltip content="GitHub Repository">
-          <Link
-            id={repoLinkId}
-            // Every card's link reads "repo", so name the project it's for.
-            aria-labelledby={`${nameId} ${repoLinkId}`}
-            href={repoUrl(project.repo)}
-            newTab
-            tone="muted"
-            data-testid="project-repo-link">
-            repo{' '}
-            <Icon
-              name="external-link"
-              className="inline-block size-[1em] align-[-0.125em]"
-            />
-          </Link>
-        </Tooltip>
-      </div>
+      <p className="text-xs">
+        <RepoLink repo={project.repo} nameId={nameId} />
+      </p>
       {project.embed ? (
         <LivePreview
           src={project.href}
