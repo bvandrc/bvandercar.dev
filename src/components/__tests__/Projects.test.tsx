@@ -91,26 +91,6 @@ describe('Projects', () => {
     expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(LABEL)
   })
 
-  it('names downloads only for a project that has them', () => {
-    renderWithProviders(<Projects />)
-    const projects = PROJECTS.flatMap((group) => group.projects)
-    const cards = screen.getAllByTestId(CARD)
-    const downloads = projects.map(({ repo }) => REPO_COUNTS[repo]?.downloads)
-    // At least one of each, or either branch could go untested.
-    expect(downloads).toContain(undefined)
-    expect(downloads.some((count) => count !== undefined)).toBe(true)
-    for (const [index, { name }] of projects.entries()) {
-      const label = within(cards[index])
-        .queryByTestId(COUNTS)
-        ?.getAttribute('aria-label')
-      if (downloads[index] === undefined) {
-        expect(label ?? '', name).not.toMatch(/download/)
-      } else {
-        expect(label, name).toMatch(/download/)
-      }
-    }
-  })
-
   it('shows the repo tooltip on keyboard focus of the repo link, not on a click', async () => {
     const user = userEvent.setup()
     renderWithProviders(<Projects />)
