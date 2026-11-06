@@ -4,13 +4,13 @@ export const SELECTORS = {
     LOGO: 'header-logo',
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
-    STATUS: 'header-status',
   },
   MAIN: 'main',
   PROJECTS: {
     SELF: 'projects',
     CARD: 'project-card',
     REPO_LINK: 'project-repo-link',
+    COUNTS: 'project-counts',
   },
   SKILLS: {
     SELF: 'skills',

@@ -14,7 +14,10 @@ export const TooltipProvider = ({
   </RadixTooltip.Provider>
 )
 
-export type TooltipProps = {
+export type TooltipProps = Pick<
+  React.ComponentProps<typeof RadixTooltip.Root>,
+  'open' | 'onOpenChange'
+> & {
   /** What the tooltip says, which screen readers hear as the trigger's description. */
   content: React.ReactNode
   /** The trigger: one element that takes a ref and spreads its props, like `Link`. */
@@ -24,10 +27,11 @@ export type TooltipProps = {
 /**
  * A tooltip shown while its trigger is hovered or has keyboard focus.
  *
- * Needs a `TooltipProvider` above it.
+ * Needs a `TooltipProvider` above it. Pass `open` and `onOpenChange` to also
+ * open it from somewhere other than its trigger.
  */
-export const Tooltip = ({ content, children }: TooltipProps) => (
-  <RadixTooltip.Root>
+export const Tooltip = ({ content, children, ...rootProps }: TooltipProps) => (
+  <RadixTooltip.Root {...rootProps}>
     <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
     <RadixTooltip.Portal>
       <RadixTooltip.Content

@@ -1,5 +1,6 @@
 import { uniq } from 'es-toolkit'
 
+import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import {
@@ -31,7 +32,7 @@ export const SECTION_GLYPHS = uniq([
   ...[...PROJECTS, ...SKILLS].flatMap(({ glyph }) => glyph?.name ?? []),
 ])
 
-/** A glyph the build bundles: an interface glyph, or a heading's. */
+/** A glyph the build bundles: an interface glyph, a heading's, or a project count's. */
 export type GlyphName = UiIconName | NonNullable<SectionHeading['glyph']>
 
 /**
@@ -43,6 +44,7 @@ export type GlyphName = UiIconName | NonNullable<SectionHeading['glyph']>
 export const GLYPH_NAMES = uniq<GlyphName>([
   ...UI_ICON_NAMES,
   ...SECTION_GLYPHS,
+  ...COUNT_KINDS.map(({ icon }) => icon),
 ])
 
 /**

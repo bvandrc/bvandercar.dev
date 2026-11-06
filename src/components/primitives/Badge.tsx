@@ -1,10 +1,9 @@
 import { cn } from '@/utils'
 
-export type BadgeTone = 'positive' | 'caution' | 'neutral'
+export type BadgeTone = 'positive' | 'neutral'
 
 const TONE_CLASSES = {
   positive: 'text-tone-positive',
-  caution: 'text-tone-caution',
   neutral: 'text-tone-neutral',
 } satisfies Record<BadgeTone, string>
 

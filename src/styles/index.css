@@ -15,18 +15,10 @@
   --color-accent: #22d3ee;
   --color-accent-hover: #67e8f9;
   --color-accent-ink: #042f35;
+  /* A lavender-tinted grey for a quiet link, at 7.5:1 on the surface. */
+  --color-link-subtle: #9da8da;
   --color-tone-positive: #7ee0a8;
-  --color-tone-caution: #ff5a2c;
   --color-tone-neutral: #c4b5fd;
-
-  /* Blends the caution orange to a lighter orange and back. */
-  --animate-caution-pulse: caution-pulse 2s ease-in-out infinite;
-
-  @keyframes caution-pulse {
-    50% {
-      color: var(--color-orange-400);
-    }
-  }
 
   /* Pulses an accent glow around an element, to draw the eye to it. */
   --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
