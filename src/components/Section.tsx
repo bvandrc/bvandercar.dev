@@ -61,7 +61,7 @@ export type SectionProps = SectionPropsCommon & {
 export const Section = ({ glyph, className, ...props }: SectionProps) => (
   <TitledSection
     level="h2"
-    headingClassName="gap-4 text-2xl font-semibold tracking-tight"
+    headingClassName="gap-7.5 text-2xl font-semibold tracking-tight"
     icon={
       <Icon name={glyph} className="size-[1.25em] shrink-0 text-orange-400" />
     }
