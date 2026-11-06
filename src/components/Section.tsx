@@ -15,7 +15,7 @@ type TitledSectionProps = Omit<
   'title' | 'children'
 > & {
   level: 'h2' | 'h3'
-  /** The heading's type size and weight. */
+  /** The heading's type, and any spacing that differs from the default. */
   headingClassName: string
   /** Drawn on both sides of the title, and decorative. */
   icon: React.ReactNode
@@ -64,7 +64,7 @@ export type SectionProps = SectionPropsCommon & {
 export const Section = ({ glyph, className, ...props }: SectionProps) => (
   <TitledSection
     level="h2"
-    headingClassName="text-2xl font-semibold tracking-tight"
+    headingClassName="gap-4 text-2xl font-semibold tracking-tight"
     icon={
       <Icon name={glyph} className="size-[1.25em] shrink-0 text-orange-400" />
     }
