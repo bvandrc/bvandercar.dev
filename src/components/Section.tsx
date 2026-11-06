@@ -69,8 +69,8 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
       'flex items-center gap-3',
       // An orange rule from each icon to the title, padded by the gaps on both
       // its sides: 12px, a 36px line, and 12px make 60px from icon to text.
-      "before:h-0.5 before:w-9 before:rounded-full before:bg-orange-400 before:content-['']",
-      "after:h-0.5 after:w-9 after:rounded-full after:bg-orange-400 after:content-['']"
+      "before:h-0.5 before:w-9 before:rounded-full before:bg-orange-600 before:content-['']",
+      "after:h-0.5 after:w-9 after:rounded-full after:bg-orange-600 after:content-['']"
     )}
     icon={
       <Icon name={glyph} className="size-[1.25em] shrink-0 text-orange-400" />
