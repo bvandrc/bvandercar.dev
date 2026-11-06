@@ -95,6 +95,8 @@ jobs:
   zap-security-scan:
     name: ZAP Security Scan
     runs-on: ubuntu-latest
+    # Main only: a PR skips it, and main's run gates the deploy.
+    if: github.ref == 'refs/heads/main'
 
     env:
       PORT: 4173

@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react'
+import { useIsMobile } from '@bvandrc/react-toolkit'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type {
@@ -57,6 +58,7 @@ const ProjectCard = ({
   const nameId = useId()
   const repoLinkId = useId()
   const cardRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
   const [previewOpen, setPreviewOpen] = useState(false)
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -73,6 +75,8 @@ const ProjectCard = ({
       }
       className={cn(
         'flex h-full flex-col gap-3',
+        // Edge to edge on a phone, past the page's px-5 gutter in App.tsx.
+        '-mx-5 rounded-none border-x-0 md:mx-0 md:rounded-xl md:border-x',
         'transition-[box-shadow,border-color] duration-200',
         // Glows orange on hover, or while a link inside has keyboard focus.
         'hover:border-orange-400 hover:shadow-glow-24 hover:shadow-orange-500',
@@ -130,8 +134,9 @@ const ProjectCard = ({
           // Every card's toggle reads the same, so name the project it's for.
           aria-describedby={nameId}
           pulse={pulsePreview}
-          // Opening centers the whole card on screen, not just the preview.
-          scrollTargetRef={cardRef}
+          // Opening centers the whole card on screen, not just the preview. A
+          // phone's screen is too short for both, so it centers the preview.
+          scrollTargetRef={isMobile ? undefined : cardRef}
           open={previewOpen}
           onOpenChange={changePreviewOpen}
           className="mt-auto"
