@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { PROJECTS } from '@/generated/profile/content/projects'
+import { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import { formatCount } from '@/lib/format-count'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { Projects } from '../Projects'
@@ -56,6 +58,25 @@ describe('Projects', () => {
         name: TYPE_ICONS[type].title,
       })
       expect(icon, name).not.toBeNull()
+    }
+  })
+
+  it("shows a project's downloads beside its commits and PRs, where it has any", () => {
+    renderWithProviders(<Projects />)
+    const projects = PROJECTS.flatMap((group) => group.projects)
+    const links = screen.getAllByTestId(REPO_LINK)
+    // At least one of each, or either branch could go untested.
+    const downloads = projects.map(({ repo }) => REPO_COUNTS[repo]?.downloads)
+    expect(downloads.some((count) => count === undefined)).toBe(true)
+    expect(downloads.some((count) => count !== undefined)).toBe(true)
+    for (const [index, { name }] of projects.entries()) {
+      const count = downloads[index]
+      const text = links[index].textContent
+      if (count === undefined) {
+        expect(text, name).not.toMatch(/download/)
+      } else {
+        expect(text, name).toContain(formatCount(count, 'download'))
+      }
     }
   })
 

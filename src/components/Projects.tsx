@@ -9,6 +9,7 @@ import type {
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import { formatCount } from '@/lib/format-count'
 import { cn } from '@/utils'
 import { LivePreview } from './LivePreview'
 import { BrandIcon } from './primitives/BrandIcon'
@@ -22,10 +23,6 @@ import { Section, SubSection } from './Section'
 const TYPE_ICON_COLOR = '9fb0c8'
 
 const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
-
-/** `formatCount(1, 'PR')` → `'1 PR'`, `formatCount(654, 'PR')` → `'654 PRs'`. */
-const formatCount = (count: number, noun: string) =>
-  `${count.toLocaleString('en-US')} ${count === 1 ? noun : `${noun}s`}`
 
 type GridLayout = 'preview' | 'pairs'
 
@@ -117,6 +114,11 @@ const ProjectCard = ({
             <>
               {formatCount(counts.commits, 'commit')} <Separator />{' '}
               {formatCount(counts.prs, 'PR')} <Separator />{' '}
+              {counts.downloads !== undefined && (
+                <>
+                  {formatCount(counts.downloads, 'download')} <Separator />{' '}
+                </>
+              )}
             </>
           )}
           repo{' '}
