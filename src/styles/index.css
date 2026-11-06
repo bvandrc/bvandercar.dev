@@ -12,6 +12,8 @@
   --color-border: #26303f;
   --color-ink: #f0f4fa;
   --color-ink-muted: #a9b8ce;
+  /* Quieter than ink-muted, for detail beside it, at 5.4:1 on the surface. */
+  --color-ink-subtle: #8291a6;
   --color-accent: #22d3ee;
   --color-accent-hover: #67e8f9;
   --color-accent-ink: #042f35;

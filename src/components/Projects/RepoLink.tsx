@@ -7,7 +7,7 @@ import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
 
 const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 
-export type RepoLinkProps = ProjectCountsProps & {
+export type RepoLinkProps = Pick<ProjectCountsProps, 'repo'> & {
   /** The `id` of the project's name, which describes the link */
   nameId: string
 }
@@ -29,8 +29,8 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
       aria-describedby={nameId}
       href={repoUrl(repo)}
       newTab
-      tone="muted"
-      className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
+      // A group, so hovering either part lights up both.
+      className="group inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
       onPointerDown={() => {
         pointerDownRef.current = true
       }}
@@ -42,7 +42,12 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
         setRepoTooltipOpen(false)
       }}
       data-testid="project-repo-link">
-      <ProjectCounts repo={repo} />
+      {/* Quieter than "repo", like the profile README's grey counts beside
+          its link-colored "repo". */}
+      <ProjectCounts
+        repo={repo}
+        className="text-ink-subtle group-hover:text-accent-hover"
+      />
       <Tooltip
         content="GitHub Repository"
         open={repoTooltipOpen}

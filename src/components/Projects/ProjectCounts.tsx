@@ -3,8 +3,12 @@ import { Tooltip } from '@/components/primitives/Tooltip'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import { cn } from '@/utils'
 
-export type ProjectCountsProps = {
+export type ProjectCountsProps = Pick<
+  React.ComponentProps<'span'>,
+  'className'
+> & {
   /** GitHub repo name under bvandrc */
   repo: string
 }
@@ -15,7 +19,7 @@ export type ProjectCountsProps = {
  *
  * Renders nothing for a repo with no counts.
  */
-export const ProjectCounts = ({ repo }: ProjectCountsProps) => {
+export const ProjectCounts = ({ repo, className }: ProjectCountsProps) => {
   const counts = REPO_COUNTS[repo]
   if (!counts) {
     return null
@@ -35,7 +39,7 @@ export const ProjectCounts = ({ repo }: ProjectCountsProps) => {
       <span
         role="img"
         aria-label={label}
-        className="inline-flex items-center gap-2.5"
+        className={cn('inline-flex items-center gap-2.5', className)}
         data-testid="project-counts">
         {shown.map(({ key, icon, count }) => (
           <span key={key} className="inline-flex items-center gap-1">
