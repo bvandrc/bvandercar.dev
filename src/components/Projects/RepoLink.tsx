@@ -30,7 +30,7 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
       href={repoUrl(repo)}
       newTab
       // Quieter than the project's name link above it, until hovered.
-      tone="slate"
+      tone="soft"
       className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
       onPointerDown={() => {
         pointerDownRef.current = true

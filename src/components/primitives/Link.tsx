@@ -7,7 +7,7 @@ const linkVariants = cva('', {
     tone: {
       accent: 'text-accent hover:text-accent-hover',
       muted: 'text-ink-muted hover:text-accent',
-      slate: 'text-link-slate hover:text-accent-hover',
+      soft: 'text-link-soft hover:text-accent-hover',
     },
   },
   defaultVariants: { tone: 'accent' },

@@ -15,8 +15,8 @@
   --color-accent: #22d3ee;
   --color-accent-hover: #67e8f9;
   --color-accent-ink: #042f35;
-  /* A muted slate blue for a quieter link, at 4.9:1 on the surface. */
-  --color-link-slate: #7088b8;
+  /* The accent, less saturated, for a quieter link. */
+  --color-link-soft: #55daee;
   --color-tone-positive: #7ee0a8;
   --color-tone-caution: #ff5a2c;
   --color-tone-neutral: #c4b5fd;
