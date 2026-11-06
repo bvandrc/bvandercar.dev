@@ -46,10 +46,13 @@ const TitledSection = ({
   )
 }
 
-export type SectionProps = Omit<
+/** What `Section` and `SubSection` both take: everything but what each sets itself. */
+type SectionPropsCommon = Omit<
   TitledSectionProps,
   'level' | 'headingClassName' | 'icon'
-> & {
+>
+
+export type SectionProps = SectionPropsCommon & {
   glyph: GlyphName
 }
 
@@ -64,10 +67,7 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
   />
 )
 
-export type SubSectionProps = Omit<
-  TitledSectionProps,
-  'level' | 'headingClassName' | 'icon'
-> & {
+export type SubSectionProps = SectionPropsCommon & {
   /** An emoji, or a Simple Icons logo in its brand color. */
   icon: string | SectionLogo
 }
