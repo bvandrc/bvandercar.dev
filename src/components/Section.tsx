@@ -65,7 +65,9 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
   <TitledSection
     level="h2"
     headingClassName="text-2xl font-semibold tracking-tight"
-    icon={<Icon name={glyph} className="shrink-0 text-orange-400" />}
+    icon={
+      <Icon name={glyph} className="size-[1.25em] shrink-0 text-orange-400" />
+    }
     className={cn('flex flex-col gap-5', className)}
     {...props}
   />
