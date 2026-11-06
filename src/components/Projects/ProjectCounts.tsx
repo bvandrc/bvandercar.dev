@@ -1,21 +1,8 @@
-import { objectEntries } from 'ts-extras'
-import type { ValueOf } from 'type-fest'
-
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
+import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
-import type { GlyphName } from '@/lib/icons'
-
-type RepoCounts = NonNullable<ValueOf<typeof REPO_COUNTS>>
-
-// The GitHub profile README's counts, in its order, with Lucide's take on its
-// Octicons to match this site's other glyphs.
-const COUNT_KINDS = {
-  commits: { glyph: 'git-commit-horizontal', noun: 'commit' },
-  prs: { glyph: 'git-pull-request', noun: 'PR' },
-  downloads: { glyph: 'download', noun: 'download' },
-} satisfies Record<keyof RepoCounts, { glyph: GlyphName; noun: string }>
 
 export type ProjectCountsProps = {
   /** GitHub repo name under bvandrc */
@@ -33,12 +20,11 @@ export const ProjectCounts = ({ repo }: ProjectCountsProps) => {
   if (!counts) {
     return null
   }
-  const shown = objectEntries(COUNT_KINDS).flatMap(
-    ([kind, { glyph, noun }]) => {
-      const count = counts[kind]
-      return count === undefined ? [] : [{ kind, glyph, noun, count }]
-    }
-  )
+  // The profile README badge's counts, in its order and with its icons.
+  const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
+    const count = counts[key]
+    return count === undefined ? [] : [{ key, icon, noun, count }]
+  })
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -51,9 +37,9 @@ export const ProjectCounts = ({ repo }: ProjectCountsProps) => {
         aria-label={label}
         className="inline-flex items-center gap-2.5"
         data-testid="project-counts">
-        {shown.map(({ kind, glyph, count }) => (
-          <span key={kind} className="inline-flex items-center gap-1">
-            <Icon name={glyph} className="size-[1.1em]" />
+        {shown.map(({ key, icon, count }) => (
+          <span key={key} className="inline-flex items-center gap-1">
+            <Icon name={icon} className="size-[1.1em]" />
             {formatCompactCount(count)}
           </span>
         ))}
