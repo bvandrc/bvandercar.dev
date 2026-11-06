@@ -1,7 +1,10 @@
 import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
-import type { GroupGlyph } from '@/generated/profile/content/sections'
+import type {
+  GlyphColor,
+  GroupGlyph,
+} from '@/generated/profile/content/sections'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
@@ -70,6 +73,16 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
   />
 )
 
+// Each written out in full so Tailwind generates it, since the names come from content.
+const GLYPH_COLOR_CLASSES = {
+  amber: 'text-amber-400',
+  brown: 'text-[#a7723d]',
+  green: 'text-green-400',
+  sky: 'text-sky-400',
+  violet: 'text-violet-300',
+  yellow: 'text-yellow-300',
+} satisfies Record<GlyphColor, string>
+
 export type SubSectionProps = SectionPropsCommon & {
   /** An emoji, or a Simple Icons logo in its brand color, drawn without a `glyph`. */
   icon: string | SectionLogo
@@ -86,9 +99,7 @@ const SubSectionIcon = ({
     return (
       <Icon
         name={glyph.name}
-        // SVG's own `color` attribute, which the CSP allows where an inline style isn't.
-        color={`#${glyph.color}`}
-        className="shrink-0"
+        className={cn('shrink-0', GLYPH_COLOR_CLASSES[glyph.color])}
       />
     )
   }
