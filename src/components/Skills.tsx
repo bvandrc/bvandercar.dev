@@ -44,11 +44,7 @@ export const Skills = () => (
     title={SECTIONS.SKILLS.title}
     data-testid="skills">
     {SKILLS.map((group) => (
-      <SubSection
-        key={group.title}
-        icon={group.icon}
-        glyph={group.glyph}
-        title={group.title}>
+      <SubSection key={group.title} icon={group.glyph} title={group.title}>
         <dl className="flex flex-col gap-3">
           {group.rows.map((row) => {
             // The label's line breaks are for the README's narrow column.

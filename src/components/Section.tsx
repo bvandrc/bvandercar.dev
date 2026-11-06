@@ -84,27 +84,19 @@ const GLYPH_COLOR_CLASSES = {
 } satisfies Record<GlyphColor, string>
 
 export type SubSectionProps = SectionPropsCommon & {
-  /** An emoji, or a Simple Icons logo in its brand color, drawn without a `glyph`. */
-  icon: string | SectionLogo
-  /** An interface glyph in its own color, drawn in place of `icon`. */
-  glyph?: GroupGlyph
+  /** An interface glyph in its own color, or a Simple Icons logo in its brand color. */
+  icon: GroupGlyph | SectionLogo
 }
 
-/** A group heading's glyph in its color, or else its emoji or brand logo. */
-const SubSectionIcon = ({
-  icon,
-  glyph,
-}: Pick<SubSectionProps, 'icon' | 'glyph'>) => {
-  if (glyph) {
+/** A group heading's glyph in its color, or its brand logo. */
+const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) => {
+  if ('name' in icon) {
     return (
       <Icon
-        name={glyph.name}
-        className={cn('shrink-0', GLYPH_COLOR_CLASSES[glyph.color])}
+        name={icon.name}
+        className={cn('shrink-0', GLYPH_COLOR_CLASSES[icon.color])}
       />
     )
-  }
-  if (typeof icon === 'string') {
-    return <span aria-hidden="true">{icon}</span>
   }
   return (
     <BrandIcon
@@ -117,17 +109,12 @@ const SubSectionIcon = ({
   )
 }
 
-/** A group within a section: an h3 with a colored glyph, an emoji, or a brand logo. */
-export const SubSection = ({
-  icon,
-  glyph,
-  className,
-  ...props
-}: SubSectionProps) => (
+/** A group within a section: an h3 with a colored glyph or a brand logo. */
+export const SubSection = ({ icon, className, ...props }: SubSectionProps) => (
   <TitledSection
     level="h3"
     headingClassName="text-lg font-semibold"
-    icon={<SubSectionIcon icon={icon} glyph={glyph} />}
+    icon={<SubSectionIcon icon={icon} />}
     className={cn('flex flex-col gap-3', className)}
     {...props}
   />

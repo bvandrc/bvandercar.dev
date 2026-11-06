@@ -148,8 +148,8 @@ export const Projects = () => {
       {PROJECTS.map((group) => (
         <SubSection
           key={group.title}
-          icon={group.icon}
-          glyph={group.glyph}
+          // React Websites has its logo and no glyph; every other group, a glyph.
+          icon={group.glyph ?? group.icon}
           title={group.title}>
           {group.intro && <p className="text-ink-muted">{group.intro}</p>}
           {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
