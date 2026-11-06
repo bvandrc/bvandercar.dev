@@ -76,18 +76,15 @@ export type SubSectionProps = SectionPropsCommon & {
 }
 
 /** A group heading's glyph in its color, or its brand logo. */
-const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) => {
-  if ('name' in icon) {
-    return (
-      <Icon
-        name={icon.name}
-        // SVG's own `color` attribute, which the CSP allows where an inline style isn't.
-        color={`#${icon.color}`}
-        className="shrink-0"
-      />
-    )
-  }
-  return (
+const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) =>
+  'name' in icon ? (
+    <Icon
+      name={icon.name}
+      // SVG's own `color` attribute, which the CSP allows where an inline style isn't.
+      color={`#${icon.color}`}
+      className="shrink-0"
+    />
+  ) : (
     <BrandIcon
       slug={icon.slug}
       color={icon.color}
@@ -96,7 +93,6 @@ const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) => {
       className="size-[1em]"
     />
   )
-}
 
 /** A group within a section: an h3 with a colored glyph or a brand logo. */
 export const SubSection = ({ icon, className, ...props }: SubSectionProps) => (
