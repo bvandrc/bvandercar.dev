@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import type { WeeklyDownloads } from '@/generated/npm-downloads'
+import type { WeeklyDownloads } from '@/generated/package-downloads'
 import { SELECTORS } from '~/test-support/selectors'
 import { DownloadsChart } from '../DownloadsChart'
 
@@ -18,15 +18,28 @@ const movePointer = (clientX: number) =>
 
 describe('DownloadsChart', () => {
   it('reads out the peak week until hovered', () => {
-    render(<DownloadsChart history={HISTORY} />)
+    render(<DownloadsChart history={HISTORY} registry="npm" />)
 
     expect(screen.getByTestId(READOUT).textContent).toBe(
       'Weekly npm downloads, peak 1,200'
     )
   })
 
+  it('names the registry the downloads are from', () => {
+    render(<DownloadsChart history={HISTORY} registry="pypi" />)
+
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Weekly PyPI downloads, peak 1,200'
+    )
+  })
+
   it('labels its first and last months', () => {
-    render(<DownloadsChart history={{ ...HISTORY, lastDay: '2026-05-24' }} />)
+    render(
+      <DownloadsChart
+        history={{ ...HISTORY, lastDay: '2026-05-24' }}
+        registry="npm"
+      />
+    )
 
     expect(
       screen.getByTestId(SELECTORS.PROJECTS.DOWNLOADS_CHART.SELF).textContent
@@ -34,7 +47,7 @@ describe('DownloadsChart', () => {
   })
 
   it('reads out the week nearest the pointer, and the peak again once it leaves', () => {
-    render(<DownloadsChart history={HISTORY} />)
+    render(<DownloadsChart history={HISTORY} registry="npm" />)
     const readout = screen.getByTestId(READOUT)
 
     // Past either end of the plot clamps to its first or last week.

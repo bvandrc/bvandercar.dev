@@ -1,4 +1,4 @@
-import type { WeeklyDownloads } from '@/generated/npm-downloads'
+import type { WeeklyDownloads } from '@/generated/package-downloads'
 import {
   describeWeeklyDownloads,
   formatDay,
@@ -59,8 +59,16 @@ describe('getPeakWeek', () => {
 
 describe('describeWeeklyDownloads', () => {
   it('names the first month and the peak week', () => {
-    expect(describeWeeklyDownloads({ ...HISTORY, weekly: [5, 1200, 12] })).toBe(
+    expect(
+      describeWeeklyDownloads({ ...HISTORY, weekly: [5, 1200, 12] }, 'npm')
+    ).toBe(
       'Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026'
+    )
+  })
+
+  it('names the registry as written in a sentence', () => {
+    expect(describeWeeklyDownloads(HISTORY, 'pypi')).toMatch(
+      /^Weekly PyPI downloads /
     )
   })
 })

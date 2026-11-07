@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { clamp } from 'es-toolkit'
 
-import type { WeeklyDownloads } from '@/generated/npm-downloads'
+import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
 import { formatCount } from '@/lib/format-count'
 import {
   formatDay,
   formatMonth,
   getPeakWeek,
   getWeekStarts,
+  REGISTRY_NAMES,
 } from './lib/weekly-downloads'
 
 const WIDTH = 256
@@ -23,6 +24,8 @@ const READOUT_CLASSES = {
 
 export type DownloadsChartProps = {
   history: WeeklyDownloads
+  /** The registry the history is from, which the readout names */
+  registry: Registry
 }
 
 /**
@@ -32,7 +35,7 @@ export type DownloadsChartProps = {
  * Drawn for sighted pointer users only: pair it with the history in words,
  * like `describeWeeklyDownloads`, for everyone else. Needs two weeks or more.
  */
-export const DownloadsChart = ({ history }: DownloadsChartProps) => {
+export const DownloadsChart = ({ history, registry }: DownloadsChartProps) => {
   const [activeWeek, setActiveWeek] = useState<number>()
   const { weekly } = history
   const weekStarts = getWeekStarts(history)
@@ -117,7 +120,7 @@ export const DownloadsChart = ({ history }: DownloadsChartProps) => {
         }
         data-testid="downloads-chart-readout">
         {activeWeek === undefined
-          ? `Weekly npm downloads, peak ${peak.downloads.toLocaleString('en-US')}`
+          ? `Weekly ${REGISTRY_NAMES[registry]} downloads, peak ${peak.downloads.toLocaleString('en-US')}`
           : `Week of ${formatDay(weekStarts[activeWeek])}: ${formatCount(weekly[activeWeek], 'download')}`}
       </p>
     </div>

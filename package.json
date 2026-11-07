@@ -66,6 +66,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4",
     "@biomejs/biome": "^2.6",
+    "@google-cloud/bigquery": "^9",
     "@iconify-json/devicon": "^1",
     "@iconify-json/lucide": "^1",
     "@iconify-json/material-symbols": "^1",

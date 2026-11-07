@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { useIsMobile } from '@bvandrc/react-toolkit'
+import { pick } from 'es-toolkit'
 
 import { LivePreview } from '@/components/LivePreview'
 import { BrandIcon } from '@/components/primitives/BrandIcon'
@@ -81,8 +82,7 @@ export const ProjectCard = ({
       <p className="text-sm text-ink-muted">{project.blurb}</p>
       <p className="text-xs">
         <RepoLink
-          repo={project.repo}
-          npmPackage={project.npmPackage}
+          {...pick(project, ['repo', 'npmPackage', 'pypiPackage'])}
           nameId={nameId}
         />
       </p>

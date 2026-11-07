@@ -1,6 +1,12 @@
-import type { WeeklyDownloads } from '@/generated/npm-downloads'
+import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
 
 const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Each registry's name, as written in a sentence. */
+export const REGISTRY_NAMES = {
+  npm: 'npm',
+  pypi: 'PyPI',
+} as const satisfies Record<Registry, string>
 
 // The dates are calendar days, so they're read in UTC, where they start.
 const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -42,7 +48,10 @@ export const getPeakWeek = (history: WeeklyDownloads) => {
 }
 
 /** The history in a sentence, like "Weekly npm downloads since Jul 2026, peaking at 1,010 in the week of Jul 28, 2026". */
-export const describeWeeklyDownloads = (history: WeeklyDownloads) => {
+export const describeWeeklyDownloads = (
+  history: WeeklyDownloads,
+  registry: Registry
+) => {
   const peak = getPeakWeek(history)
-  return `Weekly npm downloads since ${formatMonth(history.firstDay)}, peaking at ${peak.downloads.toLocaleString('en-US')} in the week of ${formatDay(peak.start)}`
+  return `Weekly ${REGISTRY_NAMES[registry]} downloads since ${formatMonth(history.firstDay)}, peaking at ${peak.downloads.toLocaleString('en-US')} in the week of ${formatDay(peak.start)}`
 }

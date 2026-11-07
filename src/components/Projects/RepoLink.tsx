@@ -18,7 +18,7 @@ export type RepoLinkProps = ProjectCountsProps & {
  * Each part shows its own tooltip on hover, and keyboard focus on the link
  * shows the "repo" one.
  */
-export const RepoLink = ({ repo, npmPackage, nameId }: RepoLinkProps) => {
+export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
   const [repoTooltipOpen, setRepoTooltipOpen] = useState(false)
   const pointerDownRef = useRef(false)
   return (
@@ -27,7 +27,7 @@ export const RepoLink = ({ repo, npmPackage, nameId }: RepoLinkProps) => {
       // beside it. A label naming the project too would no longer contain the
       // counts as shown, like "70.3K", which voice control users would say.
       aria-describedby={nameId}
-      href={repoUrl(repo)}
+      href={repoUrl(countsProps.repo)}
       newTab
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
@@ -43,7 +43,7 @@ export const RepoLink = ({ repo, npmPackage, nameId }: RepoLinkProps) => {
         setRepoTooltipOpen(false)
       }}
       data-testid="project-repo-link">
-      <ProjectCounts repo={repo} npmPackage={npmPackage} />
+      <ProjectCounts {...countsProps} />
       <Tooltip
         content="GitHub Repository"
         open={repoTooltipOpen}
