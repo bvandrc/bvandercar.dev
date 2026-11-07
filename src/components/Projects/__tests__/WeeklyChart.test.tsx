@@ -6,16 +6,17 @@ import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
   SELECTORS.PROJECTS.WEEKLY_CHART
 
-/** Renders a chart of 5, 1,200, then 12 commits over three weeks ending Mar 22, summarized as "Commits (cumulative)". */
+/** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
 const renderChart = (props?: Pick<WeeklyChartProps, 'releases'>) =>
   render(
     <WeeklyChart
+      firstDay="2026-03-02"
       weekEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
       noun="commit"
       weekly={[5, 1200, 12]}
       tone="COMMITS"
       icon="git-commit"
-      summary="Commits (cumulative)"
+      summary="Commits"
       data-testid="chart"
       {...props}
     />
@@ -29,7 +30,7 @@ describe('WeeklyChart', () => {
   it('reads out its summary until hovered', () => {
     renderChart()
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('Commits (cumulative)')
+    expect(screen.getByTestId(READOUT).textContent).toBe('Commits')
   })
 
   it('leads its caption with its glyph, hovered or not', () => {
@@ -64,7 +65,7 @@ describe('WeeklyChart', () => {
     }
 
     fireEvent.pointerLeave(screen.getByTestId(PLOT))
-    expect(readout.textContent).toBe('Commits (cumulative)')
+    expect(readout.textContent).toBe('Commits')
   })
 
   it('reads out a tapped week, and keeps it once the finger lifts', () => {
@@ -78,20 +79,22 @@ describe('WeeklyChart', () => {
     )
   })
 
-  it('marks each week with a release, and names its versions while hovered', () => {
+  it("marks each day with a release, and names its week's versions while hovered", () => {
     renderChart({
       releases: [
         { version: '1.0.0', day: '2026-03-02' },
         { version: '1.0.1', day: '2026-03-20' },
+        // The same day as the last, so drawn on the same line.
+        { version: '1.0.2', day: '2026-03-20' },
         { version: '1.1.0', day: '2026-03-22' },
       ],
     })
 
-    // The second and third releases share the last week.
-    expect(screen.getAllByTestId(RELEASE)).toHaveLength(2)
+    expect(screen.getAllByTestId(RELEASE)).toHaveLength(3)
     expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
     const CASES = [
       [0, 'v1.0.0'],
+      // The last three share the last week.
       [400, 'v1.0.1–v1.1.0'],
     ] as const
     for (const [clientX, expected] of CASES) {

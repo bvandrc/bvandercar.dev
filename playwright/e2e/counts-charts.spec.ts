@@ -26,11 +26,9 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
   const activity = tooltip.getByTestId(ACTIVITY_CHART)
   const downloads = tooltip.getByTestId(DOWNLOADS_CHART)
-  await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    'Commits (cumulative)'
-  )
+  await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText('Commits')
   await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    'npm downloads (cumulative)'
+    'npm downloads'
   )
   // Each chart ends at the count its glyph shows, shortened the same way.
   for (const chart of [activity, downloads]) {

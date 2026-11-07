@@ -181,7 +181,7 @@ describe('ProjectCounts', () => {
     expect(
       within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
         .textContent
-    ).toBe('PyPI downloads (cumulative)')
+    ).toBe('PyPI downloads')
   })
 
   it('charts nothing with a single week to show, leaving the counts alone', async () => {
@@ -194,6 +194,21 @@ describe('ProjectCounts', () => {
     expect(tooltip.textContent).toBe('2 commits, 1 PR, 30 downloads')
     expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
+  })
+
+  it('spans both charts over the same dates, so each release lines up across them', async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+
+    await hoverCounts()
+    const [activityLines, downloadsLines] = [
+      ACTIVITY_CHART,
+      DOWNLOADS_CHART,
+    ].map((chart) =>
+      within(screen.getByTestId(chart))
+        .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+        .map((line) => line.getAttribute('x1'))
+    )
+    expect(downloadsLines).toEqual(activityLines)
   })
 
   it("marks its package's releases on both charts", async () => {

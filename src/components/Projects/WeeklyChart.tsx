@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { clamp } from 'es-toolkit'
+import { uniq } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
 import type { Release } from '@/generated/package-downloads'
@@ -21,8 +21,9 @@ const PLOT_TOP = CAPTION_HEIGHT + INSET
 // Room on the right for the total, written beside the line's end, as short as
 // the glyphs write it, like "70.3K".
 const TOTAL_WIDTH = 46
-// Where the last week is drawn.
+// Where the last day is drawn.
 const PLOT_RIGHT = WIDTH - TOTAL_WIDTH
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /** What a chart counts, which picks its color, the same on every chart. */
 export type ChartTone = 'COMMITS' | 'DOWNLOADS'
@@ -48,8 +49,17 @@ const READOUT_CLASSES = {
 } as const
 
 export type WeeklyChartProps = {
+  /** The ISO date counting starts on, the first week's first day */
+  firstDay: string
   /** The ISO date each week ends on, oldest first; two or more */
   weekEnds: string[]
+  /**
+   * The ISO dates its width runs from and to, which charts shown together
+   * share, so a date sits at the same place on each.
+   *
+   * Defaults to its own weeks'.
+   */
+  span?: { start: string; end: string }
   /** What one of what it counts is called, like "commit" */
   noun: string
   /** Its count in each week, one per entry of `weekEnds` */
@@ -59,7 +69,7 @@ export type WeeklyChartProps = {
   icon?: GlyphName
   /** What the readout says while no week is hovered */
   summary: string
-  /** Marked with a grey line on each week that had one, naming its versions on hover */
+  /** Marked with a grey line on each day there was one, naming the week's versions on hover */
   releases?: Release[]
   'data-testid': string
 }
@@ -69,12 +79,14 @@ export type WeeklyChartProps = {
  * at the total, written beside it.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
- * summary, or the total through the week under the pointer. A week with releases gets a grey line, and its
- * versions show while it's hovered. Drawn for sighted pointer users only: pair
+ * summary, or the total through the week under the pointer. A release gets a
+ * grey line on its day, and its week's versions show while that's hovered. Drawn for sighted pointer users only: pair
  * it with the counts in words for everyone else.
  */
 export const WeeklyChart = ({
+  firstDay,
   weekEnds,
+  span,
   noun,
   weekly,
   tone,
@@ -92,24 +104,41 @@ export const WeeklyChart = ({
   })
   // A running total only grows, so it peaks at the end.
   const total = totals[lastIndex]
-  const toX = (index: number) =>
-    INSET + (index / lastIndex) * (PLOT_RIGHT - INSET)
+  const { start, end } = span ?? { start: firstDay, end: weekEnds[lastIndex] }
+  const startTime = Date.parse(start)
+  // A span of one day still has width to draw across.
+  const spanTime = Date.parse(end) - startTime || DAY_MS
+  /** Where a day falls across the plot. */
+  const toX = (day: string) =>
+    INSET + ((Date.parse(day) - startTime) / spanTime) * (PLOT_RIGHT - INSET)
   // A total of zero stays on the baseline rather than dividing by zero.
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
-  const line = totals
-    .map((count, index) => `${index ? 'L' : 'M'}${toX(index)},${toY(count)}`)
-    .join('')
+  const lastX = toX(weekEnds[lastIndex])
+  // From the baseline on the first day, before which there was nothing to count.
+  const line = `M${toX(firstDay)},${toY(0)}${totals
+    .map((count, index) => `L${toX(weekEnds[index])},${toY(count)}`)
+    .join('')}`
+  const releaseDays = uniq(releases.map(({ day }) => day)).filter(
+    (day) => day >= start && day <= end
+  )
   const releaseWeeks = getReleaseWeeks(releases, weekEnds)
+  const activeX =
+    activeWeek === undefined ? undefined : toX(weekEnds[activeWeek])
   const activeVersions =
     activeWeek === undefined ? undefined : releaseWeeks.get(activeWeek)
-  // A label in the right half sits left of its line, so it stays in the box.
-  const labelOnLeft = activeWeek !== undefined && activeWeek > lastIndex / 2
-  /** Reads out the week nearest the pointer, so it never has to land on the line. */
+  // A label in the right half sits left of the pointer, so it stays in the box.
+  const labelOnLeft =
+    activeX !== undefined && activeX > (INSET + PLOT_RIGHT) / 2
+  /** Reads out the week the pointer's day falls in, so it never has to land on the line. */
   const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
     const x = event.clientX - event.currentTarget.getBoundingClientRect().left
-    const index = Math.round(((x - INSET) / (PLOT_RIGHT - INSET)) * lastIndex)
-    setActiveWeek(clamp(index, 0, lastIndex))
+    const time = startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime
+    // The first week ending on or after that day, or the last past them all.
+    const index = weekEnds.findIndex(
+      (weekEnd) => Date.parse(weekEnd) + DAY_MS > time
+    )
+    setActiveWeek(index === -1 ? lastIndex : index)
   }
   return (
     <div className="relative" data-testid={testId}>
@@ -140,11 +169,11 @@ export const WeeklyChart = ({
           y2={HEIGHT - INSET}
           className="stroke-ink-muted/30"
         />
-        {[...releaseWeeks.keys()].map((index) => (
+        {releaseDays.map((day) => (
           <line
-            key={index}
-            x1={toX(index)}
-            x2={toX(index)}
+            key={day}
+            x1={toX(day)}
+            x2={toX(day)}
             y1={CAPTION_HEIGHT}
             y2={HEIGHT - INSET}
             className="stroke-ink-muted/30"
@@ -152,7 +181,7 @@ export const WeeklyChart = ({
           />
         ))}
         <path
-          d={`${line}L${toX(lastIndex)},${HEIGHT - INSET}L${toX(0)},${HEIGHT - INSET}Z`}
+          d={`${line}L${lastX},${HEIGHT - INSET}Z`}
           className={TONE_CLASSES[tone].AREA}
         />
         <path
@@ -164,7 +193,7 @@ export const WeeklyChart = ({
           className={TONE_CLASSES[tone].LINE}
         />
         <text
-          x={PLOT_RIGHT + 6}
+          x={lastX + 6}
           // Centred on the line's end, about a third of the text's height down.
           y={toY(total) + 5}
           className="fill-ink text-sm font-bold"
@@ -172,17 +201,17 @@ export const WeeklyChart = ({
           {/* Shortened like the glyphs, since hovering the last week reads it in full. */}
           {formatCompactCount(total)}
         </text>
-        {activeWeek !== undefined && (
+        {activeWeek !== undefined && activeX !== undefined && (
           <>
             <line
-              x1={toX(activeWeek)}
-              x2={toX(activeWeek)}
+              x1={activeX}
+              x2={activeX}
               y1={CAPTION_HEIGHT}
               y2={HEIGHT - INSET}
               className="stroke-ink-muted/50"
             />
             <circle
-              cx={toX(activeWeek)}
+              cx={activeX}
               cy={toY(totals[activeWeek])}
               r={4}
               strokeWidth={2}
@@ -191,9 +220,9 @@ export const WeeklyChart = ({
             />
           </>
         )}
-        {activeWeek !== undefined && activeVersions && (
+        {activeX !== undefined && activeVersions && (
           <text
-            x={toX(activeWeek) + (labelOnLeft ? -4 : 4)}
+            x={activeX + (labelOnLeft ? -4 : 4)}
             y={HEIGHT - INSET - 4}
             textAnchor={labelOnLeft ? 'end' : 'start'}
             className={cn(

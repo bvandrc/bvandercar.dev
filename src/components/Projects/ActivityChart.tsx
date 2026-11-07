@@ -3,7 +3,7 @@ import { COUNT_ICONS } from './lib/count-icons'
 import { getActivityWeekEnds } from './lib/weekly-activity'
 import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
-export type ActivityChartProps = Pick<WeeklyChartProps, 'releases'> & {
+export type ActivityChartProps = Pick<WeeklyChartProps, 'releases' | 'span'> & {
   activity: WeeklyActivity
 }
 
@@ -14,14 +14,20 @@ export type ActivityChartProps = Pick<WeeklyChartProps, 'releases'> & {
  * Pair it with `describeWeeklyCommits` for screen readers. Needs two weeks or
  * more.
  */
-export const ActivityChart = ({ activity, releases }: ActivityChartProps) => (
+export const ActivityChart = ({
+  activity,
+  releases,
+  span,
+}: ActivityChartProps) => (
   <WeeklyChart
+    firstDay={activity.firstWeek}
     weekEnds={getActivityWeekEnds(activity)}
+    span={span}
     noun="commit"
     weekly={activity.commits}
     tone="COMMITS"
     icon={COUNT_ICONS.commits}
-    summary="Commits (cumulative)"
+    summary="Commits"
     releases={releases}
     data-testid="activity-chart"
   />

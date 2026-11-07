@@ -79,6 +79,21 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       : undefined
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
+  // Both charts span the same dates, so a release lines up across them.
+  const ownSpans = [
+    chartedActivity && {
+      start: chartedActivity.firstWeek,
+      end: chartedActivity.lastDay,
+    },
+    chartedDownloads && {
+      start: chartedDownloads.history.firstDay,
+      end: chartedDownloads.history.lastDay,
+    },
+  ].filter(isNotNil)
+  const span = {
+    start: ownSpans.map(({ start }) => start).sort()[0],
+    end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
+  }
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -102,10 +117,18 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
         chartedActivity || chartedDownloads ? (
           <div className="flex flex-col gap-3">
             {chartedActivity && (
-              <ActivityChart activity={chartedActivity} releases={releases} />
+              <ActivityChart
+                activity={chartedActivity}
+                releases={releases}
+                span={span}
+              />
             )}
             {chartedDownloads && (
-              <DownloadsChart {...chartedDownloads} releases={releases} />
+              <DownloadsChart
+                {...chartedDownloads}
+                releases={releases}
+                span={span}
+              />
             )}
           </div>
         ) : (
