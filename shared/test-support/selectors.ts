@@ -10,7 +10,16 @@ export const SELECTORS = {
     SELF: 'projects',
     CARD: 'project-card',
     REPO_LINK: 'project-repo-link',
+    REPO_LINK_LABEL: 'project-repo-link-label',
     COUNTS: 'project-counts',
+    ACTIVITY_CHART: 'activity-chart',
+    DOWNLOADS_CHART: 'downloads-chart',
+    WEEKLY_CHART: {
+      PLOT: 'weekly-chart-plot',
+      READOUT: 'weekly-chart-readout',
+      RELEASE: 'weekly-chart-release',
+      RELEASE_LABEL: 'weekly-chart-release-label',
+    },
   },
   SKILLS: {
     SELF: 'skills',

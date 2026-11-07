@@ -1,7 +1,10 @@
 name: Deploy
 
 # Deploys to Cloudflare once CI passes on main. Needs the repo secrets
-# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and BIGQUERY_CREDENTIALS, a
+# Google Cloud service account key, for PyPI download charts. PRIVATE_REPOS_TOKEN,
+# a GitHub token that can read the private project repos, is optional: without
+# it, their cards show no activity chart.
 
 on:
   workflow_run:
@@ -25,6 +28,9 @@ jobs:
     environment:
       name: production
       url: https://bvandercar.dev/
+    env:
+      # Whether the secret is set, without putting the key itself in every step's env.
+      HAS_BIGQUERY_CREDENTIALS: ${{ secrets.BIGQUERY_CREDENTIALS != '' }}
 
     steps:
       - name: Checkout repo
@@ -36,8 +42,20 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      # For the PyPI download charts, which the build queries from BigQuery.
+      # Without the secret, the build still passes and PyPI projects show none.
+      - name: Authenticate to Google Cloud
+        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.BIGQUERY_CREDENTIALS }}
+
       - name: Build project
         run: pnpm build
+        env:
+          # For the activity charts. The workflow's own token reads public
+          # repos; PRIVATE_REPOS_TOKEN, if set, reaches the private ones too.
+          GITHUB_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN || github.token }}
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3

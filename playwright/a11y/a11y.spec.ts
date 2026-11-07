@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
+import { getChartedCounts } from '../support/charted-counts'
 import { mockFramedPages } from '../support/mock-framed-pages'
 import { checkA11y } from './accessibility'
 
@@ -27,6 +28,17 @@ test.describe('Accessibility', () => {
     // Radix portals the tooltip to the end of <body>, outside every landmark,
     // so it can float above the page; screen readers get its text as the
     // trigger's description instead.
+    await checkA11y(page, { disableRules: ['region'] })
+  })
+
+  test('Open counts charts', async ({ page }) => {
+    await page.goto('/')
+
+    await getChartedCounts(page).hover()
+    await expect(page.getByTestId(PROJECTS.ACTIVITY_CHART)).toBeVisible()
+    await expect(page.getByTestId(PROJECTS.DOWNLOADS_CHART)).toBeVisible()
+
+    // Portaled outside every landmark, like any tooltip.
     await checkA11y(page, { disableRules: ['region'] })
   })
 
