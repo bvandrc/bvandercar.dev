@@ -19,6 +19,7 @@ export const SELECTORS = {
       PLOT: 'weekly-chart-plot',
       READOUT: 'weekly-chart-readout',
       TOTAL: 'weekly-chart-total',
+      DOT: 'weekly-chart-dot',
       RELEASE: 'weekly-chart-release',
       RELEASE_LABEL: 'weekly-chart-release-label',
     },

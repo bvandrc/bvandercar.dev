@@ -92,7 +92,7 @@ export type WeeklyChartProps = {
   icon?: GlyphName
   /** What the readout says while no week is hovered */
   summary: string
-  /** Whether `span` is zoomed in, which fits the height to the totals in view, rather than measuring from zero */
+  /** Whether `span` is zoomed in, which lets a mouse drag the chart along */
   zoomed?: boolean
   /** Called for a wheel turned, or a pinch, over the chart, with the time under it and how much to scale `span`'s width, to zoom around it; without it, the page scrolls and zooms as usual */
   onZoom?: (anchor: number, factor: number) => void
@@ -150,22 +150,11 @@ export const WeeklyChart = ({
   /** Where a day falls across the plot. */
   const toX = (day: string) =>
     INSET + ((Date.parse(day) - startTime) / spanTime) * (PLOT_RIGHT - INSET)
-  // The highest total in view: the first past its right edge, so a zoomed-in
-  // line stays below the top, or the total if the line ends in view.
-  const endIndex = weekEnds.findIndex((weekEnd) => weekEnd >= end)
-  const topTotal = totals[endIndex === -1 ? lastIndex : endIndex]
-  // The lowest total in view: what was counted by the left edge, while
-  // zoomed in, so the climb fills the height; zero otherwise.
-  const leftEdge = [firstDay, start].sort()[1]
-  const bottomTotal = zoomed
-    ? (totals.findLast((_, index) => weekEnds[index] < leftEdge) ?? 0)
-    : 0
-  // A range of zero stays on the baseline rather than dividing by zero.
+  // From zero to the total, zoomed in or not, so a height always means the
+  // same count. A total of zero stays on the baseline rather than dividing
+  // by zero.
   const toY = (count: number) =>
-    HEIGHT -
-    INSET -
-    ((count - bottomTotal) / (topTotal - bottomTotal || 1)) *
-      (HEIGHT - INSET - PLOT_TOP)
+    HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
   const lastX = toX(weekEnds[lastIndex])
   // The line starts on the first day, at nothing counted yet, or at a span's
   // later start, at what was counted by then.
@@ -379,6 +368,7 @@ export const WeeklyChart = ({
               strokeWidth={2}
               // A ring in the tooltip's own color, so the dot stands off the line.
               className={cn(TONE_CLASSES[tone].DOT, 'stroke-surface-raised')}
+              data-testid="weekly-chart-dot"
             />
           </>
         )}

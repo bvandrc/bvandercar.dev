@@ -4,12 +4,15 @@ import { SELECTORS } from '~/test-support/selectors'
 import { getWheelZoomFactor } from '../lib/weeks'
 import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 
-const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
+const { PLOT, READOUT, TOTAL, DOT, RELEASE, RELEASE_LABEL } =
   SELECTORS.PROJECTS.WEEKLY_CHART
 
 /** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
 const renderChart = (
-  props?: Pick<WeeklyChartProps, 'releases' | 'span' | 'onZoom' | 'onPan'>
+  props?: Pick<
+    WeeklyChartProps,
+    'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
+  >
 ) =>
   render(
     <WeeklyChart
@@ -96,6 +99,28 @@ describe('WeeklyChart', () => {
       'Through Mar 15, 2026: 1,205 commits'
     )
     expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
+  })
+
+  it('keeps its height from zero to the total while zoomed in, so a count sits at the same height', () => {
+    /** The hover dot's height on the middle week, Mar 9 to 15. */
+    const getMiddleDotY = () => {
+      movePointer(140)
+      return screen.getByTestId(DOT).getAttribute('cy')
+    }
+    const { unmount } = renderChart()
+    const unzoomed = getMiddleDotY()
+    unmount()
+
+    renderChart({
+      span: { start: '2026-03-09', end: '2026-03-16' },
+      zoomed: true,
+    })
+    movePointer(0)
+    // Across a zoomed span, the pointer finds the middle week further left.
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 15, 2026: 1,205 commits'
+    )
+    expect(screen.getByTestId(DOT).getAttribute('cy')).toBe(unzoomed)
   })
 
   it('reads out a tapped week, and keeps it once the finger lifts', () => {
