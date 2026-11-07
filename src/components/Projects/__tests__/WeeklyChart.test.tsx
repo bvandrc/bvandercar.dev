@@ -4,8 +4,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { getWheelZoomFactor } from '../lib/weeks'
 import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 
-const { PLOT, READOUT, TOTAL, DOT, RELEASE, RELEASE_LABEL } =
-  SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL, DOT, RELEASE } = SELECTORS.PROJECTS.WEEKLY_CHART
 
 /** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
 const renderChart = (
@@ -134,7 +133,7 @@ describe('WeeklyChart', () => {
     )
   })
 
-  it("marks each day with a release, and names its week's latest version while hovered", () => {
+  it('marks each day with a release with a line, one for releases on the same day', () => {
     renderChart({
       releases: [
         { version: '1.0.0', day: '2026-03-02' },
@@ -146,22 +145,6 @@ describe('WeeklyChart', () => {
     })
 
     expect(screen.getAllByTestId(RELEASE)).toHaveLength(3)
-    expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
-    const CASES = [
-      [0, 'v1.0.0'],
-      // The last three share the last week, which names its latest.
-      [400, 'v1.1.0'],
-    ] as const
-    for (const [clientX, expected] of CASES) {
-      movePointer(clientX)
-      expect(
-        screen.getByTestId(RELEASE_LABEL).textContent,
-        String(clientX)
-      ).toBe(expected)
-    }
-    // The middle week had no release.
-    movePointer(140)
-    expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
   })
 
   it('zooms with the wheel, around the time under the pointer, in place of scrolling the page', () => {

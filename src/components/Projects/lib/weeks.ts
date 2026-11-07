@@ -1,7 +1,5 @@
 import { clamp } from 'es-toolkit'
 
-import type { Release } from '@/generated/package-downloads'
-
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // The dates are calendar days, so they're read in UTC, where they start.
@@ -33,26 +31,6 @@ export const addDays = (isoDate: string, days: number) =>
 export const getPeakWeek = (weekly: number[], weekStarts: string[]) => {
   const count = Math.max(...weekly)
   return { count, start: weekStarts[weekly.indexOf(count)] }
-}
-
-/**
- * Each week, by its index in `weekEnds`, that had a release, and the versions
- * released in it, oldest first.
- *
- * A release from before the first week or after the last is left out.
- */
-export const getReleaseWeeks = (releases: Release[], weekEnds: string[]) => {
-  const firstDay = addDays(weekEnds[0], -6)
-  const weeks = new Map<number, string[]>()
-  for (const { version, day } of releases.toSorted((a, b) =>
-    a.day.localeCompare(b.day)
-  )) {
-    const index = weekEnds.findIndex((end) => day <= end)
-    if (day >= firstDay && index !== -1) {
-      weeks.set(index, [...(weeks.get(index) ?? []), version])
-    }
-  }
-  return weeks
 }
 
 /**

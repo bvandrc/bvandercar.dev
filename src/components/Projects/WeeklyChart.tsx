@@ -11,7 +11,6 @@ import {
   type DaySpan,
   formatDay,
   formatLatestVersion,
-  getReleaseWeeks,
   getWheelZoomFactor,
 } from './lib/weeks'
 
@@ -98,7 +97,7 @@ export type WeeklyChartProps = {
   onZoom?: (anchor: number, factor: number) => void
   /** Called for a drag, a sideways scroll, or two fingers moved, over the chart, with how many milliseconds later to move `span` */
   onPan?: (delta: number) => void
-  /** Marked with a grey line on each day there was one, naming the week's versions on hover */
+  /** Marked with a grey line on each day there was one, naming its latest version on hover */
   releases?: Release[]
   'data-testid': string
 }
@@ -109,7 +108,7 @@ export type WeeklyChartProps = {
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
  * summary, or the total through the week under the pointer. A release gets a
- * grey line on its day, and its week's versions show while that's hovered. Drawn for sighted pointer users only: pair
+ * grey line on its day, which names its latest version while hovered. Drawn for sighted pointer users only: pair
  * it with the counts in words for everyone else.
  */
 export const WeeklyChart = ({
@@ -169,14 +168,8 @@ export const WeeklyChart = ({
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => day >= start && day <= end
   )
-  const releaseWeeks = getReleaseWeeks(releases, weekEnds)
   const activeX =
     activeWeek === undefined ? undefined : toX(weekEnds[activeWeek])
-  const activeVersions =
-    activeWeek === undefined ? undefined : releaseWeeks.get(activeWeek)
-  // A label in the right half sits left of the pointer, so it stays in the box.
-  const labelOnLeft =
-    activeX !== undefined && activeX > (INSET + PLOT_RIGHT) / 2
   /** The time at a pointer's `clientX`, kept between where the line starts and the span's end, so it never falls on a week the chart leaves out. */
   const getTimeAt = (clientX: number) => {
     const x = clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
@@ -371,20 +364,6 @@ export const WeeklyChart = ({
               data-testid="weekly-chart-dot"
             />
           </>
-        )}
-        {activeX !== undefined && activeVersions && (
-          <text
-            x={activeX + (labelOnLeft ? -4 : 4)}
-            y={HEIGHT - INSET - 4}
-            textAnchor={labelOnLeft ? 'end' : 'start'}
-            className={cn(
-              'fill-ink text-xs',
-              // An outline in the tooltip's color, so it reads over the line.
-              'stroke-surface-raised stroke-3 [paint-order:stroke] [stroke-linejoin:round]'
-            )}
-            data-testid="weekly-chart-release-label">
-            {formatLatestVersion(activeVersions)}
-          </text>
         )}
         {/* The hover target: the whole box, not just the thin line. */}
         <rect width={WIDTH} height={HEIGHT} fill="transparent" />

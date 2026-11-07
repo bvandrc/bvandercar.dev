@@ -4,7 +4,6 @@ import {
   formatLatestVersion,
   formatMonth,
   getPeakWeek,
-  getReleaseWeeks,
   getWheelZoomFactor,
   panSpan,
   zoomSpan,
@@ -44,37 +43,6 @@ describe('getPeakWeek', () => {
       count: 40,
       start: '2026-03-02',
     })
-  })
-})
-
-describe('getReleaseWeeks', () => {
-  const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
-
-  it('groups releases by the week they fall in, oldest version first', () => {
-    const weeks = getReleaseWeeks(
-      [
-        { version: '1.1.0', day: '2026-03-15' },
-        { version: '1.0.0', day: '2026-03-02' },
-        { version: '1.0.1', day: '2026-03-09' },
-      ],
-      WEEK_ENDS
-    )
-    expect([...weeks]).toEqual([
-      [0, ['1.0.0']],
-      // The 9th starts the second week, and the 15th ends it.
-      [1, ['1.0.1', '1.1.0']],
-    ])
-  })
-
-  it('leaves out releases from before the first week or after the last', () => {
-    const weeks = getReleaseWeeks(
-      [
-        { version: '0.9.0', day: '2026-03-01' },
-        { version: '2.0.0', day: '2026-03-23' },
-      ],
-      WEEK_ENDS
-    )
-    expect(weeks.size).toBe(0)
   })
 })
 
