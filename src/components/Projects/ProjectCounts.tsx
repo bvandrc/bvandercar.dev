@@ -41,6 +41,8 @@ const prefetchCharts = () => {
 const UNPACKAGED_MIN_COMMITS = 20
 // How many commits a repo with no package has made before its chart starts.
 const UNPACKAGED_START_COMMITS = 15
+// The shortest stretch of dates the charts are drawn over: two weeks.
+const MIN_CHART_MS = 14 * 24 * 60 * 60 * 1000
 
 export type ProjectCountsProps = Pick<
   Project,
@@ -116,7 +118,6 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     pkg && history && history.weekly.length > 1
       ? { registry: pkg.registry, history }
       : undefined
-  const hasCharts = Boolean(chartedActivity || chartedDownloads)
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
   /** Where the charts start: past a slow start, so it doesn't squeeze the rest into their right edge. */
@@ -147,6 +148,11 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     start: getSpanStart(),
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
+  const hasCharts =
+    Boolean(chartedActivity || chartedDownloads) &&
+    // Too short a stretch, like a package released this week, has nothing
+    // to chart yet.
+    Date.parse(fullSpan.end) - Date.parse(fullSpan.start) >= MIN_CHART_MS
   const span = zoomedSpan ?? fullSpan
   // Each from the span before, so gestures landing in one frame build on
   // each other rather than all starting from the same one.
@@ -164,12 +170,17 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   // The charts' history in words, for screen readers.
   const description = [
     label,
-    chartedActivity && describeWeeklyCommits(chartedActivity),
-    chartedDownloads &&
-      describeWeeklyDownloads(
-        chartedDownloads.history,
-        chartedDownloads.registry
-      ),
+    // Only for charts that show.
+    ...(hasCharts
+      ? [
+          chartedActivity && describeWeeklyCommits(chartedActivity),
+          chartedDownloads &&
+            describeWeeklyDownloads(
+              chartedDownloads.history,
+              chartedDownloads.registry
+            ),
+        ]
+      : []),
   ]
     .filter(isNotNil)
     .join('. ')

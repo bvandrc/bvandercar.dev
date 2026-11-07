@@ -30,6 +30,7 @@ const FIXTURES = vi.hoisted(() => ({
   SMALL_REPO: 'small-repo',
   NPM_PACKAGE: 'some-package',
   NEW_NPM_PACKAGE: 'new-package',
+  FRESH_NPM_PACKAGE: 'fresh-package',
   PYPI_PACKAGE: 'some-python-package',
 }))
 const {
@@ -39,6 +40,7 @@ const {
   SMALL_REPO,
   NPM_PACKAGE,
   NEW_NPM_PACKAGE,
+  FRESH_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
 const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
@@ -61,11 +63,13 @@ vi.mock('@/generated/profile/repo-counts', () => ({
 
 vi.mock('@/generated/repo-activity', () => ({
   REPO_ACTIVITY: {
+    // Two quiet weeks at the end, so it spans the two weeks a chart needs
+    // from where it starts.
     [FIXTURES.REPO]: {
       firstWeek: '2026-02-23',
-      lastDay: '2026-03-12',
-      commits: [3, 40, 12],
-      prs: [1, 9, 4],
+      lastDay: '2026-03-26',
+      commits: [3, 40, 12, 0, 0],
+      prs: [1, 9, 4, 0, 0],
     },
     [FIXTURES.NEW_REPO]: {
       firstWeek: '2026-03-16',
@@ -107,6 +111,8 @@ vi.mock('@/generated/package-downloads', () => ({
   } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
   PACKAGE_RELEASES: {
     npm: {
+      // First released six days before the repo's history ends.
+      [FIXTURES.FRESH_NPM_PACKAGE]: [{ version: '1.0.0', day: '2026-03-20' }],
       [FIXTURES.NPM_PACKAGE]: [
         { version: '1.0.0', day: '2026-03-04' },
         { version: '1.1.0', day: '2026-03-12' },
@@ -349,6 +355,15 @@ describe('ProjectCounts', () => {
     const panned = getFirstReleaseXs()
     expect(panned).not.toEqual(zoomed)
     expect(panned[1]).toEqual(panned[0])
+  })
+
+  it('charts nothing for a package first released under two weeks ago, however long its repo', async () => {
+    renderWithProviders(
+      <ProjectCounts repo={REPO} npmPackage={FRESH_NPM_PACKAGE} />
+    )
+
+    expect((await hoverCounts()).textContent).toBe(LABEL)
+    expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
   })
 
   it("marks its package's releases on both charts", async () => {
