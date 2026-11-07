@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { isNotNil, sum } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
@@ -12,14 +12,30 @@ import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
-import { ActivityChart } from './ActivityChart'
-import { DownloadsChart } from './DownloadsChart'
 import {
   describeWeeklyCommits,
   getWeekReachingCommits,
 } from './lib/weekly-activity'
 import { describeWeeklyDownloads } from './lib/weekly-downloads'
 import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
+// The type alone, which leaves the charts' code to the lazy import below.
+import type { ProjectChartsProps } from './ProjectCharts'
+
+/** Loads the charts' code, which the module system keeps once loaded. */
+const loadCharts = () => import('./ProjectCharts')
+const ProjectCharts = lazy<React.ComponentType<ProjectChartsProps>>(() =>
+  loadCharts().then(
+    // React.lazy takes a default export, which the module doesn't have.
+    (module) => ({ default: module.ProjectCharts }),
+    // A chunk that fails to load, offline say, leaves the tooltip without
+    // charts rather than throwing in render.
+    () => ({ default: () => null })
+  )
+)
+/** Starts loading the charts ahead of their first render, which handles a failure itself. */
+const prefetchCharts = () => {
+  loadCharts().catch(() => undefined)
+}
 
 // How many commits a repo with no package needs before it gets a chart.
 const UNPACKAGED_MIN_COMMITS = 20
@@ -100,6 +116,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     pkg && history && history.weekly.length > 1
       ? { registry: pkg.registry, history }
       : undefined
+  const hasCharts = Boolean(chartedActivity || chartedDownloads)
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
   /** Where the charts start: past a slow start, so it doesn't squeeze the rest into their right edge. */
@@ -161,40 +178,39 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       open={open}
       onOpenChange={changeOpen}
       content={
-        chartedActivity || chartedDownloads ? (
-          <div className="flex flex-col gap-3">
-            {chartedActivity && (
-              <ActivityChart
-                activity={chartedActivity}
-                releases={releases}
-                span={span}
-                zoomed={zoomedSpan !== undefined}
-                onZoom={zoom}
-                onPan={pan}
-              />
-            )}
-            {chartedDownloads && (
-              <DownloadsChart
-                {...chartedDownloads}
-                releases={releases}
-                span={span}
-                zoomed={zoomedSpan !== undefined}
-                onZoom={zoom}
-                onPan={pan}
-              />
-            )}
-          </div>
+        hasCharts ? (
+          <Suspense
+            fallback={
+              // A blank chart's size for each, so the tooltip doesn't jump
+              // once they load.
+              <div
+                className="flex flex-col gap-3"
+                data-testid="project-charts-loading">
+                {[chartedActivity, chartedDownloads]
+                  .filter(isNotNil)
+                  .map((_, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
+                    <div key={index} className="h-21 w-82" />
+                  ))}
+              </div>
+            }>
+            <ProjectCharts
+              activity={chartedActivity}
+              downloads={chartedDownloads}
+              releases={releases}
+              span={span}
+              zoomed={zoomedSpan !== undefined}
+              onZoom={zoom}
+              onPan={pan}
+            />
+          </Suspense>
         ) : (
           label
         )
       }
       aria-label={description === label ? undefined : description}
       // Sized to its charts, with text to match, rather than to a line of text.
-      className={
-        chartedActivity || chartedDownloads
-          ? 'max-w-none p-3 text-sm'
-          : undefined
-      }>
+      className={hasCharts ? 'max-w-none p-3 text-sm' : undefined}>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: a tap only stands in for the hover a touch screen lacks; keyboards focus the link around it. */}
@@ -202,7 +218,13 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
         role="img"
         aria-label={label}
         className="inline-flex items-center gap-2.5"
+        // Starts loading the charts as the pointer arrives, ahead of the
+        // tooltip's open delay, or with a tap.
+        onPointerEnter={hasCharts ? prefetchCharts : undefined}
         onPointerDown={(event) => {
+          if (hasCharts) {
+            prefetchCharts()
+          }
           tapRef.current = {
             isTouch: event.pointerType === 'touch',
             wasOpen: open,

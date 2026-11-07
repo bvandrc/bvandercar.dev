@@ -18,7 +18,8 @@ import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
-const { COUNTS, ACTIVITY_CHART, DOWNLOADS_CHART } = SELECTORS.PROJECTS
+const { COUNTS, ACTIVITY_CHART, DOWNLOADS_CHART, CHARTS_LOADING } =
+  SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
@@ -131,10 +132,12 @@ const turnWheel = (
   return fireEvent(target, event)
 }
 
-/** Hovers the counts, and returns the tooltip once it opens. */
+/** Hovers the counts, and returns the tooltip once it opens and any charts in it have loaded. */
 const hoverCounts = async () => {
   await userEvent.setup().hover(screen.getByTestId(COUNTS))
-  return screen.findByTestId(TOOLTIP)
+  const tooltip = await screen.findByTestId(TOOLTIP)
+  await waitFor(() => expect(screen.queryByTestId(CHARTS_LOADING)).toBeNull())
+  return tooltip
 }
 
 /** Asserts `later` comes after `earlier` in the page, so is shown below it. */
