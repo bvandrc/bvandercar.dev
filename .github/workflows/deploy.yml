@@ -1,8 +1,9 @@
 name: Deploy
 
 # Deploys to Cloudflare once CI passes on main. Needs the repo secrets
-# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and BIGQUERY_CREDENTIALS, a
-# Google Cloud service account key, for PyPI download charts.
+# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and, for PyPI download
+# charts, the repo variables GCP_WORKLOAD_IDENTITY_PROVIDER and
+# GCP_SERVICE_ACCOUNT.
 
 on:
   workflow_run:
@@ -12,6 +13,8 @@ on:
 
 permissions:
   contents: read
+  # The GitHub token Google Cloud's auth step exchanges for its own.
+  id-token: write
 
 # Let a running deploy finish rather than cancelling it mid-publish.
 concurrency:
@@ -26,9 +29,6 @@ jobs:
     environment:
       name: production
       url: https://bvandercar.dev/
-    env:
-      # Whether the secret is set, without putting the key itself in every step's env.
-      HAS_BIGQUERY_CREDENTIALS: ${{ secrets.BIGQUERY_CREDENTIALS != '' }}
 
     steps:
       - name: Checkout repo
@@ -40,13 +40,16 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      # For the PyPI download charts, which the build queries from BigQuery.
-      # Without the secret, the build still passes and PyPI projects show none.
+      # For the PyPI download charts, which the build queries from BigQuery. No
+      # key: Google trusts this repo's GitHub token through Workload Identity
+      # Federation. Without the variables, the build still passes and PyPI
+      # projects show none.
       - name: Authenticate to Google Cloud
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
+        if: vars.GCP_WORKLOAD_IDENTITY_PROVIDER != ''
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: ${{ secrets.BIGQUERY_CREDENTIALS }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Build project
         run: pnpm build

@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: read
+  # The GitHub token Google Cloud's auth step exchanges for its own.
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -23,9 +25,6 @@ jobs:
     environment:
       name: preview
       url: ${{ steps.upload.outputs.url }}
-    env:
-      # Whether the secret is set, without putting the key itself in every step's env.
-      HAS_BIGQUERY_CREDENTIALS: ${{ secrets.BIGQUERY_CREDENTIALS != '' }}
 
     steps:
       - name: Checkout repo
@@ -34,13 +33,16 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      # For the PyPI download charts, which the build queries from BigQuery.
-      # Without the secret, the build still passes and PyPI projects show none.
+      # For the PyPI download charts, which the build queries from BigQuery. No
+      # key: Google trusts this repo's GitHub token through Workload Identity
+      # Federation. Without the variables, the build still passes and PyPI
+      # projects show none.
       - name: Authenticate to Google Cloud
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
+        if: vars.GCP_WORKLOAD_IDENTITY_PROVIDER != ''
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: ${{ secrets.BIGQUERY_CREDENTIALS }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Build project
         run: pnpm build
