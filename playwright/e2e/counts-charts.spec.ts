@@ -46,3 +46,24 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
     /^Through .+: [\d,]+ downloads?$/
   )
 })
+
+test("the wheel zooms both of a project's charts around the pointer, without scrolling the page", async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  await getChartedCounts(page).hover()
+  const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
+  const totals = tooltip.getByTestId(WEEKLY_CHART.TOTAL)
+  await expect(totals).toHaveCount(2)
+  const scrollY = await page.evaluate(() => window.scrollY)
+
+  await hoverPlot(page, tooltip.getByTestId(ACTIVITY_CHART))
+  await page.mouse.wheel(0, -600)
+  // Zoomed in around the middle, short of the lines' ends and their totals.
+  await expect(totals).toHaveCount(0)
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY)
+
+  await page.mouse.wheel(0, 2000)
+  await expect(totals).toHaveCount(2)
+})

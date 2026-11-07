@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { createEvent, fireEvent, render, screen } from '@testing-library/react'
 
 import { SELECTORS } from '~/test-support/selectors'
 import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
@@ -7,7 +7,9 @@ const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
   SELECTORS.PROJECTS.WEEKLY_CHART
 
 /** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
-const renderChart = (props?: Pick<WeeklyChartProps, 'releases' | 'span'>) =>
+const renderChart = (
+  props?: Pick<WeeklyChartProps, 'releases' | 'span' | 'onZoom'>
+) =>
   render(
     <WeeklyChart
       firstDay="2026-03-02"
@@ -21,6 +23,14 @@ const renderChart = (props?: Pick<WeeklyChartProps, 'releases' | 'span'>) =>
       {...props}
     />
   )
+
+/** Turns the wheel over `target` at `clientX`, returning whether the page would scroll. */
+const turnWheel = (target: Element, clientX: number, deltaY: number) => {
+  const event = createEvent.wheel(target, { deltaY })
+  // The test DOM's WheelEvent drops a clientX passed in, which a browser's keeps.
+  Object.defineProperty(event, 'clientX', { value: clientX })
+  return fireEvent(target, event)
+}
 
 /** Moves the pointer to `clientX` on the plot, which the test DOM lays out from x = 0. */
 const movePointer = (clientX: number) =>
@@ -118,5 +128,27 @@ describe('WeeklyChart', () => {
     // The middle week had no release.
     movePointer(140)
     expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
+  })
+
+  it('zooms with the wheel, around the time under the pointer, in place of scrolling the page', () => {
+    const onZoom = vi.fn()
+    renderChart({ onZoom })
+
+    // Over the plot's start, so the time is the first day's.
+    const scrolled = turnWheel(screen.getByTestId(PLOT), 5, -100)
+    expect(onZoom).toHaveBeenCalledWith(Date.parse('2026-03-02'), -100)
+    expect(scrolled).toBe(false)
+  })
+
+  it('leaves the wheel to scroll the page without a zoom to call', () => {
+    renderChart()
+
+    expect(turnWheel(screen.getByTestId(PLOT), 5, -100)).toBe(true)
+  })
+
+  it("hides the total while zoomed in short of the line's end", () => {
+    renderChart({ span: { start: '2026-03-02', end: '2026-03-15' } })
+
+    expect(screen.queryByTestId(TOTAL)).toBeNull()
   })
 })

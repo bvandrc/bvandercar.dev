@@ -1,3 +1,5 @@
+import { clamp } from 'es-toolkit'
+
 import type { Release } from '@/generated/package-downloads'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -58,3 +60,53 @@ export const formatVersions = (versions: string[]) =>
   versions.length > 1
     ? `v${versions[0]}–v${versions.at(-1)}`
     : `v${versions[0]}`
+
+/** The dates a chart runs from and to, as ISO dates or times. */
+export type DaySpan = { start: string; end: string }
+
+// How far a wheel zooms per unit of its `deltaY`: about a fifth per notch.
+const ZOOM_RATE = 0.002
+// The narrowest a zoom goes: four weeks, so there's still a line to draw, or
+// a quarter of a shorter chart's span.
+const MIN_ZOOM_MS = 28 * DAY_MS
+
+/**
+ * `span` zoomed around `anchor`, a time within it, by a wheel's `deltaY`: in
+ * for a negative one, out for a positive.
+ *
+ * The anchor keeps its place across the chart. The result stays within
+ * `full`, and no narrower than four weeks, or a quarter of `full` if that's
+ * narrower. It's undefined once it's back out to `full`.
+ */
+export const zoomSpan = (
+  span: DaySpan,
+  full: DaySpan,
+  anchor: number,
+  deltaY: number
+) => {
+  const [start, end, fullStart, fullEnd] = [
+    span.start,
+    span.end,
+    full.start,
+    full.end,
+  ].map(Date.parse)
+  const fullWidth = fullEnd - fullStart
+  const width = clamp(
+    (end - start) * Math.exp(deltaY * ZOOM_RATE),
+    Math.min(MIN_ZOOM_MS, fullWidth / 4),
+    fullWidth
+  )
+  if (width >= fullWidth) {
+    return undefined
+  }
+  const nextStart = clamp(
+    anchor - (anchor - start) * (width / (end - start)),
+    fullStart,
+    fullEnd - width
+  )
+  // Kept to the millisecond, as ISO times, so small wheel steps still move it.
+  return {
+    start: new Date(nextStart).toISOString(),
+    end: new Date(nextStart + width).toISOString(),
+  } satisfies DaySpan
+}

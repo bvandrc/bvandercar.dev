@@ -5,6 +5,7 @@ import {
   formatVersions,
   getPeakWeek,
   getReleaseWeeks,
+  zoomSpan,
 } from '../weeks'
 
 describe('formatMonth', () => {
@@ -82,5 +83,53 @@ describe('formatVersions', () => {
 
   it('spans several versions from the first to the last', () => {
     expect(formatVersions(['1.0.0', '1.0.1', '1.0.5'])).toBe('v1.0.0–v1.0.5')
+  })
+})
+
+describe('zoomSpan', () => {
+  const FULL = { start: '2025-04-11', end: '2026-04-11' }
+  const DAY_MS = 24 * 60 * 60 * 1000
+  /** A span's width, in days. */
+  const getDays = ({ start, end }: { start: string; end: string }) =>
+    (Date.parse(end) - Date.parse(start)) / DAY_MS
+  /** How far across a span a time falls, from 0 to 1. */
+  const getFraction = (
+    { start, end }: { start: string; end: string },
+    time: number
+  ) => (time - Date.parse(start)) / (Date.parse(end) - Date.parse(start))
+
+  it('zooms in for a wheel turned up, keeping the anchor where it was across the span', () => {
+    const ANCHOR = Date.parse('2026-03-01')
+    const zoomed = zoomSpan(FULL, FULL, ANCHOR, -200)
+
+    expect(zoomed).toBeDefined()
+    expect(getDays(zoomed ?? FULL)).toBeLessThan(getDays(FULL))
+    expect(getFraction(zoomed ?? FULL, ANCHOR)).toBeCloseTo(
+      getFraction(FULL, ANCHOR)
+    )
+  })
+
+  it('goes no narrower than four weeks', () => {
+    const zoomed = zoomSpan(FULL, FULL, Date.parse('2026-02-01'), -100_000)
+
+    expect(getDays(zoomed ?? FULL)).toBeCloseTo(28)
+  })
+
+  it('goes no narrower than a quarter of a span shorter than 16 weeks', () => {
+    const SHORT = { start: '2026-03-01', end: '2026-03-21' }
+    const zoomed = zoomSpan(SHORT, SHORT, Date.parse('2026-03-10'), -100_000)
+
+    expect(getDays(zoomed ?? SHORT)).toBeCloseTo(5)
+  })
+
+  it('stays within the full span when zooming out near an edge', () => {
+    const ZOOMED = { start: '2026-03-20', end: '2026-04-11' }
+    const zoomed = zoomSpan(ZOOMED, FULL, Date.parse('2026-04-10'), 100)
+
+    expect(zoomed?.end).toBe(new Date(Date.parse(FULL.end)).toISOString())
+  })
+
+  it('returns nothing once zoomed back out to the full span', () => {
+    expect(zoomSpan(FULL, FULL, Date.parse('2026-02-01'), 400)).toBeUndefined()
   })
 })

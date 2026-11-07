@@ -3,7 +3,10 @@ import { COUNT_ICONS } from './lib/count-icons'
 import { getActivityWeekEnds } from './lib/weekly-activity'
 import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
-export type ActivityChartProps = Pick<WeeklyChartProps, 'releases' | 'span'> & {
+export type ActivityChartProps = Pick<
+  WeeklyChartProps,
+  'releases' | 'span' | 'zoomed' | 'onZoom'
+> & {
   activity: WeeklyActivity
 }
 
@@ -18,11 +21,15 @@ export const ActivityChart = ({
   activity,
   releases,
   span,
+  zoomed,
+  onZoom,
 }: ActivityChartProps) => (
   <WeeklyChart
     firstDay={activity.firstWeek}
     weekEnds={getActivityWeekEnds(activity)}
     span={span}
+    zoomed={zoomed}
+    onZoom={onZoom}
     noun="commit"
     weekly={activity.commits}
     tone="COMMITS"

@@ -1,4 +1,10 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import {
+  createEvent,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import type {
@@ -108,6 +114,14 @@ vi.mock('@/generated/package-downloads', () => ({
     pypi: {},
   } satisfies Record<Registry, Record<string, Release[]>>,
 }))
+
+/** Turns the wheel over `target` at `clientX`, returning whether the page would scroll. */
+const turnWheel = (target: Element, clientX: number, deltaY: number) => {
+  const event = createEvent.wheel(target, { deltaY })
+  // The test DOM's WheelEvent drops a clientX passed in, which a browser's keeps.
+  Object.defineProperty(event, 'clientX', { value: clientX })
+  return fireEvent(target, event)
+}
 
 /** Hovers the counts, and returns the tooltip once it opens. */
 const hoverCounts = async () => {
@@ -266,6 +280,38 @@ describe('ProjectCounts', () => {
       ).toBe(charted)
       unmount()
     }
+  })
+
+  it('zooms both charts together with the wheel, and back out once the tooltip closes', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+    /** Each chart's release lines' positions, activity first. */
+    const getReleaseXs = () =>
+      [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
+        within(screen.getByTestId(chart))
+          .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+          .map((line) => line.getAttribute('x1'))
+      )
+
+    await hoverCounts()
+    const unzoomed = getReleaseXs()
+    turnWheel(
+      within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT),
+      100,
+      -300
+    )
+    const zoomed = getReleaseXs()
+    expect(zoomed).not.toEqual(unzoomed)
+    // Still lined up across the two.
+    expect(zoomed[1]).toEqual(zoomed[0])
+
+    // Taps close it, then open it again.
+    const counts = screen.getByTestId(COUNTS)
+    await user.pointer({ keys: '[TouchA]', target: counts })
+    await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
+    await user.pointer({ keys: '[TouchA]', target: counts })
+    await screen.findByTestId(TOOLTIP)
+    expect(getReleaseXs()).toEqual(unzoomed)
   })
 
   it("marks its package's releases on both charts", async () => {

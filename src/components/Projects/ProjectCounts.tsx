@@ -19,6 +19,7 @@ import {
   getWeekReachingCommits,
 } from './lib/weekly-activity'
 import { describeWeeklyDownloads } from './lib/weekly-downloads'
+import { type DaySpan, zoomSpan } from './lib/weeks'
 
 // How many commits a repo with no package needs before it gets a chart.
 const UNPACKAGED_MIN_COMMITS = 20
@@ -57,6 +58,15 @@ const getPackage = ({
  */
 export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   const [open, setOpen] = useState(false)
+  // Shared by both charts, so a release stays lined up across them as they zoom.
+  const [zoomedSpan, setZoomedSpan] = useState<DaySpan>()
+  /** Opens or closes the tooltip, closing it zoomed back out. */
+  const changeOpen = (next: boolean) => {
+    setOpen(next)
+    if (!next) {
+      setZoomedSpan(undefined)
+    }
+  }
   // Read at pointerdown, before Radix's own handler closes an open tooltip.
   const tapRef = useRef({ isTouch: false, wasOpen: false })
   const activity = REPO_ACTIVITY[repo]
@@ -116,10 +126,14 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       end: chartedDownloads.history.lastDay,
     },
   ].filter(isNotNil)
-  const span = {
+  const fullSpan = {
     start: getSpanStart(),
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
+  const span = zoomedSpan ?? fullSpan
+  /** Zooms both charts around a time under the pointer, by a wheel's turn. */
+  const zoom = (anchor: number, deltaY: number) =>
+    setZoomedSpan(zoomSpan(span, fullSpan, anchor, deltaY))
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -138,7 +152,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   return (
     <Tooltip
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={changeOpen}
       content={
         chartedActivity || chartedDownloads ? (
           <div className="flex flex-col gap-3">
@@ -147,6 +161,8 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
                 activity={chartedActivity}
                 releases={releases}
                 span={span}
+                zoomed={zoomedSpan !== undefined}
+                onZoom={zoom}
               />
             )}
             {chartedDownloads && (
@@ -154,6 +170,8 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
                 {...chartedDownloads}
                 releases={releases}
                 span={span}
+                zoomed={zoomedSpan !== undefined}
+                onZoom={zoom}
               />
             )}
           </div>
@@ -185,7 +203,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
           if (tapRef.current.isTouch) {
             // Also stops Radix's own handler, which would close it again.
             event.preventDefault()
-            setOpen(!tapRef.current.wasOpen)
+            changeOpen(!tapRef.current.wasOpen)
           }
         }}
         data-testid="project-counts">

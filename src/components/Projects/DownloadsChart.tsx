@@ -5,7 +5,7 @@ import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
 export type DownloadsChartProps = Pick<
   WeeklyChartProps,
-  'releases' | 'span'
+  'releases' | 'span' | 'zoomed' | 'onZoom'
 > & {
   history: WeeklyDownloads
   /** The registry the history is from, which the readout names */
@@ -24,11 +24,15 @@ export const DownloadsChart = ({
   registry,
   releases,
   span,
+  zoomed,
+  onZoom,
 }: DownloadsChartProps) => (
   <WeeklyChart
     firstDay={history.firstDay}
     weekEnds={getDownloadWeekEnds(history)}
     span={span}
+    zoomed={zoomed}
+    onZoom={onZoom}
     noun="download"
     weekly={history.weekly}
     tone="DOWNLOADS"

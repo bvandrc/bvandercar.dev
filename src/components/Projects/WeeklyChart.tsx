@@ -1,12 +1,18 @@
-import { useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { uniq } from 'es-toolkit'
+import { useEventListener } from 'usehooks-ts'
 
 import { Icon } from '@/components/primitives/Icon'
 import type { Release } from '@/generated/package-downloads'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
-import { formatDay, formatVersions, getReleaseWeeks } from './lib/weeks'
+import {
+  type DaySpan,
+  formatDay,
+  formatVersions,
+  getReleaseWeeks,
+} from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
 const WIDTH = 328
@@ -60,7 +66,7 @@ export type WeeklyChartProps = {
    * Defaults to its own weeks'. A start after the first day leaves out the
    * weeks before it, and the line starts at the total counted by then.
    */
-  span?: { start: string; end: string }
+  span?: DaySpan
   /** What one of what it counts is called, like "commit" */
   noun: string
   /** Its count in each week, one per entry of `weekEnds` */
@@ -70,6 +76,10 @@ export type WeeklyChartProps = {
   icon?: GlyphName
   /** What the readout says while no week is hovered */
   summary: string
+  /** Whether `span` is zoomed in, which fits the height to the totals in view, rather than measuring from zero */
+  zoomed?: boolean
+  /** Called for a wheel turned over the chart, with the time under the pointer, to zoom `span` around it; without it, the wheel scrolls the page */
+  onZoom?: (anchor: number, deltaY: number) => void
   /** Marked with a grey line on each day there was one, naming the week's versions on hover */
   releases?: Release[]
   'data-testid': string
@@ -93,10 +103,15 @@ export const WeeklyChart = ({
   tone,
   icon,
   summary,
+  zoomed = false,
+  onZoom,
   releases = [],
   'data-testid': testId,
 }: WeeklyChartProps) => {
   const [activeWeek, setActiveWeek] = useState<number>()
+  const plotRef = useRef<SVGSVGElement>(null)
+  // An id is only for the clip path's url(), where colons don't belong.
+  const clipId = `plot-${useId().replaceAll(':', '')}`
   const lastIndex = weekEnds.length - 1
   let runningTotal = 0
   const totals = weekly.map((count) => {
@@ -112,9 +127,22 @@ export const WeeklyChart = ({
   /** Where a day falls across the plot. */
   const toX = (day: string) =>
     INSET + ((Date.parse(day) - startTime) / spanTime) * (PLOT_RIGHT - INSET)
-  // A total of zero stays on the baseline rather than dividing by zero.
+  // The highest total in view: the first past its right edge, so a zoomed-in
+  // line stays below the top, or the total if the line ends in view.
+  const endIndex = weekEnds.findIndex((weekEnd) => weekEnd >= end)
+  const topTotal = totals[endIndex === -1 ? lastIndex : endIndex]
+  // The lowest total in view: what was counted by the left edge, while
+  // zoomed in, so the climb fills the height; zero otherwise.
+  const leftEdge = [firstDay, start].sort()[1]
+  const bottomTotal = zoomed
+    ? (totals.findLast((_, index) => weekEnds[index] < leftEdge) ?? 0)
+    : 0
+  // A range of zero stays on the baseline rather than dividing by zero.
   const toY = (count: number) =>
-    HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
+    HEIGHT -
+    INSET -
+    ((count - bottomTotal) / (topTotal - bottomTotal || 1)) *
+      (HEIGHT - INSET - PLOT_TOP)
   const lastX = toX(weekEnds[lastIndex])
   // The line starts on the first day, at nothing counted yet, or at a span's
   // later start, at what was counted by then.
@@ -137,15 +165,34 @@ export const WeeklyChart = ({
   // A label in the right half sits left of the pointer, so it stays in the box.
   const labelOnLeft =
     activeX !== undefined && activeX > (INSET + PLOT_RIGHT) / 2
+  /** The time at a pointer's `clientX`, kept between where the line starts and the span's end, so it never falls on a week the chart leaves out. */
+  const getTimeAt = (clientX: number) => {
+    const x = clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
+    return Math.min(
+      Math.max(
+        startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
+        Date.parse(lineStart)
+      ),
+      Date.parse(end)
+    )
+  }
+  useEventListener(
+    'wheel',
+    (event) => {
+      if (onZoom) {
+        // Zooms rather than scrolling the page beneath the tooltip.
+        event.preventDefault()
+        onZoom(getTimeAt(event.clientX), event.deltaY)
+      }
+    },
+    // usehooks-ts types its refs from before React 19 made them nullable.
+    plotRef as React.RefObject<SVGSVGElement>,
+    // Not passive, so it can stop the page from scrolling.
+    { passive: false }
+  )
   /** Reads out the week the pointer's day falls in, so it never has to land on the line. */
   const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
-    const x = event.clientX - event.currentTarget.getBoundingClientRect().left
-    // Clamped to where the line starts, so the inset left of it, or a later
-    // span start, never picks a week the chart leaves out.
-    const time = Math.max(
-      startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
-      Date.parse(lineStart)
-    )
+    const time = getTimeAt(event.clientX)
     // The first week ending on or after that day, or the last past them all.
     const index = weekEnds.findIndex(
       (weekEnd) => Date.parse(weekEnd) + DAY_MS > time
@@ -155,6 +202,7 @@ export const WeeklyChart = ({
   return (
     <div className="relative" data-testid={testId}>
       <svg
+        ref={plotRef}
         aria-hidden
         width={WIDTH}
         height={HEIGHT}
@@ -174,6 +222,12 @@ export const WeeklyChart = ({
           }
         }}
         data-testid="weekly-chart-plot">
+        <defs>
+          {/* Crops a zoomed-in line at the plot's edges. */}
+          <clipPath id={clipId}>
+            <rect width={PLOT_RIGHT + INSET} height={HEIGHT} />
+          </clipPath>
+        </defs>
         <line
           x1={INSET}
           x2={PLOT_RIGHT}
@@ -194,6 +248,7 @@ export const WeeklyChart = ({
         ))}
         <path
           d={`${line}L${lastX},${HEIGHT - INSET}L${startX},${HEIGHT - INSET}Z`}
+          clipPath={`url(#${clipId})`}
           className={TONE_CLASSES[tone].AREA}
         />
         <path
@@ -202,17 +257,21 @@ export const WeeklyChart = ({
           strokeWidth={2}
           strokeLinejoin="round"
           strokeLinecap="round"
+          clipPath={`url(#${clipId})`}
           className={TONE_CLASSES[tone].LINE}
         />
-        <text
-          x={lastX + 6}
-          // Centred on the line's end, about a third of the text's height down.
-          y={toY(total) + 5}
-          className="fill-ink text-sm font-bold"
-          data-testid="weekly-chart-total">
-          {/* Shortened like the glyphs, since hovering the last week reads it in full. */}
-          {formatCompactCount(total)}
-        </text>
+        {/* Only while the line's end is in view, unless zoomed in short of it. */}
+        {weekEnds[lastIndex] <= end && (
+          <text
+            x={lastX + 6}
+            // Centred on the line's end, about a third of the text's height down.
+            y={toY(total) + 5}
+            className="fill-ink text-sm font-bold"
+            data-testid="weekly-chart-total">
+            {/* Shortened like the glyphs, since hovering the last week reads it in full. */}
+            {formatCompactCount(total)}
+          </text>
+        )}
         {activeWeek !== undefined && activeX !== undefined && (
           <>
             <line
