@@ -16,21 +16,28 @@ const CAPTION_HEIGHT = 22
 // Where the highest total is drawn.
 const PLOT_TOP = CAPTION_HEIGHT + INSET
 
-/** A series' color, in a fixed order checked to stay apart for colorblind readers. */
-export type SeriesTone = 'FIRST' | 'SECOND'
+/** What a series counts, which picks its color, the same on every chart. */
+export type SeriesTone = 'COMMITS' | 'PRS' | 'DOWNLOADS'
 
 const TONE_CLASSES = {
-  FIRST: {
+  COMMITS: {
+    LINE: 'stroke-commits',
+    AREA: 'fill-commits/10',
+    DOT: 'fill-commits',
+    KEY: 'bg-commits',
+  },
+  PRS: {
+    LINE: 'stroke-prs',
+    AREA: 'fill-prs/10',
+    DOT: 'fill-prs',
+    KEY: 'bg-prs',
+  },
+  // Its own color, so the downloads chart never reads as another commits one.
+  DOWNLOADS: {
     LINE: 'stroke-cyan-600',
     AREA: 'fill-cyan-600/10',
     DOT: 'fill-cyan-600',
     KEY: 'bg-cyan-600',
-  },
-  SECOND: {
-    LINE: 'stroke-orange-600',
-    AREA: 'fill-orange-600/10',
-    DOT: 'fill-orange-600',
-    KEY: 'bg-orange-600',
   },
 } as const satisfies Record<SeriesTone, Record<string, string>>
 

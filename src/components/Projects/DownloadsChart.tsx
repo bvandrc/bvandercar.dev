@@ -22,7 +22,7 @@ export const DownloadsChart = ({
 }: DownloadsChartProps) => (
   <WeeklyChart
     weekEnds={getDownloadWeekEnds(history)}
-    series={[{ noun: 'download', weekly: history.weekly, tone: 'FIRST' }]}
+    series={[{ noun: 'download', weekly: history.weekly, tone: 'DOWNLOADS' }]}
     summary={`Running total of ${REGISTRY_NAMES[registry]} downloads`}
     releases={releases}
     data-testid="downloads-chart"

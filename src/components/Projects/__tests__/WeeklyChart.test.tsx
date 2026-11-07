@@ -14,12 +14,12 @@ const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
 const COMMITS = {
   noun: 'commit',
   weekly: [5, 1200, 12],
-  tone: 'FIRST',
+  tone: 'COMMITS',
 } satisfies ChartSeries
 const PRS = {
   noun: 'PR',
   weekly: [1, 0, 3],
-  tone: 'SECOND',
+  tone: 'PRS',
 } satisfies ChartSeries
 
 /** Renders the chart with `series`, summarized as "Running total". */

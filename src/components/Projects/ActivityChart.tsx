@@ -18,8 +18,8 @@ export const ActivityChart = ({ activity, releases }: ActivityChartProps) => (
   <WeeklyChart
     weekEnds={getActivityWeekEnds(activity)}
     series={[
-      { noun: 'commit', weekly: activity.commits, tone: 'FIRST' },
-      { noun: 'PR', weekly: activity.prs, tone: 'SECOND' },
+      { noun: 'commit', weekly: activity.commits, tone: 'COMMITS' },
+      { noun: 'PR', weekly: activity.prs, tone: 'PRS' },
     ]}
     summary="Running total"
     releases={releases}
