@@ -58,25 +58,34 @@ const fetchAll = async <T>(path: string) => {
 
 /**
  * A repo's commits on its default branch, and its pull requests by when they
- * were opened, counted per week from its first through the last full one.
+ * were opened, counted per week from its first through the one under way.
  *
- * Undefined for a repo with no full week yet.
+ * Every commit and PR is counted, so the weeks sum to the repo's totals.
+ * Undefined for a repo with neither.
  */
 const fetchActivity = async (repo: string) => {
   const [commits, pulls] = await Promise.all([
-    fetchAll<{ commit: { committer: { date: string } | null } }>(
-      `/repos/${OWNER}/${repo}/commits`
-    ),
+    fetchAll<{
+      commit: {
+        committer: { date: string } | null
+        author: { date: string } | null
+      }
+    }>(`/repos/${OWNER}/${repo}/commits`),
     fetchAll<{ created_at: string }>(`/repos/${OWNER}/${repo}/pulls?state=all`),
   ])
-  const commitWeeks = commits.flatMap(({ commit }) =>
-    commit.committer ? [getWeekStart(Date.parse(commit.committer.date))] : []
+  const commitWeeks = commits.map(({ commit }) =>
+    // A commit can lack a committer, so its author dates it instead, and one
+    // with neither still counts, as this week's.
+    getWeekStart(
+      Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
+    )
   )
   const prWeeks = pulls.map(({ created_at }) =>
     getWeekStart(Date.parse(created_at))
   )
-  // The week under way is left out, so it never reads as a drop.
-  const lastWeek = getWeekStart(Date.now()) - WEEK_MS
+  const now = Date.now()
+  // A running total never drops, so the week under way is charted too.
+  const lastWeek = getWeekStart(now)
   const firstWeek = Math.min(...commitWeeks, ...prWeeks)
   if (!(firstWeek <= lastWeek)) {
     return undefined
@@ -89,6 +98,7 @@ const fetchActivity = async (repo: string) => {
   }
   return {
     firstWeek: isoDate(firstWeek),
+    lastDay: isoDate(now),
     commits: weeks.map((week) => commitCounts[week] ?? 0),
     prs: weeks.map((week) => prCounts[week] ?? 0),
   }
@@ -115,9 +125,9 @@ if (token === undefined) {
         `::warning::Activity for ${repo} could not be read, so its card shows no chart: ${result.reason instanceof Error ? result.reason.message : result.reason}`
       )
     } else if (result.value) {
-      const { firstWeek, commits, prs } = result.value
+      const { firstWeek, lastDay, commits, prs } = result.value
       entries.push(
-        `  '${repo}': { firstWeek: '${firstWeek}', commits: [${commits.join(', ')}], prs: [${prs.join(', ')}] },`
+        `  '${repo}': { firstWeek: '${firstWeek}', lastDay: '${lastDay}', commits: [${commits.join(', ')}], prs: [${prs.join(', ')}] },`
       )
     }
   })
@@ -131,7 +141,9 @@ await writeFile(
 export type WeeklyActivity = {
   /** ISO date of the Monday the first week starts on */
   firstWeek: string
-  /** Commits on the default branch in each week, oldest first, through the last full week */
+  /** ISO date the history was read, which ends the last week, the one under way */
+  lastDay: string
+  /** Commits on the default branch in each week, oldest first; they sum to the repo's total */
   commits: number[]
   /** Pull requests opened in each of the same weeks */
   prs: number[]

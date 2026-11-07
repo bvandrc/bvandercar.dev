@@ -1,36 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
 import { SELECTORS } from '~/test-support/selectors'
-import {
-  type ChartSeries,
-  WeeklyChart,
-  type WeeklyChartProps,
-} from '../WeeklyChart'
+import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 
-const { PLOT, READOUT, RELEASE, RELEASE_LABEL } =
+const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
   SELECTORS.PROJECTS.WEEKLY_CHART
 
-const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
-const COMMITS = {
-  noun: 'commit',
-  weekly: [5, 1200, 12],
-  tone: 'COMMITS',
-} satisfies ChartSeries
-const PRS = {
-  noun: 'PR',
-  weekly: [1, 0, 3],
-  tone: 'PRS',
-} satisfies ChartSeries
-
-/** Renders the chart with `series`, summarized as "Running total". */
-const renderChart = (
-  series: ChartSeries[],
-  props?: Pick<WeeklyChartProps, 'releases'>
-) =>
+/** Renders a chart of 5, 1,200, then 12 commits over three weeks ending Mar 22, summarized as "Running total". */
+const renderChart = (props?: Pick<WeeklyChartProps, 'releases'>) =>
   render(
     <WeeklyChart
-      weekEnds={WEEK_ENDS}
-      series={series}
+      weekEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
+      noun="commit"
+      weekly={[5, 1200, 12]}
+      tone="COMMITS"
       summary="Running total"
       data-testid="chart"
       {...props}
@@ -43,28 +26,26 @@ const movePointer = (clientX: number) =>
 
 describe('WeeklyChart', () => {
   it('reads out its summary until hovered', () => {
-    renderChart([COMMITS])
+    renderChart()
 
     expect(screen.getByTestId(READOUT).textContent).toBe('Running total')
   })
 
-  it('names each of two or more series in the summary, as its legend', () => {
-    renderChart([COMMITS, PRS])
+  it('writes the total beside the end of its line', () => {
+    renderChart()
 
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Running totalcommitsPRs'
-    )
+    expect(screen.getByTestId(TOTAL).textContent).toBe('1,217')
   })
 
   it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
-    renderChart([COMMITS])
+    renderChart()
     const readout = screen.getByTestId(READOUT)
 
     // Past either end of the plot clamps to its first or last week.
     const CASES = [
       [-20, 'Through Mar 8, 2026: 5 commits'],
       // Closer to the middle week than to either end.
-      [100, 'Through Mar 15, 2026: 1,205 commits'],
+      [140, 'Through Mar 15, 2026: 1,205 commits'],
       [400, 'Through Mar 22, 2026: 1,217 commits'],
     ] as const
     for (const [clientX, expected] of CASES) {
@@ -76,17 +57,19 @@ describe('WeeklyChart', () => {
     expect(readout.textContent).toBe('Running total')
   })
 
-  it("reads out every series' running total through the hovered week", () => {
-    renderChart([COMMITS, PRS])
+  it('reads out a tapped week, and keeps it once the finger lifts', () => {
+    renderChart()
+    const plot = screen.getByTestId(PLOT)
 
-    movePointer(0)
+    fireEvent.pointerDown(plot, { clientX: 0, pointerType: 'touch' })
+    fireEvent.pointerLeave(plot, { pointerType: 'touch' })
     expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 5 commits, 1 PR'
+      'Through Mar 8, 2026: 5 commits'
     )
   })
 
   it('marks each week with a release, and names its versions while hovered', () => {
-    renderChart([COMMITS], {
+    renderChart({
       releases: [
         { version: '1.0.0', day: '2026-03-02' },
         { version: '1.0.1', day: '2026-03-20' },
@@ -109,18 +92,7 @@ describe('WeeklyChart', () => {
       ).toBe(expected)
     }
     // The middle week had no release.
-    movePointer(128)
+    movePointer(140)
     expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
-  })
-
-  it('reads out a tapped week, and keeps it once the finger lifts', () => {
-    renderChart([COMMITS])
-    const plot = screen.getByTestId(PLOT)
-
-    fireEvent.pointerDown(plot, { clientX: 0, pointerType: 'touch' })
-    fireEvent.pointerLeave(plot, { pointerType: 'touch' })
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 5 commits'
-    )
   })
 })

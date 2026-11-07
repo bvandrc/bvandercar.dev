@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { isNotNil } from 'es-toolkit'
+import { isNotNil, sum } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
@@ -12,10 +12,9 @@ import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
-import { cn } from '@/utils'
 import { ActivityChart } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
-import { describeWeeklyActivity } from './lib/weekly-activity'
+import { describeWeeklyCommits } from './lib/weekly-activity'
 import { describeWeeklyDownloads } from './lib/weekly-downloads'
 
 export type ProjectCountsProps = Pick<
@@ -38,12 +37,13 @@ const getPackage = ({
 }
 
 /**
- * A repo's counts as glyphs with shortened numbers, in full as alt text and on
- * hover, like "3,120 downloads".
+ * A repo's counts as glyphs with shortened numbers, in full as alt text, and
+ * on hover where there's nothing to chart, like "3,120 downloads".
  *
- * Renders nothing for a repo with no counts. The hover also charts the repo's
- * weekly commits and PRs, and an npm or PyPI package's weekly downloads, each
- * once it has more than a week of them, marking the package's releases on both.
+ * Renders nothing for a repo with no counts. The hover charts the repo's
+ * commits, and an npm or PyPI package's downloads, as running totals, each
+ * once it has more than a week of them, marking the package's releases on both,
+ * in place of the counts in words.
  * On a touch screen, which has no hover, a tap opens and closes the tooltip
  * instead, rather than following a link the counts sit in.
  */
@@ -51,35 +51,41 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   const [open, setOpen] = useState(false)
   // Read at pointerdown, before Radix's own handler closes an open tooltip.
   const tapRef = useRef({ isTouch: false, wasOpen: false })
-  const counts = REPO_COUNTS[repo]
-  if (!counts) {
-    return null
-  }
+  const activity = REPO_ACTIVITY[repo]
   const pkg = getPackage(packages)
   const history = pkg && PACKAGE_DOWNLOADS[pkg.registry][pkg.name]
+  // This site's own fetches are fresher than the profile's weekly counts, and
+  // the charts are drawn from them, so a count they have wins, and each chart
+  // ends at the count shown for it.
+  const counts = {
+    ...REPO_COUNTS[repo],
+    ...(activity && { commits: sum(activity.commits), prs: sum(activity.prs) }),
+    ...(history && { downloads: sum(history.weekly) }),
+  }
+  // The profile README badge's counts, in its order and with its icons.
+  const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
+    const count = counts[key]
+    return count === undefined ? [] : [{ key, icon, noun, count }]
+  })
+  if (shown.length === 0) {
+    return null
+  }
   // A single week is a point, not a trend.
+  const chartedActivity =
+    activity && activity.commits.length > 1 ? activity : undefined
   const chartedDownloads =
     pkg && history && history.weekly.length > 1
       ? { registry: pkg.registry, history }
       : undefined
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
-  // The profile README badge's counts, in its order and with its icons.
-  const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
-    const count = counts[key]
-    return count === undefined ? [] : [{ key, icon, noun, count }]
-  })
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
-  const activity = REPO_ACTIVITY[repo]
-  // A single week is a point, not a trend.
-  const chartedActivity =
-    activity && activity.commits.length > 1 ? activity : undefined
   // The charts' history in words, for screen readers.
   const description = [
     label,
-    chartedActivity && describeWeeklyActivity(chartedActivity),
+    chartedActivity && describeWeeklyCommits(chartedActivity),
     chartedDownloads &&
       describeWeeklyDownloads(
         chartedDownloads.history,
@@ -101,14 +107,6 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
             {chartedDownloads && (
               <DownloadsChart {...chartedDownloads} releases={releases} />
             )}
-            <p
-              className={cn(
-                'font-bold',
-                // Set off from the readout above it, which is white on hover too.
-                'border-t border-ink-muted/30 pt-2'
-              )}>
-              {label}
-            </p>
           </div>
         ) : (
           label

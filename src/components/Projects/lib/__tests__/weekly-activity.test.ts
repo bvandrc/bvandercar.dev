@@ -1,12 +1,14 @@
 import type { WeeklyActivity } from '@/generated/repo-activity'
 import {
-  describeWeeklyActivity,
+  describeWeeklyCommits,
   getActivityWeekEnds,
   getActivityWeekStarts,
 } from '../weekly-activity'
 
+// Read on a Sunday, the day its last week ends.
 const ACTIVITY = {
   firstWeek: '2026-02-23',
+  lastDay: '2026-03-15',
   commits: [3, 40, 12],
   prs: [1, 9, 4],
 } satisfies WeeklyActivity
@@ -29,12 +31,18 @@ describe('getActivityWeekEnds', () => {
       '2026-03-15',
     ])
   })
+
+  it('ends the week under way on the day it was read', () => {
+    expect(
+      getActivityWeekEnds({ ...ACTIVITY, lastDay: '2026-03-12' }).at(-1)
+    ).toBe('2026-03-12')
+  })
 })
 
-describe('describeWeeklyActivity', () => {
+describe('describeWeeklyCommits', () => {
   it('names the first month and the week with the most commits', () => {
-    expect(describeWeeklyActivity(ACTIVITY)).toBe(
-      'Weekly commits and PRs since Feb 2026, peaking at 40 commits in the week of Mar 2, 2026'
+    expect(describeWeeklyCommits(ACTIVITY)).toBe(
+      'Weekly commits since Feb 2026, peaking at 40 in the week of Mar 2, 2026'
     )
   })
 })

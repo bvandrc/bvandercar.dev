@@ -7,21 +7,19 @@ export type ActivityChartProps = Pick<WeeklyChartProps, 'releases'> & {
 }
 
 /**
- * A repo's commits and PRs as running totals, week by week, in two lines on
- * one small chart, with a legend, reading out the totals through the week
- * under the pointer.
+ * A repo's commits as a running total, week by week, on a small shaded line
+ * chart, reading out the total through the week under the pointer.
  *
- * Pair it with `describeWeeklyActivity` for screen readers. Needs two weeks or
+ * Pair it with `describeWeeklyCommits` for screen readers. Needs two weeks or
  * more.
  */
 export const ActivityChart = ({ activity, releases }: ActivityChartProps) => (
   <WeeklyChart
     weekEnds={getActivityWeekEnds(activity)}
-    series={[
-      { noun: 'commit', weekly: activity.commits, tone: 'COMMITS' },
-      { noun: 'PR', weekly: activity.prs, tone: 'PRS' },
-    ]}
-    summary="Running total"
+    noun="commit"
+    weekly={activity.commits}
+    tone="COMMITS"
+    summary="Running total of commits"
     releases={releases}
     data-testid="activity-chart"
   />

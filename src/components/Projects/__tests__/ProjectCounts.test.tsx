@@ -19,21 +19,33 @@ const { TOOLTIP } = SELECTORS
 const FIXTURES = vi.hoisted(() => ({
   REPO: 'some-repo',
   NEW_REPO: 'new-repo',
+  OTHER_REPO: 'other-repo',
   NPM_PACKAGE: 'some-package',
   NEW_NPM_PACKAGE: 'new-package',
   PYPI_PACKAGE: 'some-python-package',
 }))
-const { REPO, NEW_REPO, NPM_PACKAGE, NEW_NPM_PACKAGE, PYPI_PACKAGE } = FIXTURES
+const {
+  REPO,
+  NEW_REPO,
+  OTHER_REPO,
+  NPM_PACKAGE,
+  NEW_NPM_PACKAGE,
+  PYPI_PACKAGE,
+} = FIXTURES
+const { READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
 
-// What the repo's counts read as in full.
-const LABEL = '25 commits, 31 PRs, 3,120 downloads'
-const ACTIVITY_DESCRIPTION =
-  'Weekly commits and PRs since Feb 2026, peaking at 40 commits in the week of Mar 2, 2026'
+// The repo's counts in full: its commits and PRs from this site's fetch, and
+// its downloads from the profile's, with no package to fetch them for.
+const LABEL = '55 commits, 14 PRs, 3,120 downloads'
+const COMMITS_DESCRIPTION =
+  'Weekly commits since Feb 2026, peaking at 40 in the week of Mar 2, 2026'
 
 vi.mock('@/generated/profile/repo-counts', () => ({
+  // Older than this site's fetches, which differ from them as they would.
   REPO_COUNTS: {
     [FIXTURES.REPO]: { commits: 25, prs: 31, downloads: 3120 },
     [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
+    [FIXTURES.OTHER_REPO]: { commits: 7, prs: 3 },
   } satisfies typeof REPO_COUNTS,
 }))
 
@@ -41,10 +53,16 @@ vi.mock('@/generated/repo-activity', () => ({
   REPO_ACTIVITY: {
     [FIXTURES.REPO]: {
       firstWeek: '2026-02-23',
+      lastDay: '2026-03-12',
       commits: [3, 40, 12],
       prs: [1, 9, 4],
     },
-    [FIXTURES.NEW_REPO]: { firstWeek: '2026-03-16', commits: [2], prs: [1] },
+    [FIXTURES.NEW_REPO]: {
+      firstWeek: '2026-03-16',
+      lastDay: '2026-03-18',
+      commits: [2],
+      prs: [1],
+    },
   } satisfies Record<string, WeeklyActivity>,
 }))
 
@@ -98,23 +116,50 @@ describe('ProjectCounts', () => {
     renderWithProviders(<ProjectCounts repo={REPO} />)
     const counts = screen.getByTestId(COUNTS)
 
-    expect(counts.textContent).toBe('25313.1K')
+    expect(counts.textContent).toBe('55143.1K')
     expect(counts.getAttribute('aria-label')).toBe(LABEL)
   })
 
-  it("charts the repo's activity in the tooltip, above the counts, and describes it in words", async () => {
+  it("counts with this site's own fetches where it has them, so each chart ends at the count shown for it", async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+
+    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
+      '55 commits, 14 PRs, 1,217 downloads'
+    )
+    await hoverCounts()
+    const CASES = [
+      [ACTIVITY_CHART, '55'],
+      [DOWNLOADS_CHART, '1,217'],
+    ] as const
+    for (const [chart, expected] of CASES) {
+      expect(
+        within(screen.getByTestId(chart)).getByTestId(TOTAL).textContent,
+        chart
+      ).toBe(expected)
+    }
+  })
+
+  it("keeps the profile's counts for a repo this site fetched nothing for", () => {
+    renderWithProviders(<ProjectCounts repo={OTHER_REPO} />)
+
+    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
+      '7 commits, 3 PRs'
+    )
+  })
+
+  it("charts the repo's commits in the tooltip in place of the counts, and describes them in words", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} />)
 
     const tooltip = await hoverCounts()
     expect(tooltip.contains(screen.getByTestId(ACTIVITY_CHART))).toBe(true)
-    expectFollows(screen.getByText(LABEL), screen.getByTestId(ACTIVITY_CHART))
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
+    expect(within(tooltip).queryByText(LABEL)).toBeNull()
     expect(screen.getByRole('tooltip').textContent).toBe(
-      `${LABEL}. ${ACTIVITY_DESCRIPTION}`
+      `${LABEL}. ${COMMITS_DESCRIPTION}`
     )
   })
 
-  it("charts its npm package's downloads below the activity, and describes both", async () => {
+  it("charts its npm package's downloads below the commits, and describes both", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     const tooltip = await hoverCounts()
@@ -123,7 +168,7 @@ describe('ProjectCounts', () => {
     expect(tooltip.contains(downloads)).toBe(true)
     expectFollows(downloads, activity)
     expect(screen.getByRole('tooltip').textContent).toBe(
-      `${LABEL}. ${ACTIVITY_DESCRIPTION}. Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026`
+      `55 commits, 14 PRs, 1,217 downloads. ${COMMITS_DESCRIPTION}. Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026`
     )
   })
 
@@ -133,9 +178,10 @@ describe('ProjectCounts', () => {
     )
 
     await hoverCounts()
-    expect(screen.getByTestId(DOWNLOADS_CHART).textContent).toBe(
-      'Running total of PyPI downloads'
-    )
+    expect(
+      within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
+        .textContent
+    ).toBe('Running total of PyPI downloads')
   })
 
   it('charts nothing with a single week to show, leaving the counts alone', async () => {
@@ -144,7 +190,8 @@ describe('ProjectCounts', () => {
     )
 
     const tooltip = await hoverCounts()
-    expect(tooltip.textContent).toBe('2 commits, 1 PR')
+    // Its downloads come from this site's fetch, though too few weeks to chart.
+    expect(tooltip.textContent).toBe('2 commits, 1 PR, 30 downloads')
     expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
