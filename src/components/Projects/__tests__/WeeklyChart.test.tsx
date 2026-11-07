@@ -200,4 +200,23 @@ describe('WeeklyChart', () => {
 
     expect(screen.queryByTestId(TOTAL)).toBeNull()
   })
+
+  it('snaps to a release line under the pointer, reading out its versions and day', () => {
+    renderChart({
+      releases: [
+        { version: '1.0.1', day: '2026-03-12' },
+        { version: '1.0.2', day: '2026-03-12' },
+      ],
+    })
+    const release = screen.getByTestId(RELEASE)
+    const releaseX = Number(release.getAttribute('x1'))
+    const readout = screen.getByTestId(READOUT)
+
+    // A pixel off the line still lands on it.
+    movePointer(releaseX + 1)
+    expect(readout.textContent).toBe('v1.0.1–v1.0.2 released Mar 12, 2026')
+    // Further off, the week reads out as before.
+    movePointer(releaseX + 20)
+    expect(readout.textContent).toMatch(/^Through /)
+  })
 })

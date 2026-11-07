@@ -51,6 +51,15 @@ const TONE_CLASSES = {
   },
 } as const satisfies Record<ChartTone, Record<string, string>>
 
+// A hovered release's line stands out from the rest.
+const RELEASE_LINE_CLASSES = {
+  IDLE: 'stroke-ink-muted/30',
+  ACTIVE: 'stroke-ink-muted',
+} as const
+
+// How near a release line the pointer snaps to it, in pixels.
+const RELEASE_SNAP_PX = 4
+
 // The readout's summary is quieter than a hovered week's total, which leads.
 const READOUT_CLASSES = {
   SUMMARY: 'text-ink-muted',
@@ -112,6 +121,8 @@ export const WeeklyChart = ({
   'data-testid': testId,
 }: WeeklyChartProps) => {
   const [activeWeek, setActiveWeek] = useState<number>()
+  // The release day under the pointer, which it snaps to over a week.
+  const [activeRelease, setActiveRelease] = useState<string>()
   const plotRef = useRef<SVGSVGElement>(null)
   // Each finger on the plot, by pointer id, at its latest clientX.
   const touchesRef = useRef(new Map<number, number>())
@@ -223,14 +234,40 @@ export const WeeklyChart = ({
   /** Lets go of a finger lifted off, or taken away from, the plot. */
   const releaseTouch = (event: React.PointerEvent<SVGSVGElement>) =>
     touchesRef.current.delete(event.pointerId)
-  /** Reads out the week the pointer's day falls in, so it never has to land on the line. */
+  /**
+   * Reads out the release line within a few pixels of the pointer, or else
+   * the week the pointer's day falls in, so it never has to land on either.
+   */
   const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
+    const x =
+      event.clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
+    const release = releaseDays.find(
+      (day) => Math.abs(toX(day) - x) <= RELEASE_SNAP_PX
+    )
+    setActiveRelease(release)
+    if (release) {
+      setActiveWeek(undefined)
+      return
+    }
     const time = getTimeAt(event.clientX)
     // The first week ending on or after that day, or the last past them all.
     const index = weekEnds.findIndex(
       (weekEnd) => Date.parse(weekEnd) + DAY_MS > time
     )
     setActiveWeek(index === -1 ? lastIndex : index)
+  }
+  /** What the caption says: the hovered release, or week, or else the summary. */
+  const getReadout = () => {
+    if (activeRelease) {
+      const versions = releases
+        .filter(({ day }) => day === activeRelease)
+        .map(({ version }) => version)
+      return `${formatVersions(versions)} released ${formatDay(activeRelease)}`
+    }
+    if (activeWeek !== undefined) {
+      return `Through ${formatDay(weekEnds[activeWeek])}: ${formatCount(totals[activeWeek], noun)}`
+    }
+    return summary
   }
   return (
     <div className="relative" data-testid={testId}>
@@ -266,6 +303,7 @@ export const WeeklyChart = ({
         onPointerLeave={(event) => {
           if (event.pointerType !== 'touch') {
             setActiveWeek(undefined)
+            setActiveRelease(undefined)
           }
         }}
         data-testid="weekly-chart-plot">
@@ -289,7 +327,9 @@ export const WeeklyChart = ({
             x2={toX(day)}
             y1={CAPTION_HEIGHT}
             y2={HEIGHT - INSET}
-            className="stroke-ink-muted/30"
+            className={
+              RELEASE_LINE_CLASSES[day === activeRelease ? 'ACTIVE' : 'IDLE']
+            }
             data-testid="weekly-chart-release"
           />
         ))}
@@ -361,13 +401,15 @@ export const WeeklyChart = ({
           // Held in the top-left corner, over the strip the line leaves
           // clear, and letting the pointer through to the plot beneath.
           'pointer-events-none absolute top-0 left-0',
-          READOUT_CLASSES[activeWeek === undefined ? 'SUMMARY' : 'WEEK']
+          READOUT_CLASSES[
+            activeWeek === undefined && activeRelease === undefined
+              ? 'SUMMARY'
+              : 'WEEK'
+          ]
         )}
         data-testid="weekly-chart-readout">
         {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
-        {activeWeek === undefined
-          ? summary
-          : `Through ${formatDay(weekEnds[activeWeek])}: ${formatCount(totals[activeWeek], noun)}`}
+        {getReadout()}
       </p>
     </div>
   )
