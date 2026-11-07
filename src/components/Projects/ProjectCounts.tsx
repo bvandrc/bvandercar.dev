@@ -8,6 +8,7 @@ import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import { cn } from '@/utils'
 import { ActivityChart } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
 import { describeWeeklyActivity } from './lib/weekly-activity'
@@ -81,8 +82,14 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
           <div className="flex flex-col gap-3">
             {chartedActivity && <ActivityChart activity={chartedActivity} />}
             {chartedDownloads && <DownloadsChart {...chartedDownloads} />}
-            {/* Set off from the readout above it, which is white on hover too. */}
-            <p className="border-t border-ink-muted/30 pt-2">{label}</p>
+            <p
+              className={cn(
+                'font-bold',
+                // Set off from the readout above it, which is white on hover too.
+                'border-t border-ink-muted/30 pt-2'
+              )}>
+              {label}
+            </p>
           </div>
         ) : (
           label
