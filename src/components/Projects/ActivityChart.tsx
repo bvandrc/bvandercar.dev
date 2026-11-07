@@ -5,7 +5,7 @@ import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
 export type ActivityChartProps = Pick<
   WeeklyChartProps,
-  'releases' | 'span' | 'zoomed' | 'onZoom'
+  'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 > & {
   activity: WeeklyActivity
 }
@@ -23,6 +23,7 @@ export const ActivityChart = ({
   span,
   zoomed,
   onZoom,
+  onPan,
 }: ActivityChartProps) => (
   <WeeklyChart
     firstDay={activity.firstWeek}
@@ -30,6 +31,7 @@ export const ActivityChart = ({
     span={span}
     zoomed={zoomed}
     onZoom={onZoom}
+    onPan={onPan}
     noun="commit"
     weekly={activity.commits}
     tone="COMMITS"

@@ -9,7 +9,7 @@ const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
 
 /** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
 const renderChart = (
-  props?: Pick<WeeklyChartProps, 'releases' | 'span' | 'onZoom'>
+  props?: Pick<WeeklyChartProps, 'releases' | 'span' | 'onZoom' | 'onPan'>
 ) =>
   render(
     <WeeklyChart
@@ -25,11 +25,19 @@ const renderChart = (
     />
   )
 
-/** Turns the wheel over `target` at `clientX`, returning whether the page would scroll. */
-const turnWheel = (target: Element, clientX: number, deltaY: number) => {
+/** Turns the wheel over `target` at `clientX`, with any other `init`, returning whether the page would scroll. */
+const turnWheel = (
+  target: Element,
+  clientX: number,
+  deltaY: number,
+  init?: WheelEventInit
+) => {
   const event = createEvent.wheel(target, { deltaY })
-  // The test DOM's WheelEvent drops a clientX passed in, which a browser's keeps.
-  Object.defineProperty(event, 'clientX', { value: clientX })
+  // The test DOM's WheelEvent drops a clientX or ctrlKey passed in, which a
+  // browser's keeps.
+  for (const [key, value] of Object.entries({ clientX, ...init })) {
+    Object.defineProperty(event, key, { value })
+  }
   return fireEvent(target, event)
 }
 
@@ -144,28 +152,24 @@ describe('WeeklyChart', () => {
     expect(scrolled).toBe(false)
   })
 
-  it('zooms with two fingers, by how far they spread, around the point between them', () => {
+  it("zooms for a trackpad's pinch, around the point under it, rather than as a wheel's turn", () => {
     const onZoom = vi.fn()
     renderChart({ onZoom })
     const plot = screen.getByTestId(PLOT)
 
-    for (const [pointerId, clientX] of [
-      [1, 50],
-      [2, 150],
-    ]) {
-      fireEvent.pointerDown(plot, { pointerId, clientX, pointerType: 'touch' })
+    // A trackpad pinch reaches the page as a wheel with ctrl held: two
+    // steps apart, since the first only sets where the pinch starts.
+    for (const deltaY of [-10, -10]) {
+      turnWheel(plot, 150, deltaY, { ctrlKey: true })
     }
-    // From 100px apart to 200px apart, around 150px across.
-    fireEvent.pointerMove(plot, {
-      pointerId: 2,
-      clientX: 250,
-      pointerType: 'touch',
-    })
-    // A wheel turned at 150px, for the time there.
+    // A plain wheel turned at the same point, for the time there.
     turnWheel(plot, 150, -100)
-    const [[pinchAnchor, factor], [wheelAnchor]] = onZoom.mock.calls
-    expect(factor).toBe(0.5)
-    expect(pinchAnchor).toBe(wheelAnchor)
+    const [pinchCall, wheelCall] = onZoom.mock.calls
+    expect(onZoom).toHaveBeenCalledTimes(2)
+    // Spreading, so zooming in, by its own scale rather than a wheel's.
+    expect(pinchCall[1]).toBeLessThan(1)
+    expect(pinchCall[1]).not.toBe(wheelCall[1])
+    expect(pinchCall[0]).toBe(wheelCall[0])
   })
 
   it('reads out a week, not a zoom, for one finger moving alone', () => {
@@ -187,6 +191,17 @@ describe('WeeklyChart', () => {
     expect(screen.getByTestId(READOUT).textContent).toBe(
       'Through Mar 22, 2026: 1,217 commits'
     )
+  })
+
+  it('pans for a sideways scroll, later for one to the right, rather than zooming', () => {
+    const onZoom = vi.fn()
+    const onPan = vi.fn()
+    renderChart({ onZoom, onPan })
+
+    turnWheel(screen.getByTestId(PLOT), 150, 0, { deltaX: 40 })
+    expect(onZoom).not.toHaveBeenCalled()
+    expect(onPan).toHaveBeenCalledWith(expect.any(Number))
+    expect(onPan.mock.calls[0][0]).toBeGreaterThan(0)
   })
 
   it('leaves the wheel to scroll the page without a zoom to call', () => {

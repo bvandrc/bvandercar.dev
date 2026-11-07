@@ -6,6 +6,7 @@ import {
   getPeakWeek,
   getReleaseWeeks,
   getWheelZoomFactor,
+  panSpan,
   zoomSpan,
 } from '../weeks'
 
@@ -139,5 +140,29 @@ describe('zoomSpan', () => {
 
   it('returns nothing once zoomed back out to the full span', () => {
     expect(zoomSpan(FULL, FULL, Date.parse('2026-02-01'), 2)).toBeUndefined()
+  })
+})
+
+describe('panSpan', () => {
+  const FULL = { start: '2026-01-01', end: '2026-04-11' }
+  const ZOOMED = { start: '2026-02-01', end: '2026-03-01' }
+  const DAY_MS = 24 * 60 * 60 * 1000
+
+  it('moves a zoomed-in span later or earlier, keeping its width', () => {
+    expect(panSpan(ZOOMED, FULL, 7 * DAY_MS)).toEqual({
+      start: '2026-02-08T00:00:00.000Z',
+      end: '2026-03-08T00:00:00.000Z',
+    })
+  })
+
+  it("stops at the full span's edges", () => {
+    expect(panSpan(ZOOMED, FULL, -365 * DAY_MS)).toEqual({
+      start: '2026-01-01T00:00:00.000Z',
+      end: '2026-01-29T00:00:00.000Z',
+    })
+  })
+
+  it("leaves a span that isn't zoomed in where it is", () => {
+    expect(panSpan(undefined, FULL, 7 * DAY_MS)).toBeUndefined()
   })
 })

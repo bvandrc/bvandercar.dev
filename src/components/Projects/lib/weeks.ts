@@ -114,3 +114,30 @@ export const zoomSpan = (
     end: new Date(nextStart + width).toISOString(),
   } satisfies DaySpan
 }
+
+/**
+ * A zoomed-in `span` moved `delta` milliseconds later, or earlier for a
+ * negative one, kept within `full`.
+ *
+ * Undefined for one that isn't zoomed in, which has nowhere to move.
+ */
+export const panSpan = (
+  span: DaySpan | undefined,
+  full: DaySpan,
+  delta: number
+) => {
+  if (!span) {
+    return undefined
+  }
+  const [start, end, fullStart, fullEnd] = [
+    span.start,
+    span.end,
+    full.start,
+    full.end,
+  ].map(Date.parse)
+  const nextStart = clamp(start + delta, fullStart, fullEnd - (end - start))
+  return {
+    start: new Date(nextStart).toISOString(),
+    end: new Date(nextStart + end - start).toISOString(),
+  } satisfies DaySpan
+}

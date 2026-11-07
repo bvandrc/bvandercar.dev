@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react'
+import { useGesture } from '@use-gesture/react'
 import { uniq } from 'es-toolkit'
-import { useEventListener } from 'usehooks-ts'
 
 import { Icon } from '@/components/primitives/Icon'
 import type { Release } from '@/generated/package-downloads'
@@ -28,8 +28,6 @@ const PLOT_TOP = CAPTION_HEIGHT + INSET
 // Room on the right for the total, written beside the line's end, as short as
 // the glyphs write it, like "70.3K".
 const TOTAL_WIDTH = 46
-// How far apart two fingers must be for their spread to scale a zoom.
-const MIN_PINCH_PX = 10
 // Where the last day is drawn.
 const PLOT_RIGHT = WIDTH - TOTAL_WIDTH
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -50,6 +48,12 @@ const TONE_CLASSES = {
     DOT: 'fill-cyan-600',
   },
 } as const satisfies Record<ChartTone, Record<string, string>>
+
+// A grab cursor while there's somewhere to drag the chart to.
+const PLOT_CURSOR_CLASSES = {
+  FIXED: '',
+  PANNABLE: 'cursor-grab active:cursor-grabbing',
+} as const
 
 // A hovered release's line stands out from the rest.
 const RELEASE_LINE_CLASSES = {
@@ -90,8 +94,10 @@ export type WeeklyChartProps = {
   summary: string
   /** Whether `span` is zoomed in, which fits the height to the totals in view, rather than measuring from zero */
   zoomed?: boolean
-  /** Called for a wheel turned, or two fingers pinched, over the chart, with the time under them and how much to scale `span`'s width, to zoom around it; without it, the page scrolls and zooms as usual */
+  /** Called for a wheel turned, or a pinch, over the chart, with the time under it and how much to scale `span`'s width, to zoom around it; without it, the page scrolls and zooms as usual */
   onZoom?: (anchor: number, factor: number) => void
+  /** Called for a drag, a sideways scroll, or two fingers moved, over the chart, with how many milliseconds later to move `span` */
+  onPan?: (delta: number) => void
   /** Marked with a grey line on each day there was one, naming the week's versions on hover */
   releases?: Release[]
   'data-testid': string
@@ -117,6 +123,7 @@ export const WeeklyChart = ({
   summary,
   zoomed = false,
   onZoom,
+  onPan,
   releases = [],
   'data-testid': testId,
 }: WeeklyChartProps) => {
@@ -124,8 +131,8 @@ export const WeeklyChart = ({
   // The release day under the pointer, which it snaps to over a week.
   const [activeRelease, setActiveRelease] = useState<string>()
   const plotRef = useRef<SVGSVGElement>(null)
-  // Each finger on the plot, by pointer id, at its latest clientX.
-  const touchesRef = useRef(new Map<number, number>())
+  // Set while two fingers pinch, so neither picks a week as it moves.
+  const pinchingRef = useRef(false)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
   const lastIndex = weekEnds.length - 1
@@ -192,48 +199,53 @@ export const WeeklyChart = ({
       Date.parse(end)
     )
   }
-  useEventListener(
-    'wheel',
-    (event) => {
-      if (onZoom) {
-        // Zooms rather than scrolling the page beneath the tooltip.
+  // How much time one pixel across the plot covers.
+  const msPerPx = spanTime / (PLOT_RIGHT - INSET)
+  useGesture(
+    {
+      onWheel: ({ event, delta: [dx, dy] }) => {
+        // A trackpad's pinch arrives as a wheel with ctrl held, for onPinch.
+        if (!onZoom || event.ctrlKey) {
+          return
+        }
+        // Zooms or pans rather than scrolling the page beneath the tooltip.
         event.preventDefault()
-        onZoom(getTimeAt(event.clientX), getWheelZoomFactor(event.deltaY))
-      }
+        // A sideways scroll, like a trackpad's, pans.
+        if (Math.abs(dx) > Math.abs(dy)) {
+          onPan?.(dx * msPerPx)
+        } else {
+          onZoom(getTimeAt(event.clientX), getWheelZoomFactor(dy))
+        }
+      },
+      // A trackpad's pinch, in any browser, as well as two fingers'.
+      onPinch: ({ event, origin: [x], offset: [scale], first, last, memo }) => {
+        event.preventDefault()
+        pinchingRef.current = !last
+        // The scale and point between the fingers at the event before.
+        const previous: { scale: number; x: number } = first
+          ? { scale, x }
+          : memo
+        if (!first && onZoom) {
+          onZoom(getTimeAt(x), previous.scale / scale)
+          // Moving both fingers together pans, the way a drag does.
+          onPan?.((previous.x - x) * msPerPx)
+        }
+        return { scale, x }
+      },
+      // A mouse's drag pans; a finger's reads out the weeks instead.
+      onDrag: ({ event, delta: [dx], pinching }) => {
+        if (
+          !pinching &&
+          event instanceof PointerEvent &&
+          event.pointerType === 'mouse'
+        ) {
+          onPan?.(-dx * msPerPx)
+        }
+      },
     },
-    // usehooks-ts types its refs from before React 19 made them nullable.
-    plotRef as React.RefObject<SVGSVGElement>,
-    // Not passive, so it can stop the page from scrolling.
-    { passive: false }
+    // Not passive, so it can stop the page from scrolling and zooming.
+    { target: plotRef, eventOptions: { passive: false } }
   )
-  /**
-   * Zooms for a finger moving while another's on the plot, by how far apart
-   * they've spread, around the point between them.
-   *
-   * Returns whether it did, so the move doesn't pick a week too.
-   */
-  const pinch = (event: React.PointerEvent<SVGSVGElement>) => {
-    const touches = touchesRef.current
-    const previousX = touches.get(event.pointerId)
-    if (previousX === undefined) {
-      return false
-    }
-    touches.set(event.pointerId, event.clientX)
-    const otherX = [...touches].find(([id]) => id !== event.pointerId)?.[1]
-    if (otherX === undefined || touches.size !== 2) {
-      return false
-    }
-    const before = Math.abs(previousX - otherX)
-    const after = Math.abs(event.clientX - otherX)
-    // Fingers almost together give no sensible scale.
-    if (onZoom && before > MIN_PINCH_PX && after > MIN_PINCH_PX) {
-      onZoom(getTimeAt((event.clientX + otherX) / 2), before / after)
-    }
-    return true
-  }
-  /** Lets go of a finger lifted off, or taken away from, the plot. */
-  const releaseTouch = (event: React.PointerEvent<SVGSVGElement>) =>
-    touchesRef.current.delete(event.pointerId)
   /**
    * Reads out the release line within a few pixels of the pointer, or else
    * the week the pointer's day falls in, so it never has to land on either.
@@ -280,25 +292,17 @@ export const WeeklyChart = ({
         className={cn(
           'overflow-visible',
           // A finger dragged across it moves through the weeks, not the page.
-          'touch-none'
+          'touch-none',
+          // A mouse drags a zoomed-in chart along.
+          PLOT_CURSOR_CLASSES[zoomed && onPan ? 'PANNABLE' : 'FIXED']
         )}
         // A tap picks a week too, which a finger may not move to first.
-        onPointerDown={(event) => {
-          if (event.pointerType === 'touch') {
-            touchesRef.current.set(event.pointerId, event.clientX)
-          }
-          // A second finger starts a pinch rather than picking a week.
-          if (touchesRef.current.size < 2) {
-            selectWeek(event)
-          }
-        }}
+        onPointerDown={selectWeek}
         onPointerMove={(event) => {
-          if (!pinch(event)) {
+          if (!pinchingRef.current) {
             selectWeek(event)
           }
         }}
-        onPointerUp={releaseTouch}
-        onPointerCancel={releaseTouch}
         // A finger always leaves once lifted, so its week stays read out.
         onPointerLeave={(event) => {
           if (event.pointerType !== 'touch') {

@@ -19,7 +19,7 @@ import {
   getWeekReachingCommits,
 } from './lib/weekly-activity'
 import { describeWeeklyDownloads } from './lib/weekly-downloads'
-import { type DaySpan, zoomSpan } from './lib/weeks'
+import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
 
 // How many commits a repo with no package needs before it gets a chart.
 const UNPACKAGED_MIN_COMMITS = 20
@@ -131,9 +131,16 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
   const span = zoomedSpan ?? fullSpan
+  // Each from the span before, so gestures landing in one frame build on
+  // each other rather than all starting from the same one.
   /** Zooms both charts around a time under the pointer, scaling their width by `factor`. */
   const zoom = (anchor: number, factor: number) =>
-    setZoomedSpan(zoomSpan(span, fullSpan, anchor, factor))
+    setZoomedSpan((previous) =>
+      zoomSpan(previous ?? fullSpan, fullSpan, anchor, factor)
+    )
+  /** Moves both zoomed-in charts `delta` milliseconds later. */
+  const pan = (delta: number) =>
+    setZoomedSpan((previous) => panSpan(previous, fullSpan, delta))
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -163,6 +170,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
                 span={span}
                 zoomed={zoomedSpan !== undefined}
                 onZoom={zoom}
+                onPan={pan}
               />
             )}
             {chartedDownloads && (
@@ -172,6 +180,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
                 span={span}
                 zoomed={zoomedSpan !== undefined}
                 onZoom={zoom}
+                onPan={pan}
               />
             )}
           </div>

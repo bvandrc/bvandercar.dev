@@ -115,11 +115,19 @@ vi.mock('@/generated/package-downloads', () => ({
   } satisfies Record<Registry, Record<string, Release[]>>,
 }))
 
-/** Turns the wheel over `target` at `clientX`, returning whether the page would scroll. */
-const turnWheel = (target: Element, clientX: number, deltaY: number) => {
+/** Turns the wheel over `target` at `clientX`, with any other `init`, returning whether the page would scroll. */
+const turnWheel = (
+  target: Element,
+  clientX: number,
+  deltaY: number,
+  init?: WheelEventInit
+) => {
   const event = createEvent.wheel(target, { deltaY })
-  // The test DOM's WheelEvent drops a clientX passed in, which a browser's keeps.
-  Object.defineProperty(event, 'clientX', { value: clientX })
+  // The test DOM's WheelEvent drops a clientX or deltaX passed in, which a
+  // browser's keeps.
+  for (const [key, value] of Object.entries({ clientX, ...init })) {
+    Object.defineProperty(event, key, { value })
+  }
   return fireEvent(target, event)
 }
 
@@ -312,6 +320,32 @@ describe('ProjectCounts', () => {
     await user.pointer({ keys: '[TouchA]', target: counts })
     await screen.findByTestId(TOOLTIP)
     expect(getReleaseXs()).toEqual(unzoomed)
+  })
+
+  it('pans both zoomed-in charts together, and not ones zoomed all the way out', async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+    /** The first release line's position in each chart, activity first. */
+    const getFirstReleaseXs = () =>
+      [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
+        within(screen.getByTestId(chart))
+          .queryAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)[0]
+          ?.getAttribute('x1')
+      )
+    const plot = () =>
+      within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT)
+
+    await hoverCounts()
+    const unzoomed = getFirstReleaseXs()
+    turnWheel(plot(), 100, 0, { deltaX: 40 })
+    expect(getFirstReleaseXs()).toEqual(unzoomed)
+
+    turnWheel(plot(), 100, -300)
+    const zoomed = getFirstReleaseXs()
+    // To the left, so later.
+    turnWheel(plot(), 100, 0, { deltaX: -40 })
+    const panned = getFirstReleaseXs()
+    expect(panned).not.toEqual(zoomed)
+    expect(panned[1]).toEqual(panned[0])
   })
 
   it("marks its package's releases on both charts", async () => {
