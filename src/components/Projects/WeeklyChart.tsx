@@ -10,7 +10,7 @@ import { formatDay, formatVersions, getReleaseWeeks } from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
 const WIDTH = 328
-const HEIGHT = 112
+const HEIGHT = 84
 // Keeps the 2px line and the 8px hover dot inside the box at either end.
 const INSET = 5
 // The strip along the top the caption sits in, which the line stays below,
