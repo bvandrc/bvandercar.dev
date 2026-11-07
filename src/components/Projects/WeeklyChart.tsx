@@ -140,7 +140,12 @@ export const WeeklyChart = ({
   /** Reads out the week the pointer's day falls in, so it never has to land on the line. */
   const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
     const x = event.clientX - event.currentTarget.getBoundingClientRect().left
-    const time = startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime
+    // Clamped to where the line starts, so the inset left of it, or a later
+    // span start, never picks a week the chart leaves out.
+    const time = Math.max(
+      startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
+      Date.parse(lineStart)
+    )
     // The first week ending on or after that day, or the last past them all.
     const index = weekEnds.findIndex(
       (weekEnd) => Date.parse(weekEnd) + DAY_MS > time

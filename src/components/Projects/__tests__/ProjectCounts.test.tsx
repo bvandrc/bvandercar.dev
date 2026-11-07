@@ -20,6 +20,7 @@ const FIXTURES = vi.hoisted(() => ({
   REPO: 'some-repo',
   NEW_REPO: 'new-repo',
   OTHER_REPO: 'other-repo',
+  SMALL_REPO: 'small-repo',
   NPM_PACKAGE: 'some-package',
   NEW_NPM_PACKAGE: 'new-package',
   PYPI_PACKAGE: 'some-python-package',
@@ -28,6 +29,7 @@ const {
   REPO,
   NEW_REPO,
   OTHER_REPO,
+  SMALL_REPO,
   NPM_PACKAGE,
   NEW_NPM_PACKAGE,
   PYPI_PACKAGE,
@@ -46,6 +48,7 @@ vi.mock('@/generated/profile/repo-counts', () => ({
     [FIXTURES.REPO]: { commits: 25, prs: 31, downloads: 3120 },
     [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
     [FIXTURES.OTHER_REPO]: { commits: 7, prs: 3 },
+    [FIXTURES.SMALL_REPO]: { commits: 12, prs: 2 },
   } satisfies typeof REPO_COUNTS,
 }))
 
@@ -62,6 +65,13 @@ vi.mock('@/generated/repo-activity', () => ({
       lastDay: '2026-03-18',
       commits: [2],
       prs: [1],
+    },
+    // Two weeks to chart, but fewer than 20 commits.
+    [FIXTURES.SMALL_REPO]: {
+      firstWeek: '2026-03-02',
+      lastDay: '2026-03-12',
+      commits: [5, 7],
+      prs: [1, 1],
     },
   } satisfies Record<string, WeeklyActivity>,
 }))
@@ -221,6 +231,41 @@ describe('ProjectCounts', () => {
     expect(activity.getByTestId(READOUT).textContent).toBe(
       'Through Mar 8, 2026: 43 commits'
     )
+  })
+
+  it('starts a repo with no package where its commits reach 15', async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} />)
+
+    await hoverCounts()
+    const activity = within(screen.getByTestId(ACTIVITY_CHART))
+    fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
+    // 3 commits the first week, then 43 by the end of the second.
+    expect(activity.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 8, 2026: 43 commits'
+    )
+  })
+
+  it('charts a repo with fewer than 20 commits only if it publishes a package', async () => {
+    const CASES = [
+      [<ProjectCounts key="alone" repo={SMALL_REPO} />, false],
+      [
+        <ProjectCounts
+          key="published"
+          repo={SMALL_REPO}
+          npmPackage={NPM_PACKAGE}
+        />,
+        true,
+      ],
+    ] as const
+    for (const [counts, charted] of CASES) {
+      const { unmount } = renderWithProviders(counts)
+      await hoverCounts()
+      expect(
+        screen.queryByTestId(ACTIVITY_CHART) !== null,
+        `${counts.key}`
+      ).toBe(charted)
+      unmount()
+    }
   })
 
   it("marks its package's releases on both charts", async () => {

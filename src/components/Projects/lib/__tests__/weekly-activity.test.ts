@@ -3,6 +3,7 @@ import {
   describeWeeklyCommits,
   getActivityWeekEnds,
   getActivityWeekStarts,
+  getWeekReachingCommits,
 } from '../weekly-activity'
 
 // Read on a Sunday, the day its last week ends.
@@ -36,6 +37,17 @@ describe('getActivityWeekEnds', () => {
     expect(
       getActivityWeekEnds({ ...ACTIVITY, lastDay: '2026-03-12' }).at(-1)
     ).toBe('2026-03-12')
+  })
+})
+
+describe('getWeekReachingCommits', () => {
+  it('finds the week the running total reaches the count', () => {
+    // 3, then 43 by the second week.
+    expect(getWeekReachingCommits(ACTIVITY, 15)).toBe('2026-03-02')
+  })
+
+  it('starts on the first week for a repo with fewer commits in all', () => {
+    expect(getWeekReachingCommits(ACTIVITY, 100)).toBe('2026-02-23')
   })
 })
 

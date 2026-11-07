@@ -14,8 +14,16 @@ import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { ActivityChart } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
-import { describeWeeklyCommits } from './lib/weekly-activity'
+import {
+  describeWeeklyCommits,
+  getWeekReachingCommits,
+} from './lib/weekly-activity'
 import { describeWeeklyDownloads } from './lib/weekly-downloads'
+
+// How many commits a repo with no package needs before it gets a chart.
+const UNPACKAGED_MIN_COMMITS = 20
+// How many commits a repo with no package has made before its chart starts.
+const UNPACKAGED_START_COMMITS = 15
 
 export type ProjectCountsProps = Pick<
   Project,
@@ -72,13 +80,31 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   }
   // A single week is a point, not a trend.
   const chartedActivity =
-    activity && activity.commits.length > 1 ? activity : undefined
+    activity &&
+    activity.commits.length > 1 &&
+    // A small repo with no package has too little history to chart.
+    (pkg || sum(activity.commits) >= UNPACKAGED_MIN_COMMITS)
+      ? activity
+      : undefined
   const chartedDownloads =
     pkg && history && history.weekly.length > 1
       ? { registry: pkg.registry, history }
       : undefined
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
+  /** Where the charts start: past a slow start, so it doesn't squeeze the rest into their right edge. */
+  const getSpanStart = () => {
+    // A package's first release, rather than the repo's first commit, which
+    // can be years before it.
+    if (releases?.[0]) {
+      return releases[0].day
+    }
+    // A repo with no package skips its first few commits' trickle.
+    if (!pkg && chartedActivity) {
+      return getWeekReachingCommits(chartedActivity, UNPACKAGED_START_COMMITS)
+    }
+    return ownSpans.map(({ start }) => start).sort()[0]
+  }
   // Both charts span the same dates, so a release lines up across them.
   const ownSpans = [
     chartedActivity && {
@@ -91,10 +117,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     },
   ].filter(isNotNil)
   const span = {
-    // From the package's first release, where there is one, rather than a
-    // repo's first commit years before it, which would squeeze the charts
-    // into their right edge.
-    start: releases?.[0]?.day ?? ownSpans.map(({ start }) => start).sort()[0],
+    start: getSpanStart(),
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
   const label = shown

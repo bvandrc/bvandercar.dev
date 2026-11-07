@@ -16,6 +16,25 @@ export const getActivityWeekEnds = ({
     return sunday > lastDay ? lastDay : sunday
   })
 
+/**
+ * The ISO date of the week the running total of commits reaches `count`.
+ *
+ * The first week's, for a repo with fewer commits than that in all.
+ */
+export const getWeekReachingCommits = (
+  activity: WeeklyActivity,
+  count: number
+) => {
+  let total = 0
+  for (const [index, commits] of activity.commits.entries()) {
+    total += commits
+    if (total >= count) {
+      return getActivityWeekStarts(activity)[index]
+    }
+  }
+  return activity.firstWeek
+}
+
 /** The commits in a sentence, like "Weekly commits since Mar 2025, peaking at 40 in the week of Mar 2, 2026". */
 export const describeWeeklyCommits = (activity: WeeklyActivity) => {
   const peak = getPeakWeek(activity.commits, getActivityWeekStarts(activity))
