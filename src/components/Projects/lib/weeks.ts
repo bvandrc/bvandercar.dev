@@ -55,11 +55,14 @@ export const getReleaseWeeks = (releases: Release[], weekEnds: string[]) => {
   return weeks
 }
 
-/** Versions released together, as one label: `['1.2.0']` → `'v1.2.0'`, `['1.0.0', '1.0.1', '1.0.5']` → `'v1.0.0–v1.0.5'`. */
-export const formatVersions = (versions: string[]) =>
-  versions.length > 1
-    ? `v${versions[0]}–v${versions.at(-1)}`
-    : `v${versions[0]}`
+/**
+ * The latest of versions released together, as a label: `['1.0.0', '1.0.5',
+ * '1.0.1']` → `'v1.0.5'`, the one users should be on.
+ *
+ * Compared by their numbers, so 1.10.0 is later than 1.9.0.
+ */
+export const formatLatestVersion = (versions: string[]) =>
+  `v${versions.toSorted((a, b) => a.localeCompare(b, 'en', { numeric: true })).at(-1)}`
 
 /** The dates a chart runs from and to, as ISO dates or times. */
 export type DaySpan = { start: string; end: string }

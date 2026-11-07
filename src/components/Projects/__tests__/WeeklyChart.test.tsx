@@ -109,7 +109,7 @@ describe('WeeklyChart', () => {
     )
   })
 
-  it("marks each day with a release, and names its week's versions while hovered", () => {
+  it("marks each day with a release, and names its week's latest version while hovered", () => {
     renderChart({
       releases: [
         { version: '1.0.0', day: '2026-03-02' },
@@ -124,8 +124,8 @@ describe('WeeklyChart', () => {
     expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
     const CASES = [
       [0, 'v1.0.0'],
-      // The last three share the last week.
-      [400, 'v1.0.1–v1.1.0'],
+      // The last three share the last week, which names its latest.
+      [400, 'v1.1.0'],
     ] as const
     for (const [clientX, expected] of CASES) {
       movePointer(clientX)
@@ -216,7 +216,7 @@ describe('WeeklyChart', () => {
     expect(screen.queryByTestId(TOTAL)).toBeNull()
   })
 
-  it('snaps to a release line under the pointer, reading out its versions and day', () => {
+  it('snaps to a release line under the pointer, reading out its latest version and day', () => {
     renderChart({
       releases: [
         { version: '1.0.1', day: '2026-03-12' },
@@ -229,7 +229,8 @@ describe('WeeklyChart', () => {
 
     // A pixel off the line still lands on it.
     movePointer(releaseX + 1)
-    expect(readout.textContent).toBe('v1.0.1–v1.0.2 released Mar 12, 2026')
+    // Two that day, named by the latest.
+    expect(readout.textContent).toBe('v1.0.2 released Mar 12, 2026')
     // Further off, the week reads out as before.
     movePointer(releaseX + 20)
     expect(readout.textContent).toMatch(/^Through /)

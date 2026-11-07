@@ -10,7 +10,7 @@ import { cn } from '@/utils'
 import {
   type DaySpan,
   formatDay,
-  formatVersions,
+  formatLatestVersion,
   getReleaseWeeks,
   getWheelZoomFactor,
 } from './lib/weeks'
@@ -274,7 +274,7 @@ export const WeeklyChart = ({
       const versions = releases
         .filter(({ day }) => day === activeRelease)
         .map(({ version }) => version)
-      return `${formatVersions(versions)} released ${formatDay(activeRelease)}`
+      return `${formatLatestVersion(versions)} released ${formatDay(activeRelease)}`
     }
     if (activeWeek !== undefined) {
       return `Through ${formatDay(weekEnds[activeWeek])}: ${formatCount(totals[activeWeek], noun)}`
@@ -393,7 +393,7 @@ export const WeeklyChart = ({
               'stroke-surface-raised stroke-3 [paint-order:stroke] [stroke-linejoin:round]'
             )}
             data-testid="weekly-chart-release-label">
-            {formatVersions(activeVersions)}
+            {formatLatestVersion(activeVersions)}
           </text>
         )}
         {/* The hover target: the whole box, not just the thin line. */}

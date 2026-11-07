@@ -1,8 +1,8 @@
 import {
   addDays,
   formatDay,
+  formatLatestVersion,
   formatMonth,
-  formatVersions,
   getPeakWeek,
   getReleaseWeeks,
   getWheelZoomFactor,
@@ -78,13 +78,14 @@ describe('getReleaseWeeks', () => {
   })
 })
 
-describe('formatVersions', () => {
+describe('formatLatestVersion', () => {
   it('names a lone version', () => {
-    expect(formatVersions(['1.2.0'])).toBe('v1.2.0')
+    expect(formatLatestVersion(['1.2.0'])).toBe('v1.2.0')
   })
 
-  it('spans several versions from the first to the last', () => {
-    expect(formatVersions(['1.0.0', '1.0.1', '1.0.5'])).toBe('v1.0.0–v1.0.5')
+  it('names only the latest of several, by their numbers rather than their order', () => {
+    // 1.10.0 sorts before 1.9.0 as text.
+    expect(formatLatestVersion(['1.9.0', '1.10.0', '1.0.5'])).toBe('v1.10.0')
   })
 })
 
