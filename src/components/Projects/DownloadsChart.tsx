@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { clamp } from 'es-toolkit'
 
 import type { WeeklyDownloads } from '@/generated/npm-downloads'
 import { formatCount } from '@/lib/format-count'
@@ -64,7 +65,7 @@ export const DownloadsChart = ({ history }: DownloadsChartProps) => {
           const index = Math.round(
             ((x - INSET) / (WIDTH - 2 * INSET)) * lastIndex
           )
-          setActiveWeek(Math.min(Math.max(index, 0), lastIndex))
+          setActiveWeek(clamp(index, 0, lastIndex))
         }}
         onPointerLeave={() => setActiveWeek(undefined)}
         data-testid="downloads-chart-plot">

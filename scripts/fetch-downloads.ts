@@ -9,6 +9,7 @@
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { chunk, sumBy } from 'es-toolkit'
 
 const PROJECTS_FILE = 'src/generated/profile/content/projects.ts'
 const OUT_FILE = 'src/generated/npm-downloads.ts'
@@ -68,14 +69,11 @@ const fetchDailyDownloads = async (pkg: string) => {
  * Counting back from the last day keeps the latest week whole, so it never
  * reads as a drop; the week of the first publish is the one left short.
  */
-const sumWeeks = (days: DailyDownloads[]) => {
-  const weekly: number[] = []
-  for (let end = days.length; end > 0; end -= 7) {
-    const week = days.slice(Math.max(0, end - 7), end)
-    weekly.unshift(week.reduce((sum, { downloads }) => sum + downloads, 0))
-  }
-  return weekly
-}
+const sumWeeks = (days: DailyDownloads[]) =>
+  // Chunked from the end, which leaves any short week first.
+  chunk(days.toReversed(), 7)
+    .map((week) => sumBy(week, ({ downloads }) => downloads))
+    .toReversed()
 
 const projects = await readFile(PROJECTS_FILE, 'utf8')
 const packages = [...projects.matchAll(/npmPackage:\s*'([^']+)'/g)]
