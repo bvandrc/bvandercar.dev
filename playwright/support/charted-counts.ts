@@ -8,14 +8,14 @@ import { SELECTORS } from '~/test-support/selectors'
 const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
 
 /**
- * The counts of the first project whose hover charts both its activity and
- * its npm downloads.
+ * The repo link of the first project whose counts, on hover, chart both its
+ * activity and its npm downloads.
  *
  * Throws if none has more than a week of both, as when the build had no
  * `GITHUB_TOKEN` or couldn't reach npm. Only npm's downloads count, since
  * CI's test builds have no credentials for PyPI's.
  */
-export const getChartedCounts = (page: Page) => {
+export const getChartedRepoLink = (page: Page) => {
   const project = PROJECTS.flatMap(({ projects }) => projects).find(
     ({ repo, npmPackage }) =>
       (REPO_ACTIVITY[repo]?.commits.length ?? 0) > 1 &&
@@ -30,5 +30,8 @@ export const getChartedCounts = (page: Page) => {
   return page
     .getByTestId(REPO_LINK)
     .and(page.locator(`[href$="/${project.repo}"]`))
-    .getByTestId(COUNTS)
 }
+
+/** The counts in `getChartedRepoLink`'s link, whose hover charts them. */
+export const getChartedCounts = (page: Page) =>
+  getChartedRepoLink(page).getByTestId(COUNTS)

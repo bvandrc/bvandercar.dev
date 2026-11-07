@@ -108,6 +108,12 @@ export const WeeklyChart = ({
     counts
       .map((count, index) => `${index ? 'L' : 'M'}${toX(index)},${toY(count)}`)
       .join('')
+  /** Reads out the week nearest the pointer, so it never has to land on a line. */
+  const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
+    const x = event.clientX - event.currentTarget.getBoundingClientRect().left
+    const index = Math.round(((x - INSET) / (WIDTH - 2 * INSET)) * lastIndex)
+    setActiveWeek(clamp(index, 0, lastIndex))
+  }
   return (
     <div className="relative" data-testid={testId}>
       <svg
@@ -115,17 +121,20 @@ export const WeeklyChart = ({
         width={WIDTH}
         height={HEIGHT}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="overflow-visible"
-        // The nearest week to the pointer, so it never has to land on a line.
-        onPointerMove={(event) => {
-          const x =
-            event.clientX - event.currentTarget.getBoundingClientRect().left
-          const index = Math.round(
-            ((x - INSET) / (WIDTH - 2 * INSET)) * lastIndex
-          )
-          setActiveWeek(clamp(index, 0, lastIndex))
+        className={cn(
+          'overflow-visible',
+          // A finger dragged across it moves through the weeks, not the page.
+          'touch-none'
+        )}
+        // A tap picks a week too, which a finger may not move to first.
+        onPointerDown={selectWeek}
+        onPointerMove={selectWeek}
+        // A finger always leaves once lifted, so its week stays read out.
+        onPointerLeave={(event) => {
+          if (event.pointerType !== 'touch') {
+            setActiveWeek(undefined)
+          }
         }}
-        onPointerLeave={() => setActiveWeek(undefined)}
         data-testid="weekly-chart-plot">
         <line
           x1={INSET}

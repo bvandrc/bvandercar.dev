@@ -112,4 +112,15 @@ describe('WeeklyChart', () => {
     movePointer(128)
     expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
   })
+
+  it('reads out a tapped week, and keeps it once the finger lifts', () => {
+    renderChart([COMMITS])
+    const plot = screen.getByTestId(PLOT)
+
+    fireEvent.pointerDown(plot, { clientX: 0, pointerType: 'touch' })
+    fireEvent.pointerLeave(plot, { pointerType: 'touch' })
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 8, 2026: 5 commits'
+    )
+  })
 })

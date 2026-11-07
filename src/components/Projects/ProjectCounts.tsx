@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { isNotNil } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
@@ -43,8 +44,13 @@ const getPackage = ({
  * Renders nothing for a repo with no counts. The hover also charts the repo's
  * weekly commits and PRs, and an npm or PyPI package's weekly downloads, each
  * once it has more than a week of them, marking the package's releases on both.
+ * On a touch screen, which has no hover, a tap opens and closes the tooltip
+ * instead, rather than following a link the counts sit in.
  */
 export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
+  const [open, setOpen] = useState(false)
+  // Read at pointerdown, before Radix's own handler closes an open tooltip.
+  const tapRef = useRef({ isTouch: false, wasOpen: false })
   const counts = REPO_COUNTS[repo]
   if (!counts) {
     return null
@@ -84,6 +90,8 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     .join('. ')
   return (
     <Tooltip
+      open={open}
+      onOpenChange={setOpen}
       content={
         chartedActivity || chartedDownloads ? (
           <div className="flex flex-col gap-3">
@@ -115,10 +123,24 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       }>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: a tap only stands in for the hover a touch screen lacks; keyboards focus the link around it. */}
       <span
         role="img"
         aria-label={label}
         className="inline-flex items-center gap-2.5"
+        onPointerDown={(event) => {
+          tapRef.current = {
+            isTouch: event.pointerType === 'touch',
+            wasOpen: open,
+          }
+        }}
+        onClick={(event) => {
+          if (tapRef.current.isTouch) {
+            // Also stops Radix's own handler, which would close it again.
+            event.preventDefault()
+            setOpen(!tapRef.current.wasOpen)
+          }
+        }}
         data-testid="project-counts">
         {shown.map(({ key, icon, count }) => (
           <span key={key} className="inline-flex items-center gap-1">
