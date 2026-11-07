@@ -6,9 +6,13 @@ import { cn } from '@/utils'
 import { formatDay } from './lib/weeks'
 
 const WIDTH = 256
-const HEIGHT = 56
+const HEIGHT = 76
 // Keeps the 2px lines and the 8px hover dots inside the box at either end.
 const INSET = 5
+// The strip along the top the caption sits in, which the lines stay below.
+const CAPTION_HEIGHT = 18
+// Where the highest total is drawn.
+const PLOT_TOP = CAPTION_HEIGHT + INSET
 
 /** A series' color, in a fixed order checked to stay apart for colorblind readers. */
 export type SeriesTone = 'FIRST' | 'SECOND'
@@ -54,8 +58,8 @@ export type WeeklyChartProps = {
 
 /**
  * Weekly counts as running totals, on a small line chart with one shared
- * scale, with a readout of the totals through the week under the pointer, and
- * a legend in the readout for two or more series.
+ * scale, captioned in its top-left corner with a summary, and a legend for two
+ * or more series, or the totals through the week under the pointer.
  *
  * Drawn for sighted pointer users only: pair it with the counts in words for
  * everyone else.
@@ -81,13 +85,13 @@ export const WeeklyChart = ({
     INSET + (index / lastIndex) * (WIDTH - 2 * INSET)
   // Counts of all zeros stay on the baseline rather than dividing by zero.
   const toY = (count: number) =>
-    HEIGHT - INSET - (count / (peak || 1)) * (HEIGHT - 2 * INSET)
+    HEIGHT - INSET - (count / (peak || 1)) * (HEIGHT - INSET - PLOT_TOP)
   const toLine = (counts: number[]) =>
     counts
       .map((count, index) => `${index ? 'L' : 'M'}${toX(index)},${toY(count)}`)
       .join('')
   return (
-    <div className="flex flex-col gap-1" data-testid={testId}>
+    <div className="relative" data-testid={testId}>
       <svg
         aria-hidden
         width={WIDTH}
@@ -134,7 +138,7 @@ export const WeeklyChart = ({
             <line
               x1={toX(activeWeek)}
               x2={toX(activeWeek)}
-              y1={0}
+              y1={CAPTION_HEIGHT}
               y2={HEIGHT - INSET}
               className="stroke-ink-muted/50"
             />
@@ -156,7 +160,10 @@ export const WeeklyChart = ({
       </svg>
       <p
         className={cn(
-          'flex flex-wrap items-center gap-x-2',
+          'flex items-center gap-x-2 whitespace-nowrap',
+          // Held in the top-left corner, over the strip the lines leave
+          // clear, and letting the pointer through to the plot beneath.
+          'pointer-events-none absolute top-0 left-0',
           READOUT_CLASSES[activeWeek === undefined ? 'SUMMARY' : 'WEEK']
         )}
         data-testid="weekly-chart-readout">
