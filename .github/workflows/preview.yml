@@ -44,6 +44,10 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          # For the activity charts. The workflow's own token reads public
+          # repos; PRIVATE_REPOS_TOKEN, if set, reaches the private ones too.
+          GITHUB_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN || github.token }}
 
       - name: Upload preview version
         id: upload

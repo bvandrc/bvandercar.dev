@@ -1,40 +1,65 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { objectKeys } from 'ts-extras'
 
 import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
-import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { formatCompactCount, formatCount } from '@/lib/format-count'
+import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import type { WeeklyActivity } from '@/generated/repo-activity'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
-const { COUNTS, DOWNLOADS_CHART } = SELECTORS.PROJECTS
+const { COUNTS, ACTIVITY_CHART, DOWNLOADS_CHART } = SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
-// Hoisted with the mock below, which runs before the file's other top-level code.
-const { NPM_PACKAGE, SINGLE_WEEK_PACKAGE, PYPI_PACKAGE } = vi.hoisted(() => ({
+// Hoisted with the mocks below, which run before the file's other top-level code.
+const FIXTURES = vi.hoisted(() => ({
+  REPO: 'some-repo',
+  NEW_REPO: 'new-repo',
   NPM_PACKAGE: 'some-package',
-  SINGLE_WEEK_PACKAGE: 'new-package',
+  NEW_NPM_PACKAGE: 'new-package',
   PYPI_PACKAGE: 'some-python-package',
+}))
+const { REPO, NEW_REPO, NPM_PACKAGE, NEW_NPM_PACKAGE, PYPI_PACKAGE } = FIXTURES
+
+// What the repo's counts read as in full.
+const LABEL = '25 commits, 31 PRs, 3,120 downloads'
+const ACTIVITY_DESCRIPTION =
+  'Weekly commits and PRs since Feb 2026, peaking at 40 commits in the week of Mar 2, 2026'
+
+vi.mock('@/generated/profile/repo-counts', () => ({
+  REPO_COUNTS: {
+    [FIXTURES.REPO]: { commits: 25, prs: 31, downloads: 3120 },
+    [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
+  } satisfies typeof REPO_COUNTS,
+}))
+
+vi.mock('@/generated/repo-activity', () => ({
+  REPO_ACTIVITY: {
+    [FIXTURES.REPO]: {
+      firstWeek: '2026-02-23',
+      commits: [3, 40, 12],
+      prs: [1, 9, 4],
+    },
+    [FIXTURES.NEW_REPO]: { firstWeek: '2026-03-16', commits: [2], prs: [1] },
+  } satisfies Record<string, WeeklyActivity>,
 }))
 
 vi.mock('@/generated/package-downloads', () => ({
   PACKAGE_DOWNLOADS: {
     npm: {
-      [NPM_PACKAGE]: {
+      [FIXTURES.NPM_PACKAGE]: {
         firstDay: '2026-03-04',
         lastDay: '2026-03-24',
         weekly: [5, 1200, 12],
       },
-      [SINGLE_WEEK_PACKAGE]: {
+      [FIXTURES.NEW_NPM_PACKAGE]: {
         firstDay: '2026-03-20',
         lastDay: '2026-03-24',
         weekly: [30],
       },
     },
     pypi: {
-      [PYPI_PACKAGE]: {
+      [FIXTURES.PYPI_PACKAGE]: {
         firstDay: '2025-04-11',
         lastDay: '2026-03-24',
         weekly: [40, 900, 300],
@@ -43,83 +68,71 @@ vi.mock('@/generated/package-downloads', () => ({
   } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
 }))
 
-/** A repo with downloads in the thousands, so they're shortened, and the label its counts read as in full. */
-const getRepoWithDownloads = () => {
-  const repo = objectKeys(REPO_COUNTS).find(
-    (name) => (REPO_COUNTS[name]?.downloads ?? 0) >= 1000
-  )
-  const counts = repo ? REPO_COUNTS[repo] : undefined
-  if (!(repo && counts?.downloads)) {
-    throw new Error('No repo has downloads in the thousands')
-  }
-  const { commits, prs, downloads } = counts
-  const label = [
-    formatCount(commits, 'commit'),
-    formatCount(prs, 'PR'),
-    formatCount(downloads, 'download'),
-  ].join(', ')
-  return { repo, downloads, label }
+/** Hovers the counts, and returns the tooltip once it opens. */
+const hoverCounts = async () => {
+  await userEvent.setup().hover(screen.getByTestId(COUNTS))
+  return screen.findByTestId(TOOLTIP)
 }
 
+/** Asserts `later` comes after `earlier` in the page, so is shown below it. */
+const expectFollows = (later: Element, earlier: Element) =>
+  expect(
+    earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy()
+
 describe('ProjectCounts', () => {
-  it('shows the counts shortened, and in full as its name and tooltip', async () => {
-    const user = userEvent.setup()
-    const { repo, downloads, label } = getRepoWithDownloads()
-    renderWithProviders(<ProjectCounts repo={repo} />)
+  it('shows the counts shortened, and in full as its name', () => {
+    renderWithProviders(<ProjectCounts repo={REPO} />)
     const counts = screen.getByTestId(COUNTS)
 
-    expect(counts.textContent).toContain(formatCompactCount(downloads))
-    expect(counts.textContent).not.toContain('download')
-    expect(counts.getAttribute('aria-label')).toBe(label)
-    await user.hover(counts)
-    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(label)
+    expect(counts.textContent).toBe('25313.1K')
+    expect(counts.getAttribute('aria-label')).toBe(LABEL)
   })
 
-  it("charts its npm package's weekly downloads in the tooltip, and describes them in words", async () => {
-    const user = userEvent.setup()
-    const { repo, label } = getRepoWithDownloads()
-    renderWithProviders(<ProjectCounts repo={repo} npmPackage={NPM_PACKAGE} />)
-    const counts = screen.getByTestId(COUNTS)
+  it("charts the repo's activity in the tooltip, above the counts, and describes it in words", async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} />)
 
-    await user.hover(counts)
-    const tooltip = await screen.findByTestId(TOOLTIP)
-    expect(tooltip.textContent).toContain(label)
-    expect(
-      screen
-        .getByTestId(DOWNLOADS_CHART.SELF)
-        .closest(`[data-testid="${TOOLTIP}"]`)
-    ).toBe(tooltip)
+    const tooltip = await hoverCounts()
+    expect(tooltip.contains(screen.getByTestId(ACTIVITY_CHART))).toBe(true)
+    expectFollows(screen.getByText(LABEL), screen.getByTestId(ACTIVITY_CHART))
+    expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
     expect(screen.getByRole('tooltip').textContent).toBe(
-      `${label}. Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026`
+      `${LABEL}. ${ACTIVITY_DESCRIPTION}`
     )
   })
 
-  it("charts its PyPI package's weekly downloads too, named as PyPI's", async () => {
-    const user = userEvent.setup()
-    const { repo, label } = getRepoWithDownloads()
+  it("charts its npm package's downloads below the activity, and describes both", async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+
+    const tooltip = await hoverCounts()
+    const activity = screen.getByTestId(ACTIVITY_CHART)
+    const downloads = screen.getByTestId(DOWNLOADS_CHART)
+    expect(tooltip.contains(downloads)).toBe(true)
+    expectFollows(downloads, activity)
+    expect(screen.getByRole('tooltip').textContent).toBe(
+      `${LABEL}. ${ACTIVITY_DESCRIPTION}. Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026`
+    )
+  })
+
+  it("charts its PyPI package's downloads too, named as PyPI's", async () => {
     renderWithProviders(
-      <ProjectCounts repo={repo} pypiPackage={PYPI_PACKAGE} />
+      <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
     )
 
-    await user.hover(screen.getByTestId(COUNTS))
-    await screen.findByTestId(TOOLTIP)
-    expect(screen.getByTestId(DOWNLOADS_CHART.READOUT).textContent).toBe(
+    await hoverCounts()
+    expect(screen.getByTestId(DOWNLOADS_CHART).textContent).toBe(
       'Weekly PyPI downloads, peak 900'
     )
-    expect(screen.getByRole('tooltip').textContent).toBe(
-      `${label}. Weekly PyPI downloads since Apr 2025, peaking at 900 in the week of Mar 11, 2026`
-    )
   })
 
-  it('charts nothing for a package with a single week of downloads', async () => {
-    const user = userEvent.setup()
-    const { repo, label } = getRepoWithDownloads()
+  it('charts nothing with a single week to show, leaving the counts alone', async () => {
     renderWithProviders(
-      <ProjectCounts repo={repo} npmPackage={SINGLE_WEEK_PACKAGE} />
+      <ProjectCounts repo={NEW_REPO} npmPackage={NEW_NPM_PACKAGE} />
     )
 
-    await user.hover(screen.getByTestId(COUNTS))
-    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(label)
-    expect(screen.queryByTestId(DOWNLOADS_CHART.SELF)).toBeNull()
+    const tooltip = await hoverCounts()
+    expect(tooltip.textContent).toBe('2 commits, 1 PR')
+    expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
+    expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
 })

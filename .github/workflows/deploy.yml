@@ -2,7 +2,9 @@ name: Deploy
 
 # Deploys to Cloudflare once CI passes on main. Needs the repo secrets
 # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and BIGQUERY_CREDENTIALS, a
-# Google Cloud service account key, for PyPI download charts.
+# Google Cloud service account key, for PyPI download charts. PRIVATE_REPOS_TOKEN,
+# a GitHub token that can read the private project repos, is optional: without
+# it, their cards show no activity chart.
 
 on:
   workflow_run:
@@ -50,6 +52,10 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          # For the activity charts. The workflow's own token reads public
+          # repos; PRIVATE_REPOS_TOKEN, if set, reaches the private ones too.
+          GITHUB_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN || github.token }}
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3

@@ -31,11 +31,12 @@ test.describe('Accessibility', () => {
     await checkA11y(page, { disableRules: ['region'] })
   })
 
-  test('Open downloads chart', async ({ page }) => {
+  test('Open counts charts', async ({ page }) => {
     await page.goto('/')
 
     await getChartedCounts(page).hover()
-    await expect(page.getByTestId(PROJECTS.DOWNLOADS_CHART.SELF)).toBeVisible()
+    await expect(page.getByTestId(PROJECTS.ACTIVITY_CHART)).toBeVisible()
+    await expect(page.getByTestId(PROJECTS.DOWNLOADS_CHART)).toBeVisible()
 
     // Portaled outside every landmark, like any tooltip.
     await checkA11y(page, { disableRules: ['region'] })

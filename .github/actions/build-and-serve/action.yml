@@ -18,6 +18,9 @@ runs:
     - name: Build
       run: pnpm build
       shell: bash
+      env:
+        # Reads the public repos' activity, so the browser suites see its chart.
+        GITHUB_TOKEN: ${{ github.token }}
 
     - name: Start server
       run: pnpm preview:ci &

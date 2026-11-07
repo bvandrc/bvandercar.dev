@@ -2,24 +2,30 @@ import type { Page } from '@playwright/test'
 
 import { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
 import { PROJECTS } from '@/generated/profile/content/projects'
+import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { SELECTORS } from '~/test-support/selectors'
 
 const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
 
 /**
- * The counts of the first project whose npm downloads chart on hover.
+ * The counts of the first project whose hover charts both its activity and
+ * its npm downloads.
  *
- * Throws if none has more than a week of them, as when `pnpm fetch:downloads`
- * couldn't reach npm. Only npm's count, since CI's test builds have no
- * credentials for PyPI's.
+ * Throws if none has more than a week of both, as when the build had no
+ * `GITHUB_TOKEN` or couldn't reach npm. Only npm's downloads count, since
+ * CI's test builds have no credentials for PyPI's.
  */
 export const getChartedCounts = (page: Page) => {
   const project = PROJECTS.flatMap(({ projects }) => projects).find(
-    ({ npmPackage }) =>
-      npmPackage && (PACKAGE_DOWNLOADS.npm[npmPackage]?.weekly.length ?? 0) > 1
+    ({ repo, npmPackage }) =>
+      (REPO_ACTIVITY[repo]?.commits.length ?? 0) > 1 &&
+      npmPackage &&
+      (PACKAGE_DOWNLOADS.npm[npmPackage]?.weekly.length ?? 0) > 1
   )
   if (!project) {
-    throw new Error('No npm package has more than a week of downloads')
+    throw new Error(
+      'No project has more than a week of both activity and npm downloads'
+    )
   }
   return page
     .getByTestId(REPO_LINK)

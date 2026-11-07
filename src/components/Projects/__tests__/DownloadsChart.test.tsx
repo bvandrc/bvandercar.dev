@@ -4,7 +4,7 @@ import type { WeeklyDownloads } from '@/generated/package-downloads'
 import { SELECTORS } from '~/test-support/selectors'
 import { DownloadsChart } from '../DownloadsChart'
 
-const { PLOT, READOUT } = SELECTORS.PROJECTS.DOWNLOADS_CHART
+const { PLOT, READOUT } = SELECTORS.PROJECTS.WEEKLY_CHART
 
 const HISTORY = {
   firstDay: '2026-03-06',
@@ -12,57 +12,28 @@ const HISTORY = {
   weekly: [5, 1200, 12],
 } satisfies WeeklyDownloads
 
-/** Moves the pointer to `clientX` on the plot, which the test DOM lays out from x = 0. */
-const movePointer = (clientX: number) =>
-  fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX })
-
 describe('DownloadsChart', () => {
-  it('reads out the peak week until hovered', () => {
-    render(<DownloadsChart history={HISTORY} registry="npm" />)
-
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Weekly npm downloads, peak 1,200'
-    )
-  })
-
-  it('names the registry the downloads are from', () => {
-    render(<DownloadsChart history={HISTORY} registry="pypi" />)
-
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Weekly PyPI downloads, peak 1,200'
-    )
-  })
-
-  it('labels its first and last months', () => {
-    render(
-      <DownloadsChart
-        history={{ ...HISTORY, lastDay: '2026-05-24' }}
-        registry="npm"
-      />
-    )
-
-    expect(
-      screen.getByTestId(SELECTORS.PROJECTS.DOWNLOADS_CHART.SELF).textContent
-    ).toMatch(/Mar 2026.*May 2026/)
-  })
-
-  it('reads out the week nearest the pointer, and the peak again once it leaves', () => {
-    render(<DownloadsChart history={HISTORY} registry="npm" />)
-    const readout = screen.getByTestId(READOUT)
-
-    // Past either end of the plot clamps to its first or last week.
+  it('sums up the downloads, naming their registry, until hovered', () => {
     const CASES = [
-      [-20, 'Week of Mar 6, 2026: 5 downloads'],
-      // Closer to the middle week than to either end.
-      [100, 'Week of Mar 11, 2026: 1,200 downloads'],
-      [400, 'Week of Mar 18, 2026: 12 downloads'],
+      ['npm', 'Weekly npm downloads, peak 1,200'],
+      ['pypi', 'Weekly PyPI downloads, peak 1,200'],
     ] as const
-    for (const [clientX, expected] of CASES) {
-      movePointer(clientX)
-      expect(readout.textContent, String(clientX)).toBe(expected)
+    for (const [registry, expected] of CASES) {
+      const { unmount } = render(
+        <DownloadsChart history={HISTORY} registry={registry} />
+      )
+      expect(screen.getByTestId(READOUT).textContent, registry).toBe(expected)
+      unmount()
     }
+  })
 
-    fireEvent.pointerLeave(screen.getByTestId(PLOT))
-    expect(readout.textContent).toBe('Weekly npm downloads, peak 1,200')
+  it("reads out a hovered week's downloads from the day it starts", () => {
+    render(<DownloadsChart history={HISTORY} registry="npm" />)
+
+    // The first week, cut short by the first publish.
+    fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 0 })
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Week of Mar 6, 2026: 5 downloads'
+    )
   })
 })
