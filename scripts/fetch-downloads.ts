@@ -26,6 +26,9 @@ const PYPI_CACHE_FILE = `${CACHE_DIR}/pypi-downloads.json`
 // The latest cached days a run queries again, since the dataset can still be
 // filling them in.
 const PYPI_REFRESH_DAYS = 3
+// Days per PyPI query, each billing well under the cap, where a whole history
+// in one query bills over it.
+const PYPI_WINDOW_DAYS = 180
 
 /** Days per npm query, inside the 18 months the API answers at once. */
 const NPM_WINDOW_DAYS = 365
@@ -52,6 +55,12 @@ type Release = { version: string; day: string }
 const byDay = (a: Release, b: Release) => a.day.localeCompare(b.day)
 
 const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
+
+/** The earlier of two ISO dates, which sort as strings. */
+const earlierDay = (a: string, b: string) => [a, b].sort()[0]
+
+/** The later of two ISO dates. */
+const laterDay = (a: string, b: string) => [a, b].sort()[1]
 
 /** Every ISO date from `first` through `last`. */
 const listDays = (first: string, last: string) => {
@@ -151,13 +160,51 @@ const readPypiCache = async (): Promise<DailyCache> => {
 }
 
 /**
+ * Each package's downloads on each day from `from` through `to`, by
+ * `"<package> <day>"`, in one BigQuery query.
+ *
+ * Logs what the query billed, so its cost shows in the build log.
+ */
+const queryPypiDownloads = async (
+  packages: string[],
+  from: string,
+  to: string
+) => {
+  // The credentials name the project the query is billed to.
+  const [job] = await new BigQuery().createQueryJob({
+    // The table is partitioned by `timestamp` and clustered by project, so
+    // bounding both keeps the scan to these packages' days.
+    query: `
+      SELECT file.project AS project, FORMAT_DATE('%F', DATE(timestamp)) AS day, COUNT(*) AS downloads
+      FROM \`bigquery-public-data.pypi.file_downloads\`
+      WHERE file.project IN UNNEST(@packages)
+        AND timestamp >= TIMESTAMP(@from)
+        AND timestamp < TIMESTAMP_ADD(TIMESTAMP(@to), INTERVAL 1 DAY)
+      GROUP BY project, day`,
+    params: { packages, from, to },
+    maximumBytesBilled: MAX_BYTES_BILLED,
+  })
+  const [rows] = await job.getQueryResults()
+  const [metadata] = await job.getMetadata()
+  const billed = Number(metadata.statistics?.query?.totalBytesBilled ?? 0)
+  console.log(
+    `PyPI downloads: BigQuery billed ${(billed / 1000 ** 3).toFixed(2)} GB for ${from} to ${to}`
+  )
+  return new Map(
+    (rows as { project: string; day: string; downloads: number }[]).map(
+      ({ project, day, downloads }) => [`${project} ${day}`, downloads]
+    )
+  )
+}
+
+/**
  * Each PyPI package's downloads for each day from its first upload through
- * two days ago, in one BigQuery query.
+ * two days ago.
  *
  * Only the days `cache` doesn't have yet are queried, plus its latest few,
- * and the counts are added to it. A package it lacks back to the first day is
- * queried in full. Logs what the query billed, so its cost shows in the
- * build log.
+ * and the counts are added to it as each query returns, so a run that fails
+ * partway keeps what it got. A package it lacks back to the first day is
+ * queried in full, a window of days at a time.
  */
 const fetchPypiDailyDownloads = async (
   packages: { pkg: string; firstDay: string }[],
@@ -176,52 +223,37 @@ const fetchPypiDailyDownloads = async (
       ? isoDate(Date.parse(latestCached) - PYPI_REFRESH_DAYS * DAY_MS)
       : firstDay
   })
-  const queryStart = starts.toSorted()[0]
-  // The credentials name the project the query is billed to.
-  const [job] = await new BigQuery().createQueryJob({
-    // The table is partitioned by `timestamp` and clustered by project, so
-    // bounding both keeps the scan to these packages' days.
-    query: `
-      SELECT file.project AS project, FORMAT_DATE('%F', DATE(timestamp)) AS day, COUNT(*) AS downloads
-      FROM \`bigquery-public-data.pypi.file_downloads\`
-      WHERE file.project IN UNNEST(@packages)
-        AND timestamp >= TIMESTAMP(@firstDay)
-        AND timestamp < TIMESTAMP_ADD(TIMESTAMP(@lastDay), INTERVAL 1 DAY)
-      GROUP BY project, day`,
-    params: {
-      packages: packages.map(({ pkg }) => pkg),
-      firstDay: queryStart,
-      lastDay,
-    },
-    maximumBytesBilled: MAX_BYTES_BILLED,
-  })
-  const [rows] = await job.getQueryResults()
-  const [metadata] = await job.getMetadata()
-  const billed = Number(metadata.statistics?.query?.totalBytesBilled ?? 0)
-  console.log(
-    `PyPI downloads: BigQuery billed ${(billed / 1000 ** 3).toFixed(2)} GB for the days from ${queryStart}`
-  )
-  const counts = new Map(
-    (rows as { project: string; day: string; downloads: number }[]).map(
-      ({ project, day, downloads }) => [`${project} ${day}`, downloads]
+  // A whole history in one query bills more than the cap allows, so it's
+  // read a window at a time, oldest first.
+  for (
+    let from = starts.toSorted()[0];
+    from <= lastDay;
+    from = isoDate(Date.parse(from) + PYPI_WINDOW_DAYS * DAY_MS)
+  ) {
+    const windowEnd = isoDate(
+      Date.parse(from) + (PYPI_WINDOW_DAYS - 1) * DAY_MS
     )
-  )
-  return packages.map(({ pkg, firstDay }) => {
-    const days = cache[pkg] ?? {}
-    // A queried day without downloads has no row, so it's set to 0 rather
-    // than left at whatever an earlier run counted.
-    for (const day of listDays(
-      // The later of the two ISO dates.
-      [queryStart, firstDay].sort()[1],
-      lastDay
-    )) {
-      days[day] = counts.get(`${pkg} ${day}`) ?? 0
+    const to = earlierDay(windowEnd, lastDay)
+    const counts = await queryPypiDownloads(
+      packages.map(({ pkg }) => pkg),
+      from,
+      to
+    )
+    for (const { pkg, firstDay } of packages) {
+      const days = cache[pkg] ?? {}
+      // A queried day without downloads has no row, so it's set to 0 rather
+      // than left at whatever an earlier run counted.
+      for (const day of listDays(laterDay(from, firstDay), to)) {
+        days[day] = counts.get(`${pkg} ${day}`) ?? 0
+      }
+      cache[pkg] = days
     }
-    cache[pkg] = days
-    return listDays(firstDay, lastDay).map(
-      (day): DailyDownloads => ({ day, downloads: days[day] ?? 0 })
+  }
+  return packages.map(({ pkg, firstDay }) =>
+    listDays(firstDay, lastDay).map(
+      (day): DailyDownloads => ({ day, downloads: cache[pkg]?.[day] ?? 0 })
     )
-  })
+  )
 }
 
 /**
@@ -300,12 +332,16 @@ if (pypiFirstDays.length > 0 && !hasGoogleCredentials) {
 } else if (pypiFirstDays.length > 0) {
   try {
     const cache = await readPypiCache()
-    const histories = await fetchPypiDailyDownloads(pypiFirstDays, cache)
-    await mkdir(CACHE_DIR, { recursive: true })
-    await writeFile(PYPI_CACHE_FILE, JSON.stringify(cache))
-    pypiFirstDays.forEach(({ pkg }, index) => {
-      pypiEntries.push(...formatEntry(pkg, histories[index]))
-    })
+    try {
+      const histories = await fetchPypiDailyDownloads(pypiFirstDays, cache)
+      pypiFirstDays.forEach(({ pkg }, index) => {
+        pypiEntries.push(...formatEntry(pkg, histories[index]))
+      })
+    } finally {
+      // Kept even when a query fails, so the next run picks up where it left off.
+      await mkdir(CACHE_DIR, { recursive: true })
+      await writeFile(PYPI_CACHE_FILE, JSON.stringify(cache))
+    }
   } catch (error) {
     warnSkipped('PyPI downloads', error)
   }
