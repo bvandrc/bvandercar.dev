@@ -6,12 +6,13 @@ import { formatCount } from '@/lib/format-count'
 import { cn } from '@/utils'
 import { formatDay, formatVersions, getReleaseWeeks } from './lib/weeks'
 
-const WIDTH = 256
-const HEIGHT = 76
+// As wide as fits a 375px phone screen, with the tooltip's padding and margins.
+const WIDTH = 328
+const HEIGHT = 104
 // Keeps the 2px lines and the 8px hover dots inside the box at either end.
 const INSET = 5
 // The strip along the top the caption sits in, which the lines stay below.
-const CAPTION_HEIGHT = 18
+const CAPTION_HEIGHT = 22
 // Where the highest total is drawn.
 const PLOT_TOP = CAPTION_HEIGHT + INSET
 
@@ -182,7 +183,7 @@ export const WeeklyChart = ({
             y={HEIGHT - INSET - 4}
             textAnchor={labelOnLeft ? 'end' : 'start'}
             className={cn(
-              'fill-ink text-[10px]',
+              'fill-ink text-xs',
               // An outline in the tooltip's color, so it reads over the lines.
               'stroke-surface-raised stroke-3 [paint-order:stroke] [stroke-linejoin:round]'
             )}

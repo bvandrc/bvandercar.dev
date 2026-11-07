@@ -1,5 +1,7 @@
 import { Tooltip as RadixTooltip } from 'radix-ui'
 
+import { cn } from '@/utils'
+
 /** Delay before a hovered trigger shows its tooltip, in ms; Radix's 700 feels sluggish. */
 const OPEN_DELAY = 150
 
@@ -18,7 +20,10 @@ export type TooltipProps = Pick<
   React.ComponentProps<typeof RadixTooltip.Root>,
   'open' | 'onOpenChange'
 > &
-  Pick<React.ComponentProps<typeof RadixTooltip.Content>, 'aria-label'> & {
+  Pick<
+    React.ComponentProps<typeof RadixTooltip.Content>,
+    'aria-label' | 'className'
+  > & {
     /** What the tooltip says, which screen readers hear as the trigger's description. */
     content: React.ReactNode
     /** The trigger: one element that takes a ref and spreads its props, like `Link`. */
@@ -35,6 +40,7 @@ export const Tooltip = ({
   content,
   children,
   'aria-label': ariaLabel,
+  className,
   ...rootProps
 }: TooltipProps) => (
   <RadixTooltip.Root {...rootProps}>
@@ -46,7 +52,10 @@ export const Tooltip = ({
         aria-label={ariaLabel}
         sideOffset={3}
         collisionPadding={8}
-        className="z-50 max-w-xs animate-tooltip-in rounded-md border border-ink-muted/30 bg-surface-raised px-2 py-1 text-xs break-words text-ink shadow-lg shadow-black/50"
+        className={cn(
+          'z-50 max-w-xs animate-tooltip-in rounded-md border border-ink-muted/30 bg-surface-raised px-2 py-1 text-xs break-words text-ink shadow-lg shadow-black/50',
+          className
+        )}
         data-testid="tooltip">
         {content}
       </RadixTooltip.Content>

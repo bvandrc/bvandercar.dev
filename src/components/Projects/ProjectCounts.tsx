@@ -106,7 +106,13 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
           label
         )
       }
-      aria-label={description === label ? undefined : description}>
+      aria-label={description === label ? undefined : description}
+      // Sized to its charts, with text to match, rather than to a line of text.
+      className={
+        chartedActivity || chartedDownloads
+          ? 'max-w-none p-3 text-sm'
+          : undefined
+      }>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
       <span
