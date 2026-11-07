@@ -28,7 +28,7 @@ const TONE_CLASSES = {
   },
 } as const satisfies Record<SeriesTone, Record<string, string>>
 
-// The readout's summary is quieter than a hovered week's values, which lead.
+// The readout's summary is quieter than a hovered week's totals, which lead.
 const READOUT_CLASSES = {
   SUMMARY: 'text-ink-muted',
   WEEK: 'text-ink',
@@ -37,14 +37,14 @@ const READOUT_CLASSES = {
 export type ChartSeries = {
   /** What one of the series counts, like "commit" */
   noun: string
-  /** Its count in each week, one per entry of `weekStarts` */
+  /** Its count in each week, one per entry of `weekEnds` */
   weekly: number[]
   tone: SeriesTone
 }
 
 export type WeeklyChartProps = {
-  /** The ISO date each week starts on, oldest first; two or more */
-  weekStarts: string[]
+  /** The ISO date each week ends on, oldest first; two or more */
+  weekEnds: string[]
   /** Drawn in order, so the last is on top; a lone series is shaded beneath */
   series: ChartSeries[]
   /** What the readout says while no week is hovered */
@@ -53,29 +53,37 @@ export type WeeklyChartProps = {
 }
 
 /**
- * Weekly counts as a small line chart on one shared scale, with a readout of
- * the week under the pointer, and a legend in the readout for two or more
- * series.
+ * Weekly counts as running totals, on a small line chart with one shared
+ * scale, with a readout of the totals through the week under the pointer, and
+ * a legend in the readout for two or more series.
  *
  * Drawn for sighted pointer users only: pair it with the counts in words for
  * everyone else.
  */
 export const WeeklyChart = ({
-  weekStarts,
+  weekEnds,
   series,
   summary,
   'data-testid': testId,
 }: WeeklyChartProps) => {
   const [activeWeek, setActiveWeek] = useState<number>()
-  const lastIndex = weekStarts.length - 1
-  const peak = Math.max(...series.flatMap(({ weekly }) => weekly))
+  const lastIndex = weekEnds.length - 1
+  const totals = series.map(({ weekly }) => {
+    let total = 0
+    return weekly.map((count) => {
+      total += count
+      return total
+    })
+  })
+  // Totals only grow, so the highest is a last one.
+  const peak = Math.max(...totals.map((running) => running[lastIndex]))
   const toX = (index: number) =>
     INSET + (index / lastIndex) * (WIDTH - 2 * INSET)
   // Counts of all zeros stay on the baseline rather than dividing by zero.
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (peak || 1)) * (HEIGHT - 2 * INSET)
-  const toLine = (weekly: number[]) =>
-    weekly
+  const toLine = (counts: number[]) =>
+    counts
       .map((count, index) => `${index ? 'L' : 'M'}${toX(index)},${toY(count)}`)
       .join('')
   return (
@@ -106,14 +114,14 @@ export const WeeklyChart = ({
         />
         {series.length === 1 && (
           <path
-            d={`${toLine(series[0].weekly)}L${toX(lastIndex)},${HEIGHT - INSET}L${toX(0)},${HEIGHT - INSET}Z`}
+            d={`${toLine(totals[0])}L${toX(lastIndex)},${HEIGHT - INSET}L${toX(0)},${HEIGHT - INSET}Z`}
             className={TONE_CLASSES[series[0].tone].AREA}
           />
         )}
-        {series.map(({ noun, weekly, tone }) => (
+        {series.map(({ noun, tone }, index) => (
           <path
             key={noun}
-            d={toLine(weekly)}
+            d={toLine(totals[index])}
             fill="none"
             strokeWidth={2}
             strokeLinejoin="round"
@@ -130,11 +138,11 @@ export const WeeklyChart = ({
               y2={HEIGHT - INSET}
               className="stroke-ink-muted/50"
             />
-            {series.map(({ noun, weekly, tone }) => (
+            {series.map(({ noun, tone }, index) => (
               <circle
                 key={noun}
                 cx={toX(activeWeek)}
-                cy={toY(weekly[activeWeek])}
+                cy={toY(totals[index][activeWeek])}
                 r={4}
                 strokeWidth={2}
                 // A ring in the tooltip's own color, so a dot stands off the lines.
@@ -170,8 +178,10 @@ export const WeeklyChart = ({
               ))}
           </>
         ) : (
-          `Week of ${formatDay(weekStarts[activeWeek])}: ${series
-            .map(({ noun, weekly }) => formatCount(weekly[activeWeek], noun))
+          `Through ${formatDay(weekEnds[activeWeek])}: ${series
+            .map(({ noun }, index) =>
+              formatCount(totals[index][activeWeek], noun)
+            )
             .join(', ')}`
         )}
       </p>

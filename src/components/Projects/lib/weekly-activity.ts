@@ -6,6 +6,10 @@ import { addDays, formatDay, formatMonth, getPeakWeek } from './weeks'
 export const getActivityWeekStarts = ({ firstWeek, commits }: WeeklyActivity) =>
   commits.map((_, index) => addDays(firstWeek, index * 7))
 
+/** The ISO date each of the activity's weeks ends on, a Sunday, oldest first. */
+export const getActivityWeekEnds = ({ firstWeek, commits }: WeeklyActivity) =>
+  commits.map((_, index) => addDays(firstWeek, index * 7 + 6))
+
 /** The activity in a sentence, like "Weekly commits and PRs since Mar 2025, peaking at 40 commits in the week of Mar 2, 2026". */
 export const describeWeeklyActivity = (activity: WeeklyActivity) => {
   const peak = getPeakWeek(activity.commits, getActivityWeekStarts(activity))

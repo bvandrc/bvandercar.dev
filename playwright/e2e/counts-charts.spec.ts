@@ -16,7 +16,7 @@ const hoverPlot = async (page: Page, chart: Locator) => {
   })
 }
 
-test("hovering a project's counts charts its activity and npm downloads, read out week by week", async ({
+test("hovering a project's counts charts its activity and npm downloads as running totals, read out week by week", async ({
   page,
 }) => {
   await page.goto('/')
@@ -26,19 +26,19 @@ test("hovering a project's counts charts its activity and npm downloads, read ou
   const activity = tooltip.getByTestId(ACTIVITY_CHART)
   const downloads = tooltip.getByTestId(DOWNLOADS_CHART)
   await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    'WeeklycommitsPRs'
+    'Running totalcommitsPRs'
   )
   await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    /^Weekly npm downloads, peak/
+    'Running total of npm downloads'
   )
 
   // The tooltip stays open as the pointer crosses into it, and between charts.
   await hoverPlot(page, activity)
   await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    /^Week of .+: [\d,]+ commits?, [\d,]+ PRs?$/
+    /^Through .+: [\d,]+ commits?, [\d,]+ PRs?$/
   )
   await hoverPlot(page, downloads)
   await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    /^Week of .+: [\d,]+ downloads?$/
+    /^Through .+: [\d,]+ downloads?$/
   )
 })

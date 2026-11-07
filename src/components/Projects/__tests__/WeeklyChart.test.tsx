@@ -5,7 +5,7 @@ import { type ChartSeries, WeeklyChart } from '../WeeklyChart'
 
 const { PLOT, READOUT } = SELECTORS.PROJECTS.WEEKLY_CHART
 
-const WEEK_STARTS = ['2026-03-02', '2026-03-09', '2026-03-16']
+const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
 const COMMITS = {
   noun: 'commit',
   weekly: [5, 1200, 12],
@@ -17,13 +17,13 @@ const PRS = {
   tone: 'SECOND',
 } satisfies ChartSeries
 
-/** Renders the chart with `series`, summarized as "Weekly". */
+/** Renders the chart with `series`, summarized as "Running total". */
 const renderChart = (series: ChartSeries[]) =>
   render(
     <WeeklyChart
-      weekStarts={WEEK_STARTS}
+      weekEnds={WEEK_ENDS}
       series={series}
-      summary="Weekly"
+      summary="Running total"
       data-testid="chart"
     />
   )
@@ -36,25 +36,27 @@ describe('WeeklyChart', () => {
   it('reads out its summary until hovered', () => {
     renderChart([COMMITS])
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('Weekly')
+    expect(screen.getByTestId(READOUT).textContent).toBe('Running total')
   })
 
   it('names each of two or more series in the summary, as its legend', () => {
     renderChart([COMMITS, PRS])
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('WeeklycommitsPRs')
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Running totalcommitsPRs'
+    )
   })
 
-  it('reads out the week nearest the pointer, and the summary again once it leaves', () => {
+  it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
     renderChart([COMMITS])
     const readout = screen.getByTestId(READOUT)
 
     // Past either end of the plot clamps to its first or last week.
     const CASES = [
-      [-20, 'Week of Mar 2, 2026: 5 commits'],
+      [-20, 'Through Mar 8, 2026: 5 commits'],
       // Closer to the middle week than to either end.
-      [100, 'Week of Mar 9, 2026: 1,200 commits'],
-      [400, 'Week of Mar 16, 2026: 12 commits'],
+      [100, 'Through Mar 15, 2026: 1,205 commits'],
+      [400, 'Through Mar 22, 2026: 1,217 commits'],
     ] as const
     for (const [clientX, expected] of CASES) {
       movePointer(clientX)
@@ -62,15 +64,15 @@ describe('WeeklyChart', () => {
     }
 
     fireEvent.pointerLeave(screen.getByTestId(PLOT))
-    expect(readout.textContent).toBe('Weekly')
+    expect(readout.textContent).toBe('Running total')
   })
 
-  it("reads out every series' count for the hovered week", () => {
+  it("reads out every series' running total through the hovered week", () => {
     renderChart([COMMITS, PRS])
 
     movePointer(0)
     expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Week of Mar 2, 2026: 5 commits, 1 PR'
+      'Through Mar 8, 2026: 5 commits, 1 PR'
     )
   })
 })

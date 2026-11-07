@@ -1,6 +1,7 @@
 import type { WeeklyActivity } from '@/generated/repo-activity'
 import {
   describeWeeklyActivity,
+  getActivityWeekEnds,
   getActivityWeekStarts,
 } from '../weekly-activity'
 
@@ -16,6 +17,16 @@ describe('getActivityWeekStarts', () => {
       '2026-02-23',
       '2026-03-02',
       '2026-03-09',
+    ])
+  })
+})
+
+describe('getActivityWeekEnds', () => {
+  it('ends each week on the Sunday 6 days after it starts', () => {
+    expect(getActivityWeekEnds(ACTIVITY)).toEqual([
+      '2026-03-01',
+      '2026-03-08',
+      '2026-03-15',
     ])
   })
 })

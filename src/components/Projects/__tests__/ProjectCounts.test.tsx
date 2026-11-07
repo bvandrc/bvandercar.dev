@@ -121,7 +121,7 @@ describe('ProjectCounts', () => {
 
     await hoverCounts()
     expect(screen.getByTestId(DOWNLOADS_CHART).textContent).toBe(
-      'Weekly PyPI downloads, peak 900'
+      'Running total of PyPI downloads'
     )
   })
 

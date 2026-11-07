@@ -19,6 +19,10 @@ export const getDownloadWeekStarts = ({
     return start < firstDay ? firstDay : start
   })
 
+/** The ISO date each of the history's weeks ends on, oldest first. */
+export const getDownloadWeekEnds = ({ lastDay, weekly }: WeeklyDownloads) =>
+  weekly.map((_, index) => addDays(lastDay, -(weekly.length - 1 - index) * 7))
+
 /** The history in a sentence, like "Weekly npm downloads since Jul 2026, peaking at 1,010 in the week of Jul 28, 2026". */
 export const describeWeeklyDownloads = (
   history: WeeklyDownloads,

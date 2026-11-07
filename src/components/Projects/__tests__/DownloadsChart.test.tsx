@@ -13,10 +13,10 @@ const HISTORY = {
 } satisfies WeeklyDownloads
 
 describe('DownloadsChart', () => {
-  it('sums up the downloads, naming their registry, until hovered', () => {
+  it('names the registry its running total is of, until hovered', () => {
     const CASES = [
-      ['npm', 'Weekly npm downloads, peak 1,200'],
-      ['pypi', 'Weekly PyPI downloads, peak 1,200'],
+      ['npm', 'Running total of npm downloads'],
+      ['pypi', 'Running total of PyPI downloads'],
     ] as const
     for (const [registry, expected] of CASES) {
       const { unmount } = render(
@@ -27,13 +27,12 @@ describe('DownloadsChart', () => {
     }
   })
 
-  it("reads out a hovered week's downloads from the day it starts", () => {
+  it('reads out the downloads through the last day of the hovered week', () => {
     render(<DownloadsChart history={HISTORY} registry="npm" />)
 
-    // The first week, cut short by the first publish.
-    fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 0 })
+    fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 400 })
     expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Week of Mar 6, 2026: 5 downloads'
+      'Through Mar 24, 2026: 1,217 downloads'
     )
   })
 })

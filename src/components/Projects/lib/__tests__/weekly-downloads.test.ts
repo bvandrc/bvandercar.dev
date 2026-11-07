@@ -1,6 +1,7 @@
 import type { WeeklyDownloads } from '@/generated/package-downloads'
 import {
   describeWeeklyDownloads,
+  getDownloadWeekEnds,
   getDownloadWeekStarts,
 } from '../weekly-downloads'
 
@@ -23,6 +24,16 @@ describe('getDownloadWeekStarts', () => {
       '2026-03-06',
       '2026-03-11',
       '2026-03-18',
+    ])
+  })
+})
+
+describe('getDownloadWeekEnds', () => {
+  it('ends each week 7 days apart, the last on the last day', () => {
+    expect(getDownloadWeekEnds(HISTORY)).toEqual([
+      '2026-03-10',
+      '2026-03-17',
+      '2026-03-24',
     ])
   })
 })

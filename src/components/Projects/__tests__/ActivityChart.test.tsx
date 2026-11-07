@@ -16,15 +16,17 @@ describe('ActivityChart', () => {
   it('names its commits and PRs lines until hovered', () => {
     render(<ActivityChart activity={ACTIVITY} />)
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('WeeklycommitsPRs')
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Running totalcommitsPRs'
+    )
   })
 
-  it("reads out a hovered week's commits and PRs", () => {
+  it('reads out the commits and PRs through the Sunday ending the hovered week', () => {
     render(<ActivityChart activity={ACTIVITY} />)
 
     fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 400 })
     expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Week of Mar 9, 2026: 12 commits, 4 PRs'
+      'Through Mar 15, 2026: 55 commits, 14 PRs'
     )
   })
 })
