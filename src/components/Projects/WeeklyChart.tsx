@@ -57,7 +57,8 @@ export type WeeklyChartProps = {
    * The ISO dates its width runs from and to, which charts shown together
    * share, so a date sits at the same place on each.
    *
-   * Defaults to its own weeks'.
+   * Defaults to its own weeks'. A start after the first day leaves out the
+   * weeks before it, and the line starts at the total counted by then.
    */
   span?: { start: string; end: string }
   /** What one of what it counts is called, like "commit" */
@@ -115,9 +116,15 @@ export const WeeklyChart = ({
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
   const lastX = toX(weekEnds[lastIndex])
-  // From the baseline on the first day, before which there was nothing to count.
-  const line = `M${toX(firstDay)},${toY(0)}${totals
-    .map((count, index) => `L${toX(weekEnds[index])},${toY(count)}`)
+  // The line starts on the first day, at nothing counted yet, or at a span's
+  // later start, at what was counted by then.
+  const lineStart = [firstDay, start].sort()[1]
+  const startX = toX(lineStart)
+  const firstShown = weekEnds.findIndex((weekEnd) => weekEnd >= lineStart)
+  const line = `M${startX},${toY(totals[firstShown - 1] ?? 0)}${totals
+    .map((count, index) => [count, weekEnds[index]] as const)
+    .slice(firstShown)
+    .map(([count, weekEnd]) => `L${toX(weekEnd)},${toY(count)}`)
     .join('')}`
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => day >= start && day <= end
@@ -181,7 +188,7 @@ export const WeeklyChart = ({
           />
         ))}
         <path
-          d={`${line}L${lastX},${HEIGHT - INSET}Z`}
+          d={`${line}L${lastX},${HEIGHT - INSET}L${startX},${HEIGHT - INSET}Z`}
           className={TONE_CLASSES[tone].AREA}
         />
         <path

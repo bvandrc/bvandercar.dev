@@ -7,7 +7,7 @@ const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
   SELECTORS.PROJECTS.WEEKLY_CHART
 
 /** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
-const renderChart = (props?: Pick<WeeklyChartProps, 'releases'>) =>
+const renderChart = (props?: Pick<WeeklyChartProps, 'releases' | 'span'>) =>
   render(
     <WeeklyChart
       firstDay="2026-03-02"
@@ -66,6 +66,17 @@ describe('WeeklyChart', () => {
 
     fireEvent.pointerLeave(screen.getByTestId(PLOT))
     expect(readout.textContent).toBe('Commits')
+  })
+
+  it('leaves out the weeks before a later span start, starting from the total by then', () => {
+    renderChart({ span: { start: '2026-03-10', end: '2026-03-22' } })
+
+    // Its left edge is now in the second week, where the total had reached 1,205.
+    movePointer(0)
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 15, 2026: 1,205 commits'
+    )
+    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
   })
 
   it('reads out a tapped week, and keeps it once the finger lifts', () => {

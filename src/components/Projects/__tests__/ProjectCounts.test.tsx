@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import type {
@@ -32,7 +32,7 @@ const {
   NEW_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
-const { READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
 
 // The repo's counts in full: its commits and PRs from this site's fetch, and
 // its downloads from the profile's, with no package to fetch them for.
@@ -209,6 +209,18 @@ describe('ProjectCounts', () => {
         .map((line) => line.getAttribute('x1'))
     )
     expect(downloadsLines).toEqual(activityLines)
+  })
+
+  it("starts both charts at the package's first release, rather than the repo's first commit", async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+
+    await hoverCounts()
+    const activity = within(screen.getByTestId(ACTIVITY_CHART))
+    fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
+    // The first release, on Mar 4, falls in the repo's second week.
+    expect(activity.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 8, 2026: 43 commits'
+    )
   })
 
   it("marks its package's releases on both charts", async () => {

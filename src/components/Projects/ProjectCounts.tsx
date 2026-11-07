@@ -91,7 +91,10 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     },
   ].filter(isNotNil)
   const span = {
-    start: ownSpans.map(({ start }) => start).sort()[0],
+    // From the package's first release, where there is one, rather than a
+    // repo's first commit years before it, which would squeeze the charts
+    // into their right edge.
+    start: releases?.[0]?.day ?? ownSpans.map(({ start }) => start).sort()[0],
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
   const label = shown
