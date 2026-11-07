@@ -80,7 +80,11 @@ export const ProjectCard = ({
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
       <p className="text-xs">
-        <RepoLink repo={project.repo} nameId={nameId} />
+        <RepoLink
+          repo={project.repo}
+          npmPackage={project.npmPackage}
+          nameId={nameId}
+        />
       </p>
       {project.embed ? (
         <LivePreview

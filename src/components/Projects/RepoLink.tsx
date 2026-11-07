@@ -18,7 +18,7 @@ export type RepoLinkProps = ProjectCountsProps & {
  * Each part shows its own tooltip on hover, and keyboard focus on the link
  * shows the "repo" one.
  */
-export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
+export const RepoLink = ({ repo, npmPackage, nameId }: RepoLinkProps) => {
   const [repoTooltipOpen, setRepoTooltipOpen] = useState(false)
   const pointerDownRef = useRef(false)
   return (
@@ -43,7 +43,7 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
         setRepoTooltipOpen(false)
       }}
       data-testid="project-repo-link">
-      <ProjectCounts repo={repo} />
+      <ProjectCounts repo={repo} npmPackage={npmPackage} />
       <Tooltip
         content="GitHub Repository"
         open={repoTooltipOpen}

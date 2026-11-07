@@ -11,6 +11,11 @@ export const SELECTORS = {
     CARD: 'project-card',
     REPO_LINK: 'project-repo-link',
     COUNTS: 'project-counts',
+    DOWNLOADS_CHART: {
+      SELF: 'downloads-chart',
+      PLOT: 'downloads-chart-plot',
+      READOUT: 'downloads-chart-readout',
+    },
   },
   SKILLS: {
     SELF: 'skills',
