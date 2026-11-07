@@ -1,8 +1,8 @@
 import type { WeeklyActivity } from '@/generated/repo-activity'
 import { getActivityWeekEnds } from './lib/weekly-activity'
-import { WeeklyChart } from './WeeklyChart'
+import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
-export type ActivityChartProps = {
+export type ActivityChartProps = Pick<WeeklyChartProps, 'releases'> & {
   activity: WeeklyActivity
 }
 
@@ -14,7 +14,7 @@ export type ActivityChartProps = {
  * Pair it with `describeWeeklyActivity` for screen readers. Needs two weeks or
  * more.
  */
-export const ActivityChart = ({ activity }: ActivityChartProps) => (
+export const ActivityChart = ({ activity, releases }: ActivityChartProps) => (
   <WeeklyChart
     weekEnds={getActivityWeekEnds(activity)}
     series={[
@@ -22,6 +22,7 @@ export const ActivityChart = ({ activity }: ActivityChartProps) => (
       { noun: 'PR', weekly: activity.prs, tone: 'SECOND' },
     ]}
     summary="Running total"
+    releases={releases}
     data-testid="activity-chart"
   />
 )

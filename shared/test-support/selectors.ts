@@ -16,6 +16,8 @@ export const SELECTORS = {
     WEEKLY_CHART: {
       PLOT: 'weekly-chart-plot',
       READOUT: 'weekly-chart-readout',
+      RELEASE: 'weekly-chart-release',
+      RELEASE_LABEL: 'weekly-chart-release-label',
     },
   },
   SKILLS: {

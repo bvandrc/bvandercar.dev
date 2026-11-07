@@ -2,7 +2,10 @@ import { isNotNil } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
-import { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
+import {
+  PACKAGE_DOWNLOADS,
+  PACKAGE_RELEASES,
+} from '@/generated/package-downloads'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
@@ -19,20 +22,16 @@ export type ProjectCountsProps = Pick<
   'repo' | 'npmPackage' | 'pypiPackage'
 >
 
-/** The project's package's weekly downloads and their registry, if there are enough to chart. */
-const getChartedDownloads = ({
+/** The registry the project publishes a package to, and its name there, if any. */
+const getPackage = ({
   npmPackage,
   pypiPackage,
 }: Omit<ProjectCountsProps, 'repo'>) => {
-  for (const [registry, pkg] of [
-    ['npm', npmPackage],
-    ['pypi', pypiPackage],
-  ] as const) {
-    const history = pkg ? PACKAGE_DOWNLOADS[registry][pkg] : undefined
-    // A single week is a point, not a trend.
-    if (history && history.weekly.length > 1) {
-      return { registry, history }
-    }
+  if (npmPackage) {
+    return { registry: 'npm', name: npmPackage } as const
+  }
+  if (pypiPackage) {
+    return { registry: 'pypi', name: pypiPackage } as const
   }
   return undefined
 }
@@ -43,14 +42,22 @@ const getChartedDownloads = ({
  *
  * Renders nothing for a repo with no counts. The hover also charts the repo's
  * weekly commits and PRs, and an npm or PyPI package's weekly downloads, each
- * once it has more than a week of them.
+ * once it has more than a week of them, marking the package's releases on both.
  */
 export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   const counts = REPO_COUNTS[repo]
   if (!counts) {
     return null
   }
-  const chartedDownloads = getChartedDownloads(packages)
+  const pkg = getPackage(packages)
+  const history = pkg && PACKAGE_DOWNLOADS[pkg.registry][pkg.name]
+  // A single week is a point, not a trend.
+  const chartedDownloads =
+    pkg && history && history.weekly.length > 1
+      ? { registry: pkg.registry, history }
+      : undefined
+  // Marked on both charts.
+  const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
   // The profile README badge's counts, in its order and with its icons.
   const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
     const count = counts[key]
@@ -80,8 +87,12 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       content={
         chartedActivity || chartedDownloads ? (
           <div className="flex flex-col gap-3">
-            {chartedActivity && <ActivityChart activity={chartedActivity} />}
-            {chartedDownloads && <DownloadsChart {...chartedDownloads} />}
+            {chartedActivity && (
+              <ActivityChart activity={chartedActivity} releases={releases} />
+            )}
+            {chartedDownloads && (
+              <DownloadsChart {...chartedDownloads} releases={releases} />
+            )}
             <p
               className={cn(
                 'font-bold',

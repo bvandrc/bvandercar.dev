@@ -1,9 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
 import { SELECTORS } from '~/test-support/selectors'
-import { type ChartSeries, WeeklyChart } from '../WeeklyChart'
+import {
+  type ChartSeries,
+  WeeklyChart,
+  type WeeklyChartProps,
+} from '../WeeklyChart'
 
-const { PLOT, READOUT } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, RELEASE, RELEASE_LABEL } =
+  SELECTORS.PROJECTS.WEEKLY_CHART
 
 const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
 const COMMITS = {
@@ -18,13 +23,17 @@ const PRS = {
 } satisfies ChartSeries
 
 /** Renders the chart with `series`, summarized as "Running total". */
-const renderChart = (series: ChartSeries[]) =>
+const renderChart = (
+  series: ChartSeries[],
+  props?: Pick<WeeklyChartProps, 'releases'>
+) =>
   render(
     <WeeklyChart
       weekEnds={WEEK_ENDS}
       series={series}
       summary="Running total"
       data-testid="chart"
+      {...props}
     />
   )
 
@@ -74,5 +83,33 @@ describe('WeeklyChart', () => {
     expect(screen.getByTestId(READOUT).textContent).toBe(
       'Through Mar 8, 2026: 5 commits, 1 PR'
     )
+  })
+
+  it('marks each week with a release, and names its versions while hovered', () => {
+    renderChart([COMMITS], {
+      releases: [
+        { version: '1.0.0', day: '2026-03-02' },
+        { version: '1.0.1', day: '2026-03-20' },
+        { version: '1.1.0', day: '2026-03-22' },
+      ],
+    })
+
+    // The second and third releases share the last week.
+    expect(screen.getAllByTestId(RELEASE)).toHaveLength(2)
+    expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
+    const CASES = [
+      [0, 'v1.0.0'],
+      [400, 'v1.0.1–v1.1.0'],
+    ] as const
+    for (const [clientX, expected] of CASES) {
+      movePointer(clientX)
+      expect(
+        screen.getByTestId(RELEASE_LABEL).textContent,
+        String(clientX)
+      ).toBe(expected)
+    }
+    // The middle week had no release.
+    movePointer(128)
+    expect(screen.queryByTestId(RELEASE_LABEL)).toBeNull()
   })
 })

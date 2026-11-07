@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { clamp } from 'es-toolkit'
 
+import type { Release } from '@/generated/package-downloads'
 import { formatCount } from '@/lib/format-count'
 import { cn } from '@/utils'
-import { formatDay } from './lib/weeks'
+import { formatDay, formatVersions, getReleaseWeeks } from './lib/weeks'
 
 const WIDTH = 256
 const HEIGHT = 76
@@ -53,13 +54,16 @@ export type WeeklyChartProps = {
   series: ChartSeries[]
   /** What the readout says while no week is hovered */
   summary: string
+  /** Marked with a grey line on each week that had one, naming its versions on hover */
+  releases?: Release[]
   'data-testid': string
 }
 
 /**
  * Weekly counts as running totals, on a small line chart with one shared
  * scale, captioned in its top-left corner with a summary, and a legend for two
- * or more series, or the totals through the week under the pointer.
+ * or more series, or the totals through the week under the pointer. A week
+ * with releases gets a grey line, and its versions show while it's hovered.
  *
  * Drawn for sighted pointer users only: pair it with the counts in words for
  * everyone else.
@@ -68,6 +72,7 @@ export const WeeklyChart = ({
   weekEnds,
   series,
   summary,
+  releases = [],
   'data-testid': testId,
 }: WeeklyChartProps) => {
   const [activeWeek, setActiveWeek] = useState<number>()
@@ -86,6 +91,11 @@ export const WeeklyChart = ({
   // Counts of all zeros stay on the baseline rather than dividing by zero.
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (peak || 1)) * (HEIGHT - INSET - PLOT_TOP)
+  const releaseWeeks = getReleaseWeeks(releases, weekEnds)
+  const activeVersions =
+    activeWeek === undefined ? undefined : releaseWeeks.get(activeWeek)
+  // A label in the right half sits left of its line, so it stays in the box.
+  const labelOnLeft = activeWeek !== undefined && activeWeek > lastIndex / 2
   const toLine = (counts: number[]) =>
     counts
       .map((count, index) => `${index ? 'L' : 'M'}${toX(index)},${toY(count)}`)
@@ -116,6 +126,17 @@ export const WeeklyChart = ({
           y2={HEIGHT - INSET}
           className="stroke-ink-muted/30"
         />
+        {[...releaseWeeks.keys()].map((index) => (
+          <line
+            key={index}
+            x1={toX(index)}
+            x2={toX(index)}
+            y1={CAPTION_HEIGHT}
+            y2={HEIGHT - INSET}
+            className="stroke-ink-muted/30"
+            data-testid="weekly-chart-release"
+          />
+        ))}
         {series.length === 1 && (
           <path
             d={`${toLine(totals[0])}L${toX(lastIndex)},${HEIGHT - INSET}L${toX(0)},${HEIGHT - INSET}Z`}
@@ -154,6 +175,20 @@ export const WeeklyChart = ({
               />
             ))}
           </>
+        )}
+        {activeWeek !== undefined && activeVersions && (
+          <text
+            x={toX(activeWeek) + (labelOnLeft ? -4 : 4)}
+            y={HEIGHT - INSET - 4}
+            textAnchor={labelOnLeft ? 'end' : 'start'}
+            className={cn(
+              'fill-ink text-[10px]',
+              // An outline in the tooltip's color, so it reads over the lines.
+              'stroke-surface-raised stroke-3 [paint-order:stroke] [stroke-linejoin:round]'
+            )}
+            data-testid="weekly-chart-release-label">
+            {formatVersions(activeVersions)}
+          </text>
         )}
         {/* The hover target: the whole box, not just the thin lines. */}
         <rect width={WIDTH} height={HEIGHT} fill="transparent" />

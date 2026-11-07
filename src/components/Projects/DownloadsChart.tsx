@@ -1,8 +1,8 @@
 import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'
-import { WeeklyChart } from './WeeklyChart'
+import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
-export type DownloadsChartProps = {
+export type DownloadsChartProps = Pick<WeeklyChartProps, 'releases'> & {
   history: WeeklyDownloads
   /** The registry the history is from, which the readout names */
   registry: Registry
@@ -15,11 +15,16 @@ export type DownloadsChartProps = {
  * Pair it with `describeWeeklyDownloads` for screen readers. Needs two weeks
  * or more.
  */
-export const DownloadsChart = ({ history, registry }: DownloadsChartProps) => (
+export const DownloadsChart = ({
+  history,
+  registry,
+  releases,
+}: DownloadsChartProps) => (
   <WeeklyChart
     weekEnds={getDownloadWeekEnds(history)}
     series={[{ noun: 'download', weekly: history.weekly, tone: 'FIRST' }]}
     summary={`Running total of ${REGISTRY_NAMES[registry]} downloads`}
+    releases={releases}
     data-testid="downloads-chart"
   />
 )

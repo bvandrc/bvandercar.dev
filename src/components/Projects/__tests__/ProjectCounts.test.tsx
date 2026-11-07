@@ -1,7 +1,11 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import type {
+  Registry,
+  Release,
+  WeeklyDownloads,
+} from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { WeeklyActivity } from '@/generated/repo-activity'
 import { renderWithProviders } from '@/test-helpers/render'
@@ -66,6 +70,15 @@ vi.mock('@/generated/package-downloads', () => ({
       },
     },
   } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
+  PACKAGE_RELEASES: {
+    npm: {
+      [FIXTURES.NPM_PACKAGE]: [
+        { version: '1.0.0', day: '2026-03-04' },
+        { version: '1.1.0', day: '2026-03-12' },
+      ],
+    },
+    pypi: {},
+  } satisfies Record<Registry, Record<string, Release[]>>,
 }))
 
 /** Hovers the counts, and returns the tooltip once it opens. */
@@ -134,5 +147,20 @@ describe('ProjectCounts', () => {
     expect(tooltip.textContent).toBe('2 commits, 1 PR')
     expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
+  })
+
+  it("marks its package's releases on both charts", async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+
+    await hoverCounts()
+    // Both releases fall in weeks each chart covers, a week apart.
+    for (const chart of [ACTIVITY_CHART, DOWNLOADS_CHART]) {
+      expect(
+        within(screen.getByTestId(chart)).getAllByTestId(
+          SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE
+        ),
+        chart
+      ).toHaveLength(2)
+    }
   })
 })

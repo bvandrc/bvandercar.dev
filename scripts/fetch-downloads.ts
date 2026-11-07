@@ -36,6 +36,9 @@ const MAX_BYTES_BILLED = String(50 * 1000 ** 3)
 const hasGoogleCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS)
 
 type DailyDownloads = { day: string; downloads: number }
+type Release = { version: string; day: string }
+
+const byDay = (a: Release, b: Release) => a.day.localeCompare(b.day)
 
 const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
 
@@ -57,26 +60,38 @@ const fetchJson = async <T>(url: string) => {
   return (await res.json()) as T
 }
 
-/** A package's downloads for each day from its first publish through the last day npm has counted. */
-const fetchNpmDailyDownloads = async (pkg: string) => {
-  // A scoped name's slash would otherwise read as a path segment.
-  const name = pkg.replace('/', '%2F')
-  const [{ time }, latest] = await Promise.all([
-    fetchJson<{ time: { created: string } }>(
-      `https://registry.npmjs.org/${name}`
-    ),
-    // The range API answers 0 for a day it hasn't counted yet, which would
-    // read as a drop, so the range stops at the last day it has.
-    fetchJson<{ end: string }>(
-      `https://api.npmjs.org/downloads/point/last-day/${name}`
-    ),
-  ])
+// A scoped name's slash would otherwise read as a path segment.
+const encodeNpmName = (pkg: string) => pkg.replace('/', '%2F')
+
+/** An npm package's first publish day, and its releases, oldest first, leaving out pre-releases. */
+const fetchNpmPackage = async (pkg: string) => {
+  const { time, versions } = await fetchJson<{
+    time: Record<string, string>
+    versions: Record<string, unknown>
+  }>(`https://registry.npmjs.org/${encodeNpmName(pkg)}`)
+  return {
+    firstDay: time.created.slice(0, 10),
+    releases: Object.keys(versions)
+      // A pre-release, like 2.0.0-beta.1, has a hyphen.
+      .filter((version) => !version.includes('-'))
+      .map((version): Release => ({ version, day: time[version].slice(0, 10) }))
+      .sort(byDay),
+  }
+}
+
+/** A package's downloads for each day from its first publish day through the last day npm has counted. */
+const fetchNpmDailyDownloads = async (pkg: string, firstDay: string) => {
+  const name = encodeNpmName(pkg)
+  // The range API answers 0 for a day it hasn't counted yet, which would
+  // read as a drop, so the range stops at the last day it has.
+  const latest = await fetchJson<{ end: string }>(
+    `https://api.npmjs.org/downloads/point/last-day/${name}`
+  )
   const lastDay = Date.parse(latest.end)
   const days: DailyDownloads[] = []
   // The API caps each query's range, so an older package takes several.
   for (
-    // From the start of the publish day, which a range has to begin on.
-    let start = Date.parse(time.created.slice(0, 10));
+    let start = Date.parse(firstDay);
     start <= lastDay;
     start += NPM_WINDOW_DAYS * DAY_MS
   ) {
@@ -89,15 +104,30 @@ const fetchNpmDailyDownloads = async (pkg: string) => {
   return days
 }
 
-/** The ISO date a PyPI package's first file was uploaded. */
-const fetchPypiFirstDay = async (pkg: string) => {
+/** A PyPI package's first upload day, and its releases, oldest first, leaving out pre-releases. */
+const fetchPypiPackage = async (pkg: string) => {
   const { releases } = await fetchJson<{
     releases: Record<string, { upload_time_iso_8601: string }[]>
   }>(`https://pypi.org/pypi/${pkg}/json`)
-  return Object.values(releases)
-    .flat()
-    .map(({ upload_time_iso_8601 }) => upload_time_iso_8601.slice(0, 10))
-    .sort()[0]
+  /** The day a release's first file was uploaded. */
+  const getUploadDay = (files: { upload_time_iso_8601: string }[]) =>
+    files
+      .map(({ upload_time_iso_8601 }) => upload_time_iso_8601.slice(0, 10))
+      .sort()[0]
+  return {
+    firstDay: getUploadDay(Object.values(releases).flat()),
+    releases: Object.entries(releases)
+      // A release with no files was deleted. A pre-release ends in a, b, rc,
+      // or dev and a number, like 2.0b1.
+      .filter(
+        ([version, files]) =>
+          files.length > 0 && !/(a|b|rc|dev)\d*$/i.test(version)
+      )
+      .map(
+        ([version, files]): Release => ({ version, day: getUploadDay(files) })
+      )
+      .sort(byDay),
+  }
 }
 
 /**
@@ -106,8 +136,9 @@ const fetchPypiFirstDay = async (pkg: string) => {
  *
  * Logs what the query billed, so its cost shows in the build log.
  */
-const fetchPypiDailyDownloads = async (packages: string[]) => {
-  const firstDays = await Promise.all(packages.map(fetchPypiFirstDay))
+const fetchPypiDailyDownloads = async (
+  packages: { pkg: string; firstDay: string }[]
+) => {
   // Two days back, like npm's latest, so a day still being loaded into the
   // dataset never reads as a drop.
   const lastDay = isoDate(Date.now() - 2 * DAY_MS)
@@ -122,7 +153,11 @@ const fetchPypiDailyDownloads = async (packages: string[]) => {
         AND timestamp >= TIMESTAMP(@firstDay)
         AND timestamp < TIMESTAMP_ADD(TIMESTAMP(@lastDay), INTERVAL 1 DAY)
       GROUP BY project, day`,
-    params: { packages, firstDay: firstDays.toSorted()[0], lastDay },
+    params: {
+      packages: packages.map(({ pkg }) => pkg),
+      firstDay: packages.map(({ firstDay }) => firstDay).sort()[0],
+      lastDay,
+    },
     maximumBytesBilled: MAX_BYTES_BILLED,
   })
   const [rows] = await job.getQueryResults()
@@ -137,8 +172,8 @@ const fetchPypiDailyDownloads = async (packages: string[]) => {
     )
   )
   // A day without downloads has no row, so each day is filled in from the first.
-  return packages.map((pkg, index) =>
-    listDays(firstDays[index], lastDay).map(
+  return packages.map(({ pkg, firstDay }) =>
+    listDays(firstDay, lastDay).map(
       (day): DailyDownloads => ({
         day,
         downloads: counts.get(`${pkg} ${day}`) ?? 0,
@@ -182,11 +217,20 @@ const getPackages = (field: 'npmPackage' | 'pypiPackage') =>
     .map(([, pkg]) => pkg)
     .sort()
 
+/** A line of the generated file listing one package's releases. */
+const formatReleases = (pkg: string, releases: Release[]) =>
+  `    '${pkg}': ${JSON.stringify(releases)},`
+
 const npmPackages = getPackages('npmPackage')
 const npmEntries: string[] = []
+const npmReleaseEntries: string[] = []
 for (const pkg of npmPackages) {
   try {
-    npmEntries.push(...formatEntry(pkg, await fetchNpmDailyDownloads(pkg)))
+    const { firstDay, releases } = await fetchNpmPackage(pkg)
+    npmReleaseEntries.push(formatReleases(pkg, releases))
+    npmEntries.push(
+      ...formatEntry(pkg, await fetchNpmDailyDownloads(pkg, firstDay))
+    )
   } catch (error) {
     warnSkipped(`npm downloads for ${pkg}`, error)
   }
@@ -194,14 +238,27 @@ for (const pkg of npmPackages) {
 
 const pypiPackages = getPackages('pypiPackage')
 const pypiEntries: string[] = []
-if (pypiPackages.length > 0 && !hasGoogleCredentials) {
+const pypiReleaseEntries: string[] = []
+// Releases need no credentials, so they're read even when downloads aren't.
+const pypiFirstDays: { pkg: string; firstDay: string }[] = []
+const pypiResults = await Promise.allSettled(pypiPackages.map(fetchPypiPackage))
+pypiResults.forEach((result, index) => {
+  const pkg = pypiPackages[index]
+  if (result.status === 'rejected') {
+    warnSkipped(`PyPI releases for ${pkg}`, result.reason)
+  } else {
+    pypiReleaseEntries.push(formatReleases(pkg, result.value.releases))
+    pypiFirstDays.push({ pkg, firstDay: result.value.firstDay })
+  }
+})
+if (pypiFirstDays.length > 0 && !hasGoogleCredentials) {
   console.warn(
-    '::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages show no chart'
+    '::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages show no downloads chart'
   )
-} else if (pypiPackages.length > 0) {
+} else if (pypiFirstDays.length > 0) {
   try {
-    const histories = await fetchPypiDailyDownloads(pypiPackages)
-    pypiPackages.forEach((pkg, index) => {
+    const histories = await fetchPypiDailyDownloads(pypiFirstDays)
+    pypiFirstDays.forEach(({ pkg }, index) => {
       pypiEntries.push(...formatEntry(pkg, histories[index]))
     })
   } catch (error) {
@@ -226,6 +283,12 @@ export type WeeklyDownloads = {
   weekly: number[]
 }
 
+export type Release = {
+  version: string
+  /** ISO date it was published */
+  day: string
+}
+
 /** Each package's weekly downloads since its first publish, by registry, then package name. */
 export const PACKAGE_DOWNLOADS: Record<
   Registry,
@@ -236,6 +299,19 @@ ${npmEntries.join('\n')}
   },
   pypi: {
 ${pypiEntries.join('\n')}
+  },
+}
+
+/** Each package's releases, oldest first and leaving out pre-releases, by registry, then package name. */
+export const PACKAGE_RELEASES: Record<
+  Registry,
+  Record<string, Release[] | undefined>
+> = {
+  npm: {
+${npmReleaseEntries.join('\n')}
+  },
+  pypi: {
+${pypiReleaseEntries.join('\n')}
   },
 }
 `
