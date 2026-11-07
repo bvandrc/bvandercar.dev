@@ -129,7 +129,7 @@ describe('ProjectCounts', () => {
     await hoverCounts()
     const CASES = [
       [ACTIVITY_CHART, '55'],
-      [DOWNLOADS_CHART, '1,217'],
+      [DOWNLOADS_CHART, '1.2K'],
     ] as const
     for (const [chart, expected] of CASES) {
       expect(

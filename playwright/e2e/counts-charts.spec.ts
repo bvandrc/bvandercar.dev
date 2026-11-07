@@ -32,14 +32,10 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
   await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
     'npm downloads (cumulative)'
   )
-  // Each chart ends at the count its glyph shows.
-  const label = await counts.getAttribute('aria-label')
-  for (const [chart, noun] of [
-    [activity, 'commit'],
-    [downloads, 'download'],
-  ] as const) {
+  // Each chart ends at the count its glyph shows, shortened the same way.
+  for (const chart of [activity, downloads]) {
     const total = await chart.getByTestId(WEEKLY_CHART.TOTAL).textContent()
-    expect(label, noun).toMatch(new RegExp(`\\b${total} ${noun}s?\\b`))
+    await expect(counts).toContainText(total ?? '')
   }
 
   // The tooltip stays open as the pointer crosses into it, and between charts.

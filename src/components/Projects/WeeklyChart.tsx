@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { clamp } from 'es-toolkit'
 
 import type { Release } from '@/generated/package-downloads'
-import { formatCount } from '@/lib/format-count'
+import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { cn } from '@/utils'
 import { formatDay, formatVersions, getReleaseWeeks } from './lib/weeks'
 
@@ -16,8 +16,9 @@ const INSET = 5
 const CAPTION_HEIGHT = 30
 // Where the highest total is drawn.
 const PLOT_TOP = CAPTION_HEIGHT + INSET
-// Room on the right for the total, written beside the line's end.
-const TOTAL_WIDTH = 52
+// Room on the right for the total, written beside the line's end, as short as
+// the glyphs write it, like "70.3K".
+const TOTAL_WIDTH = 46
 // Where the last week is drawn.
 const PLOT_RIGHT = WIDTH - TOTAL_WIDTH
 
@@ -163,7 +164,8 @@ export const WeeklyChart = ({
           y={toY(total) + 5}
           className="fill-ink text-sm font-bold"
           data-testid="weekly-chart-total">
-          {total.toLocaleString('en-US')}
+          {/* Shortened like the glyphs, since hovering the last week reads it in full. */}
+          {formatCompactCount(total)}
         </text>
         {activeWeek !== undefined && (
           <>

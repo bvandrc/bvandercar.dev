@@ -31,10 +31,10 @@ describe('WeeklyChart', () => {
     expect(screen.getByTestId(READOUT).textContent).toBe('Commits (cumulative)')
   })
 
-  it('writes the total beside the end of its line', () => {
+  it('writes the total, shortened, beside the end of its line', () => {
     renderChart()
 
-    expect(screen.getByTestId(TOTAL).textContent).toBe('1,217')
+    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
   })
 
   it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
