@@ -18,9 +18,7 @@ describe('ActivityChart', () => {
   it('charts the running total of commits, ending at them all', () => {
     render(<ActivityChart activity={ACTIVITY} />)
 
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Running total of commits'
-    )
+    expect(screen.getByTestId(READOUT).textContent).toBe('Commits (cumulative)')
     expect(screen.getByTestId(TOTAL).textContent).toBe('55')
   })
 

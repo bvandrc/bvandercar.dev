@@ -15,8 +15,8 @@ const HISTORY = {
 describe('DownloadsChart', () => {
   it('names the registry its running total is of, until hovered', () => {
     const CASES = [
-      ['npm', 'Running total of npm downloads'],
-      ['pypi', 'Running total of PyPI downloads'],
+      ['npm', 'npm downloads (cumulative)'],
+      ['pypi', 'PyPI downloads (cumulative)'],
     ] as const
     for (const [registry, expected] of CASES) {
       const { unmount } = render(

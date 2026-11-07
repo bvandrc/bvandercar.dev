@@ -181,7 +181,7 @@ describe('ProjectCounts', () => {
     expect(
       within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
         .textContent
-    ).toBe('Running total of PyPI downloads')
+    ).toBe('PyPI downloads (cumulative)')
   })
 
   it('charts nothing with a single week to show, leaving the counts alone', async () => {

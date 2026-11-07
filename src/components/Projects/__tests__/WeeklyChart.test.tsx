@@ -6,7 +6,7 @@ import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
   SELECTORS.PROJECTS.WEEKLY_CHART
 
-/** Renders a chart of 5, 1,200, then 12 commits over three weeks ending Mar 22, summarized as "Running total". */
+/** Renders a chart of 5, 1,200, then 12 commits over three weeks ending Mar 22, summarized as "Commits (cumulative)". */
 const renderChart = (props?: Pick<WeeklyChartProps, 'releases'>) =>
   render(
     <WeeklyChart
@@ -14,7 +14,7 @@ const renderChart = (props?: Pick<WeeklyChartProps, 'releases'>) =>
       noun="commit"
       weekly={[5, 1200, 12]}
       tone="COMMITS"
-      summary="Running total"
+      summary="Commits (cumulative)"
       data-testid="chart"
       {...props}
     />
@@ -28,7 +28,7 @@ describe('WeeklyChart', () => {
   it('reads out its summary until hovered', () => {
     renderChart()
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('Running total')
+    expect(screen.getByTestId(READOUT).textContent).toBe('Commits (cumulative)')
   })
 
   it('writes the total beside the end of its line', () => {
@@ -54,7 +54,7 @@ describe('WeeklyChart', () => {
     }
 
     fireEvent.pointerLeave(screen.getByTestId(PLOT))
-    expect(readout.textContent).toBe('Running total')
+    expect(readout.textContent).toBe('Commits (cumulative)')
   })
 
   it('reads out a tapped week, and keeps it once the finger lifts', () => {

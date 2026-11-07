@@ -27,10 +27,10 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
   const activity = tooltip.getByTestId(ACTIVITY_CHART)
   const downloads = tooltip.getByTestId(DOWNLOADS_CHART)
   await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    'Running total of commits'
+    'Commits (cumulative)'
   )
   await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
-    'Running total of npm downloads'
+    'npm downloads (cumulative)'
   )
   // Each chart ends at the count its glyph shows.
   const label = await counts.getAttribute('aria-label')

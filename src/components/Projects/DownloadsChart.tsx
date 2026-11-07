@@ -25,7 +25,7 @@ export const DownloadsChart = ({
     noun="download"
     weekly={history.weekly}
     tone="DOWNLOADS"
-    summary={`Running total of ${REGISTRY_NAMES[registry]} downloads`}
+    summary={`${REGISTRY_NAMES[registry]} downloads (cumulative)`}
     releases={releases}
     data-testid="downloads-chart"
   />

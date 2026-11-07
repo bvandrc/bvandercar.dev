@@ -19,7 +19,7 @@ export const ActivityChart = ({ activity, releases }: ActivityChartProps) => (
     noun="commit"
     weekly={activity.commits}
     tone="COMMITS"
-    summary="Running total of commits"
+    summary="Commits (cumulative)"
     releases={releases}
     data-testid="activity-chart"
   />
