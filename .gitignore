@@ -15,3 +15,6 @@ public/apple-touch-icon-*.png
 # Fetched from bvandrc/bvandrc by `pnpm fetch:profile`
 src/generated/
 public/project-screenshots/
+
+# Daily download counts kept between runs by `pnpm fetch:downloads`
+.cache/

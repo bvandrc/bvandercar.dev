@@ -44,6 +44,17 @@ jobs:
 
       # For the PyPI download charts, which the build queries from BigQuery.
       # Without the secret, the build still passes and PyPI projects show none.
+      # PyPI's daily download counts from earlier runs, so the build queries
+      # BigQuery for just the days since. Each run saves its own copy, and
+      # the next restores the newest.
+      - name: Cache PyPI downloads
+        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
+        uses: actions/cache@v6
+        with:
+          path: .cache
+          key: pypi-downloads-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: pypi-downloads-
+
       - name: Authenticate to Google Cloud
         if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
         uses: google-github-actions/auth@v3
