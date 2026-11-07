@@ -57,8 +57,9 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       content={
         charted ? (
           <div className="flex flex-col gap-2">
-            {label}
             <DownloadsChart {...charted} />
+            {/* Set off from the chart's readout, which is white on hover too. */}
+            <p className="border-t border-ink-muted/30 pt-2">{label}</p>
           </div>
         ) : (
           label
