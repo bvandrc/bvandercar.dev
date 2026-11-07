@@ -131,9 +131,9 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
   const span = zoomedSpan ?? fullSpan
-  /** Zooms both charts around a time under the pointer, by a wheel's turn. */
-  const zoom = (anchor: number, deltaY: number) =>
-    setZoomedSpan(zoomSpan(span, fullSpan, anchor, deltaY))
+  /** Zooms both charts around a time under the pointer, scaling their width by `factor`. */
+  const zoom = (anchor: number, factor: number) =>
+    setZoomedSpan(zoomSpan(span, fullSpan, anchor, factor))
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')

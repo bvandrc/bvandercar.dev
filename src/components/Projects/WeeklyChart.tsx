@@ -12,6 +12,7 @@ import {
   formatDay,
   formatVersions,
   getReleaseWeeks,
+  getWheelZoomFactor,
 } from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
@@ -27,6 +28,8 @@ const PLOT_TOP = CAPTION_HEIGHT + INSET
 // Room on the right for the total, written beside the line's end, as short as
 // the glyphs write it, like "70.3K".
 const TOTAL_WIDTH = 46
+// How far apart two fingers must be for their spread to scale a zoom.
+const MIN_PINCH_PX = 10
 // Where the last day is drawn.
 const PLOT_RIGHT = WIDTH - TOTAL_WIDTH
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -78,8 +81,8 @@ export type WeeklyChartProps = {
   summary: string
   /** Whether `span` is zoomed in, which fits the height to the totals in view, rather than measuring from zero */
   zoomed?: boolean
-  /** Called for a wheel turned over the chart, with the time under the pointer, to zoom `span` around it; without it, the wheel scrolls the page */
-  onZoom?: (anchor: number, deltaY: number) => void
+  /** Called for a wheel turned, or two fingers pinched, over the chart, with the time under them and how much to scale `span`'s width, to zoom around it; without it, the page scrolls and zooms as usual */
+  onZoom?: (anchor: number, factor: number) => void
   /** Marked with a grey line on each day there was one, naming the week's versions on hover */
   releases?: Release[]
   'data-testid': string
@@ -110,6 +113,8 @@ export const WeeklyChart = ({
 }: WeeklyChartProps) => {
   const [activeWeek, setActiveWeek] = useState<number>()
   const plotRef = useRef<SVGSVGElement>(null)
+  // Each finger on the plot, by pointer id, at its latest clientX.
+  const touchesRef = useRef(new Map<number, number>())
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
   const lastIndex = weekEnds.length - 1
@@ -182,7 +187,7 @@ export const WeeklyChart = ({
       if (onZoom) {
         // Zooms rather than scrolling the page beneath the tooltip.
         event.preventDefault()
-        onZoom(getTimeAt(event.clientX), event.deltaY)
+        onZoom(getTimeAt(event.clientX), getWheelZoomFactor(event.deltaY))
       }
     },
     // usehooks-ts types its refs from before React 19 made them nullable.
@@ -190,6 +195,34 @@ export const WeeklyChart = ({
     // Not passive, so it can stop the page from scrolling.
     { passive: false }
   )
+  /**
+   * Zooms for a finger moving while another's on the plot, by how far apart
+   * they've spread, around the point between them.
+   *
+   * Returns whether it did, so the move doesn't pick a week too.
+   */
+  const pinch = (event: React.PointerEvent<SVGSVGElement>) => {
+    const touches = touchesRef.current
+    const previousX = touches.get(event.pointerId)
+    if (previousX === undefined) {
+      return false
+    }
+    touches.set(event.pointerId, event.clientX)
+    const otherX = [...touches].find(([id]) => id !== event.pointerId)?.[1]
+    if (otherX === undefined || touches.size !== 2) {
+      return false
+    }
+    const before = Math.abs(previousX - otherX)
+    const after = Math.abs(event.clientX - otherX)
+    // Fingers almost together give no sensible scale.
+    if (onZoom && before > MIN_PINCH_PX && after > MIN_PINCH_PX) {
+      onZoom(getTimeAt((event.clientX + otherX) / 2), before / after)
+    }
+    return true
+  }
+  /** Lets go of a finger lifted off, or taken away from, the plot. */
+  const releaseTouch = (event: React.PointerEvent<SVGSVGElement>) =>
+    touchesRef.current.delete(event.pointerId)
   /** Reads out the week the pointer's day falls in, so it never has to land on the line. */
   const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
     const time = getTimeAt(event.clientX)
@@ -213,8 +246,22 @@ export const WeeklyChart = ({
           'touch-none'
         )}
         // A tap picks a week too, which a finger may not move to first.
-        onPointerDown={selectWeek}
-        onPointerMove={selectWeek}
+        onPointerDown={(event) => {
+          if (event.pointerType === 'touch') {
+            touchesRef.current.set(event.pointerId, event.clientX)
+          }
+          // A second finger starts a pinch rather than picking a week.
+          if (touchesRef.current.size < 2) {
+            selectWeek(event)
+          }
+        }}
+        onPointerMove={(event) => {
+          if (!pinch(event)) {
+            selectWeek(event)
+          }
+        }}
+        onPointerUp={releaseTouch}
+        onPointerCancel={releaseTouch}
         // A finger always leaves once lifted, so its week stays read out.
         onPointerLeave={(event) => {
           if (event.pointerType !== 'touch') {

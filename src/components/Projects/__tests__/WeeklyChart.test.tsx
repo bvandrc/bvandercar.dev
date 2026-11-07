@@ -1,6 +1,7 @@
 import { createEvent, fireEvent, render, screen } from '@testing-library/react'
 
 import { SELECTORS } from '~/test-support/selectors'
+import { getWheelZoomFactor } from '../lib/weeks'
 import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 
 const { PLOT, READOUT, TOTAL, RELEASE, RELEASE_LABEL } =
@@ -136,8 +137,56 @@ describe('WeeklyChart', () => {
 
     // Over the plot's start, so the time is the first day's.
     const scrolled = turnWheel(screen.getByTestId(PLOT), 5, -100)
-    expect(onZoom).toHaveBeenCalledWith(Date.parse('2026-03-02'), -100)
+    expect(onZoom).toHaveBeenCalledWith(
+      Date.parse('2026-03-02'),
+      getWheelZoomFactor(-100)
+    )
     expect(scrolled).toBe(false)
+  })
+
+  it('zooms with two fingers, by how far they spread, around the point between them', () => {
+    const onZoom = vi.fn()
+    renderChart({ onZoom })
+    const plot = screen.getByTestId(PLOT)
+
+    for (const [pointerId, clientX] of [
+      [1, 50],
+      [2, 150],
+    ]) {
+      fireEvent.pointerDown(plot, { pointerId, clientX, pointerType: 'touch' })
+    }
+    // From 100px apart to 200px apart, around 150px across.
+    fireEvent.pointerMove(plot, {
+      pointerId: 2,
+      clientX: 250,
+      pointerType: 'touch',
+    })
+    // A wheel turned at 150px, for the time there.
+    turnWheel(plot, 150, -100)
+    const [[pinchAnchor, factor], [wheelAnchor]] = onZoom.mock.calls
+    expect(factor).toBe(0.5)
+    expect(pinchAnchor).toBe(wheelAnchor)
+  })
+
+  it('reads out a week, not a zoom, for one finger moving alone', () => {
+    const onZoom = vi.fn()
+    renderChart({ onZoom })
+    const plot = screen.getByTestId(PLOT)
+
+    fireEvent.pointerDown(plot, {
+      pointerId: 1,
+      clientX: 0,
+      pointerType: 'touch',
+    })
+    fireEvent.pointerMove(plot, {
+      pointerId: 1,
+      clientX: 400,
+      pointerType: 'touch',
+    })
+    expect(onZoom).not.toHaveBeenCalled()
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 22, 2026: 1,217 commits'
+    )
   })
 
   it('leaves the wheel to scroll the page without a zoom to call', () => {

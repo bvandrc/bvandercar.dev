@@ -65,14 +65,18 @@ export const formatVersions = (versions: string[]) =>
 export type DaySpan = { start: string; end: string }
 
 // How far a wheel zooms per unit of its `deltaY`: about a fifth per notch.
-const ZOOM_RATE = 0.002
+const WHEEL_ZOOM_RATE = 0.002
 // The narrowest a zoom goes: four weeks, so there's still a line to draw, or
 // a quarter of a shorter chart's span.
 const MIN_ZOOM_MS = 28 * DAY_MS
 
+/** How much a wheel's turn scales a chart's span: under 1, zooming in, for a negative `deltaY`, and over 1, zooming out, for a positive one. */
+export const getWheelZoomFactor = (deltaY: number) =>
+  Math.exp(deltaY * WHEEL_ZOOM_RATE)
+
 /**
- * `span` zoomed around `anchor`, a time within it, by a wheel's `deltaY`: in
- * for a negative one, out for a positive.
+ * `span` zoomed around `anchor`, a time within it, its width scaled by
+ * `factor`: in for one under 1, out for one over.
  *
  * The anchor keeps its place across the chart. The result stays within
  * `full`, and no narrower than four weeks, or a quarter of `full` if that's
@@ -82,7 +86,7 @@ export const zoomSpan = (
   span: DaySpan,
   full: DaySpan,
   anchor: number,
-  deltaY: number
+  factor: number
 ) => {
   const [start, end, fullStart, fullEnd] = [
     span.start,
@@ -92,7 +96,7 @@ export const zoomSpan = (
   ].map(Date.parse)
   const fullWidth = fullEnd - fullStart
   const width = clamp(
-    (end - start) * Math.exp(deltaY * ZOOM_RATE),
+    (end - start) * factor,
     Math.min(MIN_ZOOM_MS, fullWidth / 4),
     fullWidth
   )
@@ -104,7 +108,7 @@ export const zoomSpan = (
     fullStart,
     fullEnd - width
   )
-  // Kept to the millisecond, as ISO times, so small wheel steps still move it.
+  // Kept to the millisecond, as ISO times, so small steps still move it.
   return {
     start: new Date(nextStart).toISOString(),
     end: new Date(nextStart + width).toISOString(),
