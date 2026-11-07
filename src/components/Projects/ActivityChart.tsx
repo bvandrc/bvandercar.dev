@@ -1,4 +1,5 @@
 import type { WeeklyActivity } from '@/generated/repo-activity'
+import { COUNT_ICONS } from './lib/count-icons'
 import { getActivityWeekEnds } from './lib/weekly-activity'
 import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
@@ -19,6 +20,7 @@ export const ActivityChart = ({ activity, releases }: ActivityChartProps) => (
     noun="commit"
     weekly={activity.commits}
     tone="COMMITS"
+    icon={COUNT_ICONS.commits}
     summary="Commits (cumulative)"
     releases={releases}
     data-testid="activity-chart"

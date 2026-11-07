@@ -1,4 +1,5 @@
 import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import { COUNT_ICONS } from './lib/count-icons'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'
 import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
 
@@ -25,6 +26,7 @@ export const DownloadsChart = ({
     noun="download"
     weekly={history.weekly}
     tone="DOWNLOADS"
+    icon={COUNT_ICONS.downloads}
     summary={`${REGISTRY_NAMES[registry]} downloads (cumulative)`}
     releases={releases}
     data-testid="downloads-chart"

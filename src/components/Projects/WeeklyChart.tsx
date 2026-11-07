@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { clamp } from 'es-toolkit'
 
+import { Icon } from '@/components/primitives/Icon'
 import type { Release } from '@/generated/package-downloads'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import { formatDay, formatVersions, getReleaseWeeks } from './lib/weeks'
 
@@ -53,6 +55,8 @@ export type WeeklyChartProps = {
   /** Its count in each week, one per entry of `weekEnds` */
   weekly: number[]
   tone: ChartTone
+  /** The glyph in front of the caption, the same as the count's own */
+  icon?: GlyphName
   /** What the readout says while no week is hovered */
   summary: string
   /** Marked with a grey line on each week that had one, naming its versions on hover */
@@ -64,8 +68,8 @@ export type WeeklyChartProps = {
  * Weekly counts as a running total, on a small shaded line chart that ends
  * at the total, written beside it.
  *
- * It's captioned in its top-left corner with a summary, or the total through
- * the week under the pointer. A week with releases gets a grey line, and its
+ * It's captioned in its top-left corner, behind the count's glyph, with a
+ * summary, or the total through the week under the pointer. A week with releases gets a grey line, and its
  * versions show while it's hovered. Drawn for sighted pointer users only: pair
  * it with the counts in words for everyone else.
  */
@@ -74,6 +78,7 @@ export const WeeklyChart = ({
   noun,
   weekly,
   tone,
+  icon,
   summary,
   releases = [],
   'data-testid': testId,
@@ -205,13 +210,14 @@ export const WeeklyChart = ({
       </svg>
       <p
         className={cn(
-          'whitespace-nowrap',
+          'flex items-center gap-1.5 whitespace-nowrap',
           // Held in the top-left corner, over the strip the line leaves
           // clear, and letting the pointer through to the plot beneath.
           'pointer-events-none absolute top-0 left-0',
           READOUT_CLASSES[activeWeek === undefined ? 'SUMMARY' : 'WEEK']
         )}
         data-testid="weekly-chart-readout">
+        {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
         {activeWeek === undefined
           ? summary
           : `Through ${formatDay(weekEnds[activeWeek])}: ${formatCount(totals[activeWeek], noun)}`}

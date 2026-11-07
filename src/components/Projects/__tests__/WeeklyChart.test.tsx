@@ -14,6 +14,7 @@ const renderChart = (props?: Pick<WeeklyChartProps, 'releases'>) =>
       noun="commit"
       weekly={[5, 1200, 12]}
       tone="COMMITS"
+      icon="git-commit"
       summary="Commits (cumulative)"
       data-testid="chart"
       {...props}
@@ -29,6 +30,15 @@ describe('WeeklyChart', () => {
     renderChart()
 
     expect(screen.getByTestId(READOUT).textContent).toBe('Commits (cumulative)')
+  })
+
+  it('leads its caption with its glyph, hovered or not', () => {
+    renderChart()
+    const readout = screen.getByTestId(READOUT)
+
+    expect(readout.firstElementChild?.tagName).toBe('svg')
+    movePointer(0)
+    expect(readout.firstElementChild?.tagName).toBe('svg')
   })
 
   it('writes the total, shortened, beside the end of its line', () => {
