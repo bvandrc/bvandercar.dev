@@ -48,7 +48,7 @@ export const RepoLink = ({ repo, nameId }: RepoLinkProps) => {
         content="GitHub Repository"
         open={repoTooltipOpen}
         onOpenChange={setRepoTooltipOpen}>
-        <span>
+        <span data-testid="project-repo-link-label">
           repo{' '}
           <Icon
             name="external-link"
