@@ -10,6 +10,7 @@ const HISTORY = {
   firstDay: '2026-03-06',
   lastDay: '2026-03-24',
   weekly: [5, 40, 12],
+  daily: [1, 1, 1, 1, 1, 10, 5, 5, 5, 5, 5, 5, 2, 2, 2, 2, 2, 1, 1],
 } satisfies WeeklyDownloads
 
 describe('getDownloadWeekStarts', () => {

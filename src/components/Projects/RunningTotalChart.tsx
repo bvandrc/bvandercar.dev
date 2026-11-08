@@ -86,6 +86,8 @@ export type RunningTotalChartProps = {
   noun: string
   /** Its count in each period, one per entry of `periodEnds` */
   counts: number[]
+  /** What was counted before `firstDay`, which the running total starts from; 0 by default */
+  startTotal?: number
   tone: ChartTone
   /** The glyph in front of the caption, the same as the count's own */
   icon?: GlyphName
@@ -118,6 +120,7 @@ export const RunningTotalChart = ({
   span,
   noun,
   counts,
+  startTotal = 0,
   tone,
   icon,
   summary,
@@ -136,7 +139,7 @@ export const RunningTotalChart = ({
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
   const lastIndex = periodEnds.length - 1
-  let runningTotal = 0
+  let runningTotal = startTotal
   const totals = counts.map((count) => {
     runningTotal += count
     return runningTotal
@@ -156,12 +159,12 @@ export const RunningTotalChart = ({
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
   const lastX = toX(periodEnds[lastIndex])
-  // The line starts on the first day, at nothing counted yet, or at a span's
-  // later start, at what was counted by then.
+  // The line starts on the first day, at what was counted before it, or at a
+  // span's later start, at what was counted by then.
   const lineStart = [firstDay, start].sort()[1]
   const startX = toX(lineStart)
   const firstShown = periodEnds.findIndex((periodEnd) => periodEnd >= lineStart)
-  const line = `M${startX},${toY(totals[firstShown - 1] ?? 0)}${totals
+  const line = `M${startX},${toY(totals[firstShown - 1] ?? startTotal)}${totals
     .map((count, index) => [count, periodEnds[index]] as const)
     .slice(firstShown)
     .map(([count, periodEnd]) => `L${toX(periodEnd)},${toY(count)}`)

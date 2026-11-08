@@ -70,12 +70,18 @@ vi.mock('@/generated/repo-activity', () => ({
       lastDay: '2026-03-26',
       commits: [3, 40, 12, 0, 0],
       prs: [1, 9, 4, 0, 0],
+      // Each day from the first week's Monday, adding up to the weeks'.
+      dailyCommits: [
+        1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ],
     },
     [FIXTURES.NEW_REPO]: {
       firstWeek: '2026-03-16',
       lastDay: '2026-03-18',
       commits: [2],
       prs: [1],
+      dailyCommits: [1, 0, 1],
     },
     // Two weeks to chart, but fewer than 20 commits.
     [FIXTURES.SMALL_REPO]: {
@@ -83,6 +89,7 @@ vi.mock('@/generated/repo-activity', () => ({
       lastDay: '2026-03-12',
       commits: [5, 7],
       prs: [1, 1],
+      dailyCommits: [1, 1, 1, 1, 1, 0, 0, 2, 2, 2, 1],
     },
   } satisfies Record<string, WeeklyActivity>,
 }))
@@ -94,11 +101,16 @@ vi.mock('@/generated/package-downloads', () => ({
         firstDay: '2026-03-04',
         lastDay: '2026-03-24',
         weekly: [5, 1200, 12],
+        daily: [
+          1, 1, 1, 1, 1, 0, 0, 200, 300, 100, 200, 100, 200, 100, 2, 2, 2, 2, 2,
+          1, 1,
+        ],
       },
       [FIXTURES.NEW_NPM_PACKAGE]: {
         firstDay: '2026-03-20',
         lastDay: '2026-03-24',
         weekly: [30],
+        daily: [10, 5, 5, 5, 5],
       },
     },
     pypi: {
@@ -106,6 +118,8 @@ vi.mock('@/generated/package-downloads', () => ({
         firstDay: '2025-04-11',
         lastDay: '2026-03-24',
         weekly: [40, 900, 300],
+        // Only the latest 56 days, of a history longer than that.
+        daily: Array<number>(56).fill(5),
       },
     },
   } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
@@ -258,9 +272,10 @@ describe('ProjectCounts', () => {
     await hoverCounts()
     const activity = within(screen.getByTestId(ACTIVITY_CHART))
     fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
-    // The first release, on Mar 4, falls in the repo's second week.
+    // The first release, on Mar 4, read day by day, since the charts span
+    // under 50 days: 3 commits the first week, then 15 more by then.
     expect(activity.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 43 commits'
+      'Through Mar 4, 2026: 18 commits'
     )
   })
 
@@ -270,9 +285,10 @@ describe('ProjectCounts', () => {
     await hoverCounts()
     const activity = within(screen.getByTestId(ACTIVITY_CHART))
     fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
-    // 3 commits the first week, then 43 by the end of the second.
+    // The second week's Monday, the 15th commit's, read day by day: 3
+    // commits the first week, then 5 that day.
     expect(activity.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 43 commits'
+      'Through Mar 2, 2026: 8 commits'
     )
   })
 

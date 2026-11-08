@@ -1,6 +1,7 @@
 /**
- * Fetches each project repo's commits and pull requests per week, for the
- * activity chart in its counts tooltip.
+ * Fetches each project repo's commits and pull requests per week, and its
+ * latest days' commits one by one, for the activity chart in its counts
+ * tooltip.
  *
  * Writes src/generated/repo-activity.ts, gitignored. Reads the repos from the
  * content `pnpm fetch:profile` copied, so run that first. Needs a
@@ -23,6 +24,9 @@ const token = process.env.GITHUB_TOKEN || undefined
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const WEEK_MS = 7 * DAY_MS
+// How many of the latest days are also counted one by one, for a chart that
+// spans too few days to read week by week.
+const DAILY_DAYS = 56
 
 const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
 
@@ -60,8 +64,9 @@ const fetchAll = async <T>(path: string) => {
  * A repo's commits on its default branch, and its pull requests by when they
  * were opened, counted per week from its first through the one under way.
  *
- * Every commit and PR is counted, so the weeks sum to the repo's totals.
- * Undefined for a repo with neither.
+ * Every commit and PR is counted, so the weeks sum to the repo's totals. Its
+ * commits on each of the last `DAILY_DAYS` days, from its first week on, are
+ * counted too. Undefined for a repo with neither.
  */
 const fetchActivity = async (repo: string) => {
   const [commits, pulls] = await Promise.all([
@@ -73,13 +78,12 @@ const fetchActivity = async (repo: string) => {
     }>(`/repos/${OWNER}/${repo}/commits`),
     fetchAll<{ created_at: string }>(`/repos/${OWNER}/${repo}/pulls?state=all`),
   ])
-  const commitWeeks = commits.map(({ commit }) =>
+  const commitTimes = commits.map(({ commit }) =>
     // A commit can lack a committer, so its author dates it instead, and one
-    // with neither still counts, as this week's.
-    getWeekStart(
-      Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
-    )
+    // with neither still counts, as today's.
+    Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
   )
+  const commitWeeks = commitTimes.map(getWeekStart)
   const prWeeks = pulls.map(({ created_at }) =>
     getWeekStart(Date.parse(created_at))
   )
@@ -96,11 +100,24 @@ const fetchActivity = async (repo: string) => {
   for (let week = firstWeek; week <= lastWeek; week += WEEK_MS) {
     weeks.push(week)
   }
+  const today = Math.floor(now / DAY_MS) * DAY_MS
+  const dayCounts = countBy(commitTimes, (time) =>
+    String(Math.floor(time / DAY_MS) * DAY_MS)
+  )
+  const days: number[] = []
+  for (
+    let day = Math.max(firstWeek, today - (DAILY_DAYS - 1) * DAY_MS);
+    day <= today;
+    day += DAY_MS
+  ) {
+    days.push(day)
+  }
   return {
     firstWeek: isoDate(firstWeek),
     lastDay: isoDate(now),
     commits: weeks.map((week) => commitCounts[week] ?? 0),
     prs: weeks.map((week) => prCounts[week] ?? 0),
+    dailyCommits: days.map((day) => dayCounts[day] ?? 0),
   }
 }
 
@@ -125,9 +142,9 @@ if (token === undefined) {
         `::warning::Activity for ${repo} could not be read, so its card shows no chart: ${result.reason instanceof Error ? result.reason.message : result.reason}`
       )
     } else if (result.value) {
-      const { firstWeek, lastDay, commits, prs } = result.value
+      const { firstWeek, lastDay, commits, prs, dailyCommits } = result.value
       entries.push(
-        `  '${repo}': { firstWeek: '${firstWeek}', lastDay: '${lastDay}', commits: [${commits.join(', ')}], prs: [${prs.join(', ')}] },`
+        `  '${repo}': { firstWeek: '${firstWeek}', lastDay: '${lastDay}', commits: [${commits.join(', ')}], prs: [${prs.join(', ')}], dailyCommits: [${dailyCommits.join(', ')}] },`
       )
     }
   })
@@ -147,6 +164,8 @@ export type WeeklyActivity = {
   commits: number[]
   /** Pull requests opened in each of the same weeks */
   prs: number[]
+  /** Commits on each of the latest days, through \`lastDay\`, oldest first: up to ${DAILY_DAYS}, and none before \`firstWeek\` */
+  dailyCommits: number[]
 }
 
 /** Each project repo's commits and pull requests per week, keyed by repo name. */

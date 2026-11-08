@@ -14,7 +14,7 @@ const { PLOT, READOUT, TOTAL, DOT, RELEASE } =
 const renderChart = (
   props?: Pick<
     RunningTotalChartProps,
-    'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
+    'releases' | 'span' | 'startTotal' | 'zoomed' | 'onZoom' | 'onPan'
   >
 ) =>
   render(
@@ -91,6 +91,16 @@ describe('RunningTotalChart', () => {
 
     fireEvent.pointerLeave(screen.getByTestId(PLOT))
     expect(readout.textContent).toBe('Commits')
+  })
+
+  it('counts on from what was counted before its first day', () => {
+    renderChart({ startTotal: 100 })
+
+    movePointer(-20)
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 8, 2026: 105 commits'
+    )
+    expect(screen.getByTestId(TOTAL).textContent).toBe('1.3K')
   })
 
   it('leaves out the weeks before a later span start, starting from the total by then', () => {

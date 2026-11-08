@@ -1,6 +1,7 @@
 /**
  * Fetches the weekly download history of each npm and PyPI package the profile
- * content names, for the chart in a project's counts tooltip.
+ * content names, and its latest days' one by one, for the chart in a
+ * project's counts tooltip.
  *
  * Writes src/generated/package-downloads.ts, gitignored. Reads the package
  * names from the content `pnpm fetch:profile` copied, so run that first. npm's
@@ -32,6 +33,9 @@ const PYPI_WINDOW_DAYS = 180
 
 /** Days per npm query, inside the 18 months the API answers at once. */
 const NPM_WINDOW_DAYS = 365
+// How many of the latest days are also kept one by one, for a chart that
+// spans too few days to read week by week.
+const DAILY_DAYS = 56
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
@@ -272,9 +276,10 @@ const sumWeeks = (days: DailyDownloads[]) =>
 const formatEntry = (pkg: string, days: DailyDownloads[]) => {
   const firstDay = days.at(0)?.day
   const lastDay = days.at(-1)?.day
+  const daily = days.slice(-DAILY_DAYS).map(({ downloads }) => downloads)
   return firstDay && lastDay
     ? [
-        `    '${pkg}': { firstDay: '${firstDay}', lastDay: '${lastDay}', weekly: [${sumWeeks(days).join(', ')}] },`,
+        `    '${pkg}': { firstDay: '${firstDay}', lastDay: '${lastDay}', weekly: [${sumWeeks(days).join(', ')}], daily: [${daily.join(', ')}] },`,
       ]
     : []
 }
@@ -362,6 +367,8 @@ export type WeeklyDownloads = {
   lastDay: string
   /** Downloads in each 7-day week ending on \`lastDay\`, oldest first; the first can be shorter */
   weekly: number[]
+  /** Downloads on each of the latest days, through \`lastDay\`, oldest first: up to ${DAILY_DAYS}, and none before \`firstDay\` */
+  daily: number[]
 }
 
 export type Release = {

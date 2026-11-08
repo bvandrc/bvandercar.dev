@@ -12,6 +12,9 @@ const ACTIVITY = {
   lastDay: '2026-03-15',
   commits: [3, 40, 12],
   prs: [1, 9, 4],
+  dailyCommits: [
+    1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5, 0, 0, 0,
+  ],
 } satisfies WeeklyActivity
 
 describe('getActivityWeekStarts', () => {
