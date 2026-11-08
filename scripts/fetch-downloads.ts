@@ -1,7 +1,6 @@
 /**
  * Fetches the weekly download history of each npm and PyPI package the profile
- * content names, whose total its project's counts' glyph shows, and its
- * release dates.
+ * content names, for the chart in a project's counts tooltip.
  *
  * Writes src/generated/package-downloads.ts, gitignored. Reads the package
  * names from the content `pnpm fetch:profile` copied, so run that first. npm's
@@ -10,8 +9,8 @@
  * Google Cloud credentials; without them, PyPI packages are skipped. PyPI's
  * daily counts are kept in PYPI_CACHE_FILE between runs, so a run queries only
  * the days since the last. A package that can't be read is left out with a
- * warning, and its glyph keeps the profile's count, rather than failing the
- * build over a stats outage.
+ * warning, and its card shows no chart, rather than failing the build over a
+ * stats outage.
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -282,7 +281,7 @@ const formatEntry = (pkg: string, days: DailyDownloads[]) => {
 
 const warnSkipped = (what: string, error: unknown) =>
   console.warn(
-    `::warning::${what} could not be read, so its glyph keeps the profile's count: ${error instanceof Error ? error.message : error}`
+    `::warning::${what} could not be read, so no chart shows for it: ${error instanceof Error ? error.message : error}`
   )
 
 const projects = await readFile(PROJECTS_FILE, 'utf8')
@@ -328,7 +327,7 @@ pypiResults.forEach((result, index) => {
 })
 if (pypiFirstDays.length > 0 && !hasGoogleCredentials) {
   console.warn(
-    "::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages' glyphs keep the profile's counts"
+    '::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages show no downloads chart'
   )
 } else if (pypiFirstDays.length > 0) {
   try {
@@ -353,7 +352,7 @@ await writeFile(
   OUT_FILE,
   `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:downloads\`.
 
-/** A package registry whose downloads are counted. */
+/** A package registry whose downloads are charted. */
 export type Registry = 'npm' | 'pypi'
 
 export type WeeklyDownloads = {

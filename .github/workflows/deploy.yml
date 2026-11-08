@@ -2,9 +2,9 @@ name: Deploy
 
 # Deploys to Cloudflare once CI passes on main. Needs the repo secrets
 # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and BIGQUERY_CREDENTIALS, a
-# Google Cloud service account key, for PyPI download counts. PROJECT_REPOS_TOKEN,
+# Google Cloud service account key, for PyPI download charts. PROJECT_REPOS_TOKEN,
 # a read-only GitHub token for every project repo, is optional: without it, the
-# private ones' glyphs keep the profile's counts.
+# private ones' cards show no commits chart.
 
 on:
   workflow_run:
@@ -42,7 +42,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      # For PyPI's download counts, which the build queries from BigQuery.
+      # For the PyPI download charts, which the build queries from BigQuery.
       # Without the secret, the build still passes and PyPI projects show none.
       # PyPI's daily download counts from earlier runs, so the build queries
       # BigQuery for just the days since. Each run saves its own copy, and
@@ -64,7 +64,7 @@ jobs:
       - name: Build project
         run: pnpm build
         env:
-          # For the repos' commit and PR counts. The workflow's own token reads public
+          # For the activity charts. The workflow's own token reads public
           # repos; PROJECT_REPOS_TOKEN, if set, reads every project repo,
           # private ones too.
           GITHUB_TOKEN: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}

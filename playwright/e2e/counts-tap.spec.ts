@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
+import { getChartedCounts, getChartedRepoLink } from '../support/charted-counts'
 
-const { REPO_LINK, REPO_LINK_LABEL, COUNTS } = SELECTORS.PROJECTS
+const { REPO_LINK_LABEL, ACTIVITY_CHART } = SELECTORS.PROJECTS
 
 test.use({ hasTouch: true })
 
-test('on a touch screen, tapping the counts toggles their tooltip, and tapping "repo" opens the repo', async ({
+test('on a touch screen, tapping the counts toggles their charts, and tapping "repo" opens the repo', async ({
   page,
   context,
 }) => {
@@ -15,17 +16,17 @@ test('on a touch screen, tapping the counts toggles their tooltip, and tapping "
     route.fulfill({ contentType: 'text/html', body: '<title>Repo</title>' })
   )
   await page.goto('/')
-  const repoLink = page.getByTestId(REPO_LINK).first()
-  const counts = repoLink.getByTestId(COUNTS)
-  const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
+  const counts = getChartedCounts(page)
+  const chart = page.getByTestId(ACTIVITY_CHART)
 
   await counts.tap()
-  await expect(tooltip).toBeVisible()
+  await expect(chart).toBeVisible()
   await counts.tap()
-  await expect(tooltip).toBeHidden()
+  await expect(chart).toBeHidden()
   // Neither tap followed the link.
   expect(context.pages()).toHaveLength(1)
 
+  const repoLink = getChartedRepoLink(page)
   const [repoPage] = await Promise.all([
     context.waitForEvent('page'),
     repoLink.getByTestId(REPO_LINK_LABEL).tap(),

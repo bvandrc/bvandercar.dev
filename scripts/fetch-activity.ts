@@ -1,14 +1,13 @@
 /**
- * Fetches each project repo's commits and pull requests per week, whose
- * totals its counts' glyphs show.
+ * Fetches each project repo's commits and pull requests per week, for the
+ * activity chart in its counts tooltip.
  *
  * Writes src/generated/repo-activity.ts, gitignored. Reads the repos from the
  * content `pnpm fetch:profile` copied, so run that first. Needs a
  * `GITHUB_TOKEN`, since a build makes about as many requests as GitHub allows
  * an hour without one; without it, every repo is skipped. A private repo
  * needs a token granted it. A repo that can't be read is left out with a
- * warning, and its glyphs keep the profile's counts, rather than failing the
- * build.
+ * warning, and its card shows no chart, rather than failing the build.
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -85,7 +84,7 @@ const fetchActivity = async (repo: string) => {
     getWeekStart(Date.parse(created_at))
   )
   const now = Date.now()
-  // Through the week under way, so the weeks sum to every commit and PR.
+  // A running total never drops, so the week under way is charted too.
   const lastWeek = getWeekStart(now)
   const firstWeek = Math.min(...commitWeeks, ...prWeeks)
   if (!(firstWeek <= lastWeek)) {
@@ -115,7 +114,7 @@ const repos = [
 const entries: string[] = []
 if (token === undefined) {
   console.warn(
-    "::notice::GITHUB_TOKEN is not set, so every project's glyphs keep the profile's counts"
+    '::notice::GITHUB_TOKEN is not set, so no project shows an activity chart'
   )
 } else {
   const results = await Promise.allSettled(repos.map(fetchActivity))
@@ -123,7 +122,7 @@ if (token === undefined) {
     const repo = repos[index]
     if (result.status === 'rejected') {
       console.warn(
-        `::warning::Activity for ${repo} could not be read, so its glyphs keep the profile's counts: ${result.reason instanceof Error ? result.reason.message : result.reason}`
+        `::warning::Activity for ${repo} could not be read, so its card shows no chart: ${result.reason instanceof Error ? result.reason.message : result.reason}`
       )
     } else if (result.value) {
       const { firstWeek, lastDay, commits, prs } = result.value
