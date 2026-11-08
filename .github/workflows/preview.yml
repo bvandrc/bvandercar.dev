@@ -3,9 +3,17 @@ name: Preview
 # Uploads each PR's build as a Cloudflare version, without deploying it, and
 # links its preview URL from the PR's "View deployment" button, which posts no
 # comment. The `pr-<number>` alias keeps one stable URL per PR across pushes.
+#
+# The data the build fetches from GitHub, npm, and BigQuery is reused from the
+# last preview or deploy while it's under DATA_MAX_AGE_HOURS old, and was
+# fetched by the same scripts, so it has the shape this build expects. Add the
+# `refresh-data` label to build a preview with fresh data; while the label
+# stays, every push fetches fresh data.
 
 on:
   pull_request:
+    # Labeled only for `refresh-data`, which the job checks.
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: read
@@ -18,14 +26,20 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
-    # A fork PR gets no secrets, so it can't upload.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # A fork PR gets no secrets, so it can't upload. Any label but
+    # `refresh-data` leaves the preview as it was.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' || github.event.label.name == 'refresh-data')
     environment:
       name: preview
       url: ${{ steps.upload.outputs.url }}
     env:
       # Whether the secret is set, without putting the key itself in every step's env.
       HAS_BIGQUERY_CREDENTIALS: ${{ secrets.BIGQUERY_CREDENTIALS != '' }}
+      # How old the fetched data can be and still be reused.
+      DATA_MAX_AGE_HOURS: 24
+      REFRESH_DATA: ${{ contains(github.event.pull_request.labels.*.name, 'refresh-data') }}
 
     steps:
       - name: Checkout repo
@@ -34,13 +48,40 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      # The newest data a preview or deploy fetched with these same scripts,
+      # which a PR can restore from its own runs or from main's.
+      - name: Restore fetched data
+        id: restore-data
+        if: env.REFRESH_DATA != 'true'
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            src/generated/*.ts
+            src/generated/fetched-at.txt
+          key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ github.run_id }}
+          restore-keys: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-
+
+      - name: Check fetched data's age
+        id: data
+        if: steps.restore-data.outputs.cache-matched-key != ''
+        run: |
+          if [ ! -f src/generated/fetched-at.txt ]; then
+            exit 0
+          fi
+          age=$(( $(date +%s) - $(cat src/generated/fetched-at.txt) ))
+          if [ "$age" -lt $(( DATA_MAX_AGE_HOURS * 3600 )) ]; then
+            echo "reuse=true" >> "$GITHUB_OUTPUT"
+            echo "Reusing data fetched $(( age / 60 )) minutes ago" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       # For PyPI's download counts, which the build queries from BigQuery.
       # Without the secret, the build still passes and PyPI projects show none.
       # PyPI's daily download counts from earlier runs, so the build queries
       # BigQuery for just the days since. Each run saves its own copy, and
       # the next restores the newest.
       - name: Cache PyPI downloads
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
+        # Nothing queries BigQuery when the fetched data is reused.
+        if: env.HAS_BIGQUERY_CREDENTIALS == 'true' && steps.data.outputs.reuse != 'true'
         uses: actions/cache@v6
         with:
           path: .cache
@@ -48,7 +89,7 @@ jobs:
           restore-keys: pypi-downloads-
 
       - name: Authenticate to Google Cloud
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
+        if: env.HAS_BIGQUERY_CREDENTIALS == 'true' && steps.data.outputs.reuse != 'true'
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.BIGQUERY_CREDENTIALS }}
@@ -60,6 +101,21 @@ jobs:
           # repos; PROJECT_REPOS_TOKEN, if set, reads every project repo,
           # private ones too.
           GITHUB_TOKEN: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
+          # Keeps the restored data rather than fetching it again.
+          REUSE_FETCHED_DATA: ${{ steps.data.outputs.reuse == 'true' }}
+
+      - name: Mark data fetched
+        if: steps.data.outputs.reuse != 'true'
+        run: date +%s > src/generated/fetched-at.txt
+
+      - name: Save fetched data
+        if: steps.data.outputs.reuse != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            src/generated/*.ts
+            src/generated/fetched-at.txt
+          key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload preview version
         id: upload

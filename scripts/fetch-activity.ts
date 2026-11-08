@@ -8,9 +8,11 @@
  * an hour without one; without it, every repo is skipped. A private repo
  * needs a token granted it. A repo that can't be read is left out with a
  * warning, and its glyphs keep the profile's counts, rather than failing the
- * build.
+ * build. With `REUSE_FETCHED_DATA=true`, it keeps the file where it already
+ * exists, as a preview build does with recent data it restored from its cache.
  */
 
+import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { countBy } from 'es-toolkit'
 
@@ -103,6 +105,11 @@ const fetchActivity = async (repo: string) => {
     commits: weeks.map((week) => commitCounts[week] ?? 0),
     prs: weeks.map((week) => prCounts[week] ?? 0),
   }
+}
+
+if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
+  console.log(`repo activity: reusing ${OUT_FILE}`)
+  process.exit(0)
 }
 
 const projects = await readFile(PROJECTS_FILE, 'utf8')
