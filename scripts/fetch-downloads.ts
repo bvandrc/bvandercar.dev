@@ -4,17 +4,17 @@
  *
  * Writes the histories and releases to src/generated/package-downloads.ts,
  * which only the lazily loaded charts import, and each package's total to
- * src/generated/package-download-totals.ts, for its counts; both gitignored. Reads the package
- * names from the content `pnpm fetch:profile` copied, so run that first. npm's
- * history comes from its downloads API. PyPI's comes from Google BigQuery's
- * public PyPI dataset, and only when `GOOGLE_APPLICATION_CREDENTIALS` points at
- * Google Cloud credentials; without them, PyPI packages are skipped. PyPI's
- * daily counts are kept in PYPI_CACHE_FILE between runs, so a run queries only
- * the days since the last. A package that can't be read is left out with a
- * warning, and its card shows no chart, rather than failing the build over a
- * stats outage. With `REUSE_FETCHED_DATA=true`, it keeps the file where it
- * already exists, as a preview build does with recent data it restored from
- * its cache.
+ * src/generated/package-download-totals.ts, for its counts; both gitignored.
+ * Reads the package names from the content `pnpm fetch:profile` copied, so
+ * run that first. npm's history comes from its downloads API. PyPI's comes
+ * from Google BigQuery's public PyPI dataset, and only when
+ * `GOOGLE_APPLICATION_CREDENTIALS` points at Google Cloud credentials; without
+ * them, PyPI packages are skipped. PyPI's daily counts are kept in
+ * PYPI_CACHE_FILE between runs, so a run queries only the days since the
+ * last. A package that can't be read is left out with a warning, and its card
+ * shows no chart, rather than failing the build over a stats outage. With
+ * `REUSE_FETCHED_DATA=true`, it keeps both files where they already exist, as
+ * a preview build does with recent data it restored from its cache.
  */
 
 import { existsSync } from 'node:fs'
@@ -285,8 +285,12 @@ const warnSkipped = (what: string, error: unknown) =>
     `::warning::${what} could not be read, so no chart shows for it: ${error instanceof Error ? error.message : error}`
   )
 
-if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
-  console.log(`package downloads: reusing ${OUT_FILE}`)
+if (
+  process.env.REUSE_FETCHED_DATA === 'true' &&
+  existsSync(OUT_FILE) &&
+  existsSync(TOTALS_FILE)
+) {
+  console.log(`package downloads: reusing ${OUT_FILE} and ${TOTALS_FILE}`)
   process.exit(0)
 }
 

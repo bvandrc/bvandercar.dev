@@ -4,14 +4,14 @@
  *
  * Writes the daily histories to src/generated/repo-activity.ts, which only the
  * lazily loaded charts import, and the totals to
- * src/generated/repo-activity-totals.ts; both gitignored. Reads the repos from the
- * content `pnpm fetch:profile` copied, so run that first. Needs a
+ * src/generated/repo-activity-totals.ts; both gitignored. Reads the repos
+ * from the content `pnpm fetch:profile` copied, so run that first. Needs a
  * `GITHUB_TOKEN`, since a build makes about as many requests as GitHub allows
  * an hour without one; without it, every repo is skipped. A private repo
  * needs a token granted it. A repo that can't be read is left out with a
  * warning, and its card shows no chart, rather than failing the build. With
- * `REUSE_FETCHED_DATA=true`, it keeps the file where it already exists, as a
- * preview build does with recent data it restored from its cache.
+ * `REUSE_FETCHED_DATA=true`, it keeps both files where they already exist, as
+ * a preview build does with recent data it restored from its cache.
  */
 
 import { existsSync } from 'node:fs'
@@ -106,8 +106,12 @@ const fetchActivity = async (repo: string) => {
   }
 }
 
-if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
-  console.log(`repo activity: reusing ${OUT_FILE}`)
+if (
+  process.env.REUSE_FETCHED_DATA === 'true' &&
+  existsSync(OUT_FILE) &&
+  existsSync(TOTALS_FILE)
+) {
+  console.log(`repo activity: reusing ${OUT_FILE} and ${TOTALS_FILE}`)
   process.exit(0)
 }
 
