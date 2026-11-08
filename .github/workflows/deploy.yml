@@ -69,6 +69,22 @@ jobs:
           # private ones too.
           GITHUB_TOKEN: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
 
+      # Always fetched fresh here, then saved for preview builds to reuse
+      # while it's recent; see preview.yml.
+      - name: Mark charts data fetched
+        run: date +%s > src/generated/fetched-at.txt
+
+      - name: Save charts data
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            src/generated/repo-activity.ts
+            src/generated/repo-activity-totals.ts
+            src/generated/package-downloads.ts
+            src/generated/package-download-totals.ts
+            src/generated/fetched-at.txt
+          key: charts-data-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:

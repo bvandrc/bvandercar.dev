@@ -1,6 +1,6 @@
 ## Project
 
-Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to Cloudflare (Workers static assets, configured in `wrangler.jsonc`) by `.github/workflows/deploy.yml`. Every PR also gets a preview URL, linked from its "View deployment" button by `.github/workflows/preview.yml`.
+Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to Cloudflare (Workers static assets, configured in `wrangler.jsonc`) by `.github/workflows/deploy.yml`. Every PR also gets a preview URL, linked from its "View deployment" button by `.github/workflows/preview.yml`. A preview build reuses the charts' data (below) from the last preview or deploy while it's under 24 hours old, rather than fetching it from GitHub, npm, and BigQuery again: `REUSE_FETCHED_DATA=true` makes the two fetches keep files already there. While a PR has the `refresh-data` label, its previews fetch fresh data, and adding the label builds one.
 
 - **Stack**: React 19 + Vite + TypeScript, Tailwind v4, Radix UI primitives (`radix-ui`, wrapped in `src/components/primitives/`), Biome, Vitest + Testing Library for unit/component tests, Playwright for e2e/a11y/Lighthouse.
 - **Layout**: `src/` is the app, with unit tests in `__tests__/` folders beside the modules they cover; `playwright/` is the browser suites; `shared/test-support/` holds test helpers either suite can import, like the test-id registry in `selectors.ts` (alias `~/test-support/*`).
