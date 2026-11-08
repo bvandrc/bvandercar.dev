@@ -1,9 +1,10 @@
 /**
- * Fetches the weekly download history of each npm and PyPI package the profile
- * content names, and its latest days' one by one, for the chart in a
- * project's counts tooltip.
+ * Fetches the daily download history of each npm and PyPI package the profile
+ * content names, for the chart in a project's counts tooltip.
  *
- * Writes src/generated/package-downloads.ts, gitignored. Reads the package
+ * Writes the histories and releases to src/generated/package-downloads.ts,
+ * which only the lazily loaded charts import, and each package's total to
+ * src/generated/package-download-totals.ts, for its counts; both gitignored. Reads the package
  * names from the content `pnpm fetch:profile` copied, so run that first. npm's
  * history comes from its downloads API. PyPI's comes from Google BigQuery's
  * public PyPI dataset, and only when `GOOGLE_APPLICATION_CREDENTIALS` points at
@@ -16,10 +17,11 @@
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
-import { chunk, sumBy } from 'es-toolkit'
+import { sumBy } from 'es-toolkit'
 
 const PROJECTS_FILE = 'src/generated/profile/content/projects.ts'
 const OUT_FILE = 'src/generated/package-downloads.ts'
+const TOTALS_FILE = 'src/generated/package-download-totals.ts'
 // Gitignored; CI's deploy and preview builds carry it between runs in the
 // Actions cache.
 const CACHE_DIR = '.cache'
@@ -33,9 +35,6 @@ const PYPI_WINDOW_DAYS = 180
 
 /** Days per npm query, inside the 18 months the API answers at once. */
 const NPM_WINDOW_DAYS = 365
-// How many of the latest days are also kept one by one, for a chart that
-// spans too few days to read week by week.
-const DAILY_DAYS = 56
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
@@ -260,26 +259,20 @@ const fetchPypiDailyDownloads = async (
   )
 }
 
-/**
- * Daily downloads summed into weeks that end on the last day.
- *
- * Counting back from the last day keeps the latest week whole, so it never
- * reads as a drop; the week of the first publish is the one left short.
- */
-const sumWeeks = (days: DailyDownloads[]) =>
-  // Chunked from the end, which leaves any short week first.
-  chunk(days.toReversed(), 7)
-    .map((week) => sumBy(week, ({ downloads }) => downloads))
-    .toReversed()
+/** A package's line in each generated file: its history's, and its total's. */
+type Entry = { history: string; total: string }
 
-/** A line of the generated file for one package, or none for one with no days. */
-const formatEntry = (pkg: string, days: DailyDownloads[]) => {
+/** The lines of the generated files for one package, or none for one with no days. */
+const formatEntry = (pkg: string, days: DailyDownloads[]): Entry[] => {
   const firstDay = days.at(0)?.day
   const lastDay = days.at(-1)?.day
-  const daily = days.slice(-DAILY_DAYS).map(({ downloads }) => downloads)
+  const daily = days.map(({ downloads }) => downloads)
   return firstDay && lastDay
     ? [
-        `    '${pkg}': { firstDay: '${firstDay}', lastDay: '${lastDay}', weekly: [${sumWeeks(days).join(', ')}], daily: [${daily.join(', ')}] },`,
+        {
+          history: `    '${pkg}': { firstDay: '${firstDay}', lastDay: '${lastDay}', daily: [${daily.join(', ')}] },`,
+          total: `    '${pkg}': ${sumBy(days, ({ downloads }) => downloads)},`,
+        },
       ]
     : []
 }
@@ -301,7 +294,7 @@ const formatReleases = (pkg: string, releases: Release[]) =>
   `    '${pkg}': ${JSON.stringify(releases)},`
 
 const npmPackages = getPackages('npmPackage')
-const npmEntries: string[] = []
+const npmEntries: Entry[] = []
 const npmReleaseEntries: string[] = []
 for (const pkg of npmPackages) {
   try {
@@ -316,7 +309,7 @@ for (const pkg of npmPackages) {
 }
 
 const pypiPackages = getPackages('pypiPackage')
-const pypiEntries: string[] = []
+const pypiEntries: Entry[] = []
 const pypiReleaseEntries: string[] = []
 // Releases need no credentials, so they're read even when downloads aren't.
 const pypiFirstDays: { pkg: string; firstDay: string }[] = []
@@ -352,22 +345,43 @@ if (pypiFirstDays.length > 0 && !hasGoogleCredentials) {
   }
 }
 
+/** Each registry's lines of `field` from its entries, as an object literal's body. */
+const formatRegistries = (field: keyof Entry) => `  npm: {
+${npmEntries.map((entry) => entry[field]).join('\n')}
+  },
+  pypi: {
+${pypiEntries.map((entry) => entry[field]).join('\n')}
+  },`
+
 await mkdir('src/generated', { recursive: true })
 await writeFile(
-  OUT_FILE,
+  TOTALS_FILE,
   `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:downloads\`.
 
 /** A package registry whose downloads are charted. */
 export type Registry = 'npm' | 'pypi'
 
-export type WeeklyDownloads = {
+/** Each package's downloads in all, by registry, then package name. */
+export const PACKAGE_DOWNLOAD_TOTALS: Record<
+  Registry,
+  Record<string, number | undefined>
+> = {
+${formatRegistries('total')}
+}
+`
+)
+await writeFile(
+  OUT_FILE,
+  `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:downloads\`.
+
+import type { Registry } from './package-download-totals'
+
+export type DownloadHistory = {
   /** ISO date of the first day counted, the package's first publish */
   firstDay: string
-  /** ISO date of the last day counted, the end of the last week */
+  /** ISO date of the last day counted */
   lastDay: string
-  /** Downloads in each 7-day week ending on \`lastDay\`, oldest first; the first can be shorter */
-  weekly: number[]
-  /** Downloads on each of the latest days, through \`lastDay\`, oldest first: up to ${DAILY_DAYS}, and none before \`firstDay\` */
+  /** Downloads on each day from \`firstDay\` through \`lastDay\`, oldest first */
   daily: number[]
 }
 
@@ -377,17 +391,12 @@ export type Release = {
   day: string
 }
 
-/** Each package's weekly downloads since its first publish, by registry, then package name. */
+/** Each package's daily downloads since its first publish, by registry, then package name. */
 export const PACKAGE_DOWNLOADS: Record<
   Registry,
-  Record<string, WeeklyDownloads | undefined>
+  Record<string, DownloadHistory | undefined>
 > = {
-  npm: {
-${npmEntries.join('\n')}
-  },
-  pypi: {
-${pypiEntries.join('\n')}
-  },
+${formatRegistries('history')}
 }
 
 /** Each package's releases, oldest first and leaving out pre-releases, by registry, then package name. */
@@ -405,5 +414,5 @@ ${pypiReleaseEntries.join('\n')}
 `
 )
 console.log(
-  `package downloads: weekly history for ${npmEntries.length} of ${npmPackages.length} npm and ${pypiEntries.length} of ${pypiPackages.length} PyPI packages`
+  `package downloads: daily history for ${npmEntries.length} of ${npmPackages.length} npm and ${pypiEntries.length} of ${pypiPackages.length} PyPI packages`
 )

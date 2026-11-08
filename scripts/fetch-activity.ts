@@ -1,9 +1,10 @@
 /**
- * Fetches each project repo's commits and pull requests per week, and its
- * latest days' commits one by one, for the activity chart in its counts
- * tooltip.
+ * Fetches each project repo's commits per day, for the activity chart in its
+ * counts tooltip, and its commits and pull requests in all, for its counts.
  *
- * Writes src/generated/repo-activity.ts, gitignored. Reads the repos from the
+ * Writes the daily histories to src/generated/repo-activity.ts, which only the
+ * lazily loaded charts import, and the totals to
+ * src/generated/repo-activity-totals.ts; both gitignored. Reads the repos from the
  * content `pnpm fetch:profile` copied, so run that first. Needs a
  * `GITHUB_TOKEN`, since a build makes about as many requests as GitHub allows
  * an hour without one; without it, every repo is skipped. A private repo
@@ -16,6 +17,7 @@ import { countBy } from 'es-toolkit'
 
 const PROJECTS_FILE = 'src/generated/profile/content/projects.ts'
 const OUT_FILE = 'src/generated/repo-activity.ts'
+const TOTALS_FILE = 'src/generated/repo-activity-totals.ts'
 const OWNER = 'bvandrc'
 // Actions sets this, to GitHub Enterprise's API on an Enterprise server.
 const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
@@ -23,20 +25,11 @@ const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
 const token = process.env.GITHUB_TOKEN || undefined
 
 const DAY_MS = 24 * 60 * 60 * 1000
-const WEEK_MS = 7 * DAY_MS
-// How many of the latest days are also counted one by one, for a chart that
-// spans too few days to read week by week.
-const DAILY_DAYS = 56
 
 const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
 
-/** The start of the Monday, UTC, of the week `time` falls in. */
-const getWeekStart = (time: number) => {
-  const dayStart = Math.floor(time / DAY_MS) * DAY_MS
-  // getUTCDay counts from Sunday; this counts days since Monday.
-  const daysSinceMonday = (new Date(dayStart).getUTCDay() + 6) % 7
-  return dayStart - daysSinceMonday * DAY_MS
-}
+/** The start of the day, UTC, `time` falls on. */
+const getDayStart = (time: number) => Math.floor(time / DAY_MS) * DAY_MS
 
 /** Every item of a paginated GitHub list, following its Link headers. */
 const fetchAll = async <T>(path: string) => {
@@ -61,12 +54,12 @@ const fetchAll = async <T>(path: string) => {
 }
 
 /**
- * A repo's commits on its default branch, and its pull requests by when they
- * were opened, counted per week from its first through the one under way.
+ * A repo's commits on its default branch, counted per day from its first
+ * commit or pull request through today, and its commits and pull requests in
+ * all.
  *
- * Every commit and PR is counted, so the weeks sum to the repo's totals. Its
- * commits on each of the last `DAILY_DAYS` days, from its first week on, are
- * counted too. Undefined for a repo with neither.
+ * Every commit is counted, so the days sum to the repo's total. Undefined for
+ * a repo with neither.
  */
 const fetchActivity = async (repo: string) => {
   const [commits, pulls] = await Promise.all([
@@ -78,46 +71,35 @@ const fetchActivity = async (repo: string) => {
     }>(`/repos/${OWNER}/${repo}/commits`),
     fetchAll<{ created_at: string }>(`/repos/${OWNER}/${repo}/pulls?state=all`),
   ])
-  const commitTimes = commits.map(({ commit }) =>
+  const today = getDayStart(Date.now())
+  const commitDays = commits.map(({ commit }) =>
     // A commit can lack a committer, so its author dates it instead, and one
-    // with neither still counts, as today's.
-    Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
+    // with neither still counts, as today's. One dated ahead, by a skewed
+    // clock, counts as today's too, so the days still sum to the total.
+    Math.min(
+      getDayStart(
+        Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
+      ),
+      today
+    )
   )
-  const commitWeeks = commitTimes.map(getWeekStart)
-  const prWeeks = pulls.map(({ created_at }) =>
-    getWeekStart(Date.parse(created_at))
+  const prDays = pulls.map(({ created_at }) =>
+    getDayStart(Date.parse(created_at))
   )
-  const now = Date.now()
-  // A running total never drops, so the week under way is charted too.
-  const lastWeek = getWeekStart(now)
-  const firstWeek = Math.min(...commitWeeks, ...prWeeks)
-  if (!(firstWeek <= lastWeek)) {
+  const firstDay = Math.min(...commitDays, ...prDays)
+  if (!(firstDay <= today)) {
     return undefined
   }
-  const commitCounts = countBy(commitWeeks, String)
-  const prCounts = countBy(prWeeks, String)
-  const weeks: number[] = []
-  for (let week = firstWeek; week <= lastWeek; week += WEEK_MS) {
-    weeks.push(week)
-  }
-  const today = Math.floor(now / DAY_MS) * DAY_MS
-  const dayCounts = countBy(commitTimes, (time) =>
-    String(Math.floor(time / DAY_MS) * DAY_MS)
-  )
-  const days: number[] = []
-  for (
-    let day = Math.max(firstWeek, today - (DAILY_DAYS - 1) * DAY_MS);
-    day <= today;
-    day += DAY_MS
-  ) {
-    days.push(day)
+  const counts = countBy(commitDays, String)
+  const daily: number[] = []
+  for (let day = firstDay; day <= today; day += DAY_MS) {
+    daily.push(counts[day] ?? 0)
   }
   return {
-    firstWeek: isoDate(firstWeek),
-    lastDay: isoDate(now),
-    commits: weeks.map((week) => commitCounts[week] ?? 0),
-    prs: weeks.map((week) => prCounts[week] ?? 0),
-    dailyCommits: days.map((day) => dayCounts[day] ?? 0),
+    firstDay: isoDate(firstDay),
+    lastDay: isoDate(today),
+    commits: daily,
+    totals: { commits: commits.length, prs: pulls.length },
   }
 }
 
@@ -129,6 +111,7 @@ const repos = [
 ].sort()
 
 const entries: string[] = []
+const totalEntries: string[] = []
 if (token === undefined) {
   console.warn(
     '::notice::GITHUB_TOKEN is not set, so no project shows an activity chart'
@@ -142,9 +125,12 @@ if (token === undefined) {
         `::warning::Activity for ${repo} could not be read, so its card shows no chart: ${result.reason instanceof Error ? result.reason.message : result.reason}`
       )
     } else if (result.value) {
-      const { firstWeek, lastDay, commits, prs, dailyCommits } = result.value
+      const { firstDay, lastDay, commits, totals } = result.value
       entries.push(
-        `  '${repo}': { firstWeek: '${firstWeek}', lastDay: '${lastDay}', commits: [${commits.join(', ')}], prs: [${prs.join(', ')}], dailyCommits: [${dailyCommits.join(', ')}] },`
+        `  '${repo}': { firstDay: '${firstDay}', lastDay: '${lastDay}', commits: [${commits.join(', ')}] },`
+      )
+      totalEntries.push(
+        `  '${repo}': { commits: ${totals.commits}, prs: ${totals.prs} },`
       )
     }
   })
@@ -152,28 +138,37 @@ if (token === undefined) {
 
 await mkdir('src/generated', { recursive: true })
 await writeFile(
+  TOTALS_FILE,
+  `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:activity\`.
+
+/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
+export const REPO_ACTIVITY_TOTALS: Record<
+  string,
+  { commits: number; prs: number } | undefined
+> = {
+${totalEntries.join('\n')}
+}
+`
+)
+await writeFile(
   OUT_FILE,
   `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:activity\`.
 
-export type WeeklyActivity = {
-  /** ISO date of the Monday the first week starts on */
-  firstWeek: string
-  /** ISO date the history was read, which ends the last week, the one under way */
+export type CommitHistory = {
+  /** ISO date of the repo's first commit or pull request */
+  firstDay: string
+  /** ISO date the history was read */
   lastDay: string
-  /** Commits on the default branch in each week, oldest first; they sum to the repo's total */
+  /** Commits on the default branch each day from \`firstDay\` through \`lastDay\`, oldest first; they sum to the repo's total */
   commits: number[]
-  /** Pull requests opened in each of the same weeks */
-  prs: number[]
-  /** Commits on each of the latest days, through \`lastDay\`, oldest first: up to ${DAILY_DAYS}, and none before \`firstWeek\` */
-  dailyCommits: number[]
 }
 
-/** Each project repo's commits and pull requests per week, keyed by repo name. */
-export const REPO_ACTIVITY: Record<string, WeeklyActivity | undefined> = {
+/** Each project repo's commits per day, keyed by repo name. */
+export const REPO_ACTIVITY: Record<string, CommitHistory | undefined> = {
 ${entries.join('\n')}
 }
 `
 )
 console.log(
-  `repo activity: weekly history for ${entries.length} of ${repos.length} repos`
+  `repo activity: daily history for ${entries.length} of ${repos.length} repos`
 )

@@ -1,64 +1,38 @@
-import { choosePeriods, type Periods } from '../periods'
+import { getPeriodEnds } from '../periods'
 
-// Three weeks to Mar 22, and the last 4 days of them one by one.
-const WEEKS = {
-  firstDay: '2026-03-02',
-  periodEnds: ['2026-03-08', '2026-03-15', '2026-03-22'],
-  counts: [5, 1200, 12],
-} satisfies Omit<Periods, 'startTotal'>
-const DAILY = [3, 0, 4, 1]
+const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
+const FIRST_DAY = '2026-03-02'
 const LAST_DAY = '2026-03-22'
 
-describe('choosePeriods', () => {
-  it('reads day by day across a span under 50 days, from what the weeks counted before the first day', () => {
-    expect(
-      choosePeriods(WEEKS, DAILY, LAST_DAY, {
-        start: '2026-03-19',
-        end: '2026-03-22',
-      })
-    ).toEqual({
-      firstDay: '2026-03-19',
-      periodEnds: ['2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22'],
-      counts: DAILY,
-      // 1,217 in all, less the 8 counted on the days.
-      startTotal: 1209,
+describe('getPeriodEnds', () => {
+  it('reads out every day across a span under 50 days', () => {
+    const days = getPeriodEnds(WEEK_ENDS, FIRST_DAY, LAST_DAY, {
+      start: '2026-03-10',
+      end: LAST_DAY,
     })
+
+    expect(days).toHaveLength(21)
+    expect([days[0], days.at(-1)]).toEqual([FIRST_DAY, LAST_DAY])
+    // 49 days, the longest that does.
+    expect(
+      getPeriodEnds(WEEK_ENDS, FIRST_DAY, LAST_DAY, {
+        start: '2026-02-02',
+        end: '2026-03-23',
+      })
+    ).toHaveLength(21)
   })
 
-  it('reads week by week where days are too many or too few to chart', () => {
+  it('reads out each week across 50 days or more, or without a span', () => {
     const SPANS = [
-      // Never told what it spans.
+      // 50 days.
+      { start: '2026-02-01', end: '2026-03-23' },
       undefined,
-      // Under 50 days, but starting before the daily counts.
-      { start: '2026-03-02', end: '2026-03-22' },
     ]
     for (const span of SPANS) {
       expect(
-        choosePeriods(WEEKS, DAILY, LAST_DAY, span),
+        getPeriodEnds(WEEK_ENDS, FIRST_DAY, LAST_DAY, span),
         JSON.stringify(span)
-      ).toEqual({ ...WEEKS, startTotal: 0 })
+      ).toBe(WEEK_ENDS)
     }
-  })
-
-  it('reads week by week across 50 days or more, though days cover it', () => {
-    // From Jan 26.
-    const DAILY_56 = Array<number>(56).fill(1)
-    /** The first day counted across the span to `LAST_DAY` from `start`. */
-    const getFirstDay = (start: string) =>
-      choosePeriods(WEEKS, DAILY_56, LAST_DAY, { start, end: LAST_DAY })
-        .firstDay
-
-    // 49 days, by day, then 50, by week.
-    expect(getFirstDay('2026-02-01')).toBe('2026-01-26')
-    expect(getFirstDay('2026-01-31')).toBe(WEEKS.firstDay)
-  })
-
-  it('reads week by week with a single day counted, which is no line', () => {
-    expect(
-      choosePeriods(WEEKS, [4], LAST_DAY, {
-        start: '2026-03-22',
-        end: LAST_DAY,
-      })
-    ).toEqual({ ...WEEKS, startTotal: 0 })
   })
 })

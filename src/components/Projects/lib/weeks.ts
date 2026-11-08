@@ -1,4 +1,4 @@
-import { clamp } from 'es-toolkit'
+import { clamp, sum } from 'es-toolkit'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -27,11 +27,45 @@ export const formatDay = (isoDate: string) =>
 export const addDays = (isoDate: string, days: number) =>
   new Date(Date.parse(isoDate) + days * DAY_MS).toISOString().slice(0, 10)
 
-/** The busiest of weekly counts: its count, and the ISO date its week starts on. */
-export const getPeakWeek = (weekly: number[], weekStarts: string[]) => {
-  const count = Math.max(...weekly)
-  return { count, start: weekStarts[weekly.indexOf(count)] }
-}
+/** How many days `isoDate` is after `from`, or before it for a negative count. */
+export const getDaysBetween = (from: string, isoDate: string) =>
+  Math.round((Date.parse(isoDate) - Date.parse(from)) / DAY_MS)
+
+/** Every ISO date from `first` through `last`, oldest first. */
+export const listDays = (first: string, last: string) =>
+  Array.from({ length: getDaysBetween(first, last) + 1 }, (_, index) =>
+    addDays(first, index)
+  )
+
+/** A week of daily counts: the ISO dates it starts and ends on, and what it counted. */
+export type Week = { start: string; end: string; count: number }
+
+/**
+ * Daily counts from `firstDay` summed into weeks ending on each of
+ * `weekEnds`, oldest first.
+ *
+ * Each starts the day after the one before, and the first on `firstDay`, so
+ * it can be short.
+ */
+export const sumWeeks = (
+  firstDay: string,
+  daily: number[],
+  weekEnds: string[]
+): Week[] =>
+  weekEnds.map((end, index) => {
+    const start = index === 0 ? firstDay : addDays(weekEnds[index - 1], 1)
+    const count = sum(
+      daily.slice(
+        getDaysBetween(firstDay, start),
+        getDaysBetween(firstDay, end) + 1
+      )
+    )
+    return { start, end, count }
+  })
+
+/** The busiest of weeks, the earliest of any that tie. */
+export const getPeakWeek = (weeks: Week[]) =>
+  weeks.reduce((peak, week) => (week.count > peak.count ? week : peak))
 
 /**
  * The latest of versions released together, as a label: `['1.0.0', '1.0.5',

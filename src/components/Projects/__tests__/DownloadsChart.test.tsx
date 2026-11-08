@@ -1,20 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import type { WeeklyDownloads } from '@/generated/package-downloads'
+import type { DownloadHistory } from '@/generated/package-downloads'
 import { SELECTORS } from '~/test-support/selectors'
 import { DownloadsChart } from '../DownloadsChart'
 
 const { PLOT, READOUT } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
+// 5, 1,200, then 12 downloads a week ending Mar 24.
 const HISTORY = {
   firstDay: '2026-03-06',
   lastDay: '2026-03-24',
-  weekly: [5, 1200, 12],
-  // Each day from the first, adding up to the weeks'.
   daily: [
     1, 1, 1, 1, 1, 200, 300, 100, 200, 100, 200, 100, 2, 2, 2, 2, 2, 1, 1,
   ],
-} satisfies WeeklyDownloads
+} satisfies DownloadHistory
 
 describe('DownloadsChart', () => {
   it('names the registry its running total is of, until hovered', () => {

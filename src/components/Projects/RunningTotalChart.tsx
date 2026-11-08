@@ -8,9 +8,11 @@ import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import {
+  addDays,
   type DaySpan,
   formatDay,
   formatLatestVersion,
+  getDaysBetween,
   getWheelZoomFactor,
 } from './lib/weeks'
 
@@ -70,24 +72,22 @@ const READOUT_CLASSES = {
 } as const
 
 export type RunningTotalChartProps = {
-  /** The ISO date counting starts on, the first period's first day */
+  /** The ISO date counting starts on */
   firstDay: string
-  /** The ISO date each period ends on, oldest first; two or more */
+  /** Its count on each day from `firstDay` on, oldest first, which the line runs through; two or more */
+  daily: number[]
+  /** The ISO date each period it reads out ends on, like each week's last day, oldest first: each one of the days counted, the last being the last of them */
   periodEnds: string[]
   /**
    * The ISO dates its width runs from and to, which charts shown together
    * share, so a date sits at the same place on each.
    *
-   * Defaults to its own periods'. A start after the first day leaves out the
-   * periods before it, and the line starts at the total counted by then.
+   * Defaults to its own days'. A start after the first day leaves out the
+   * days before it, and the line starts at the total counted by then.
    */
   span?: DaySpan
   /** What one of what it counts is called, like "commit" */
   noun: string
-  /** Its count in each period, one per entry of `periodEnds` */
-  counts: number[]
-  /** What was counted before `firstDay`, which the running total starts from; 0 by default */
-  startTotal?: number
   tone: ChartTone
   /** The glyph in front of the caption, the same as the count's own */
   icon?: GlyphName
@@ -105,22 +105,21 @@ export type RunningTotalChartProps = {
 }
 
 /**
- * Counts per period, like a week or a day, as a running total, on a small
- * shaded line chart that ends at the total, written beside it.
+ * Daily counts as a running total, on a small shaded line chart that ends at
+ * the total, written beside it.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
- * summary, or the total through the period under the pointer. A release gets
+ * summary, or the total through the period under the pointer, like its week. A release gets
  * a grey line on its day, which names its latest version while hovered. Drawn
  * for sighted pointer users only: pair it with the counts in words for
  * everyone else.
  */
 export const RunningTotalChart = ({
   firstDay,
+  daily,
   periodEnds,
   span,
   noun,
-  counts,
-  startTotal = 0,
   tone,
   icon,
   summary,
@@ -139,14 +138,20 @@ export const RunningTotalChart = ({
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
   const lastIndex = periodEnds.length - 1
-  let runningTotal = startTotal
-  const totals = counts.map((count) => {
+  const days = daily.map((_, index) => addDays(firstDay, index))
+  // It counts two days or more, so has a last.
+  const lastDay = days.at(-1) ?? firstDay
+  let runningTotal = 0
+  const dayTotals = daily.map((count) => {
     runningTotal += count
     return runningTotal
   })
   // A running total only grows, so it peaks at the end.
-  const total = totals[lastIndex]
-  const { start, end } = span ?? { start: firstDay, end: periodEnds[lastIndex] }
+  const total = runningTotal
+  const periodTotals = periodEnds.map(
+    (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
+  )
+  const { start, end } = span ?? { start: firstDay, end: lastDay }
   const startTime = Date.parse(start)
   // A span of one day still has width to draw across.
   const spanTime = Date.parse(end) - startTime || DAY_MS
@@ -158,16 +163,17 @@ export const RunningTotalChart = ({
   // by zero.
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
-  const lastX = toX(periodEnds[lastIndex])
+  const lastX = toX(lastDay)
   // The line starts on the first day, at what was counted before it, or at a
   // span's later start, at what was counted by then.
   const lineStart = [firstDay, start].sort()[1]
   const startX = toX(lineStart)
-  const firstShown = periodEnds.findIndex((periodEnd) => periodEnd >= lineStart)
-  const line = `M${startX},${toY(totals[firstShown - 1] ?? startTotal)}${totals
-    .map((count, index) => [count, periodEnds[index]] as const)
+  const firstShown = days.findIndex((day) => day >= lineStart)
+  // Through every day, whichever periods it reads out.
+  const line = `M${startX},${toY(dayTotals[firstShown - 1] ?? 0)}${dayTotals
+    .map((count, index) => [count, days[index]] as const)
     .slice(firstShown)
-    .map(([count, periodEnd]) => `L${toX(periodEnd)},${toY(count)}`)
+    .map(([count, day]) => `L${toX(day)},${toY(count)}`)
     .join('')}`
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => day >= start && day <= end
@@ -263,7 +269,7 @@ export const RunningTotalChart = ({
       return `${formatLatestVersion(versions)} released ${formatDay(activeRelease)}`
     }
     if (activePeriod !== undefined) {
-      return `Through ${formatDay(periodEnds[activePeriod])}: ${formatCount(totals[activePeriod], noun)}`
+      return `Through ${formatDay(periodEnds[activePeriod])}: ${formatCount(periodTotals[activePeriod], noun)}`
     }
     return summary
   }
@@ -336,9 +342,10 @@ export const RunningTotalChart = ({
           strokeLinecap="round"
           clipPath={`url(#${clipId})`}
           className={TONE_CLASSES[tone].LINE}
+          data-testid="running-total-chart-line"
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
-        {periodEnds[lastIndex] <= end && (
+        {lastDay <= end && (
           <text
             x={lastX + 6}
             // Centred on the line's end, about a third of the text's height down.
@@ -360,7 +367,7 @@ export const RunningTotalChart = ({
             />
             <circle
               cx={activeX}
-              cy={toY(totals[activePeriod])}
+              cy={toY(periodTotals[activePeriod])}
               r={4}
               strokeWidth={2}
               // A ring in the tooltip's own color, so the dot stands off the line.

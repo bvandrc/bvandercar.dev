@@ -1,6 +1,7 @@
-import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import type { Registry } from '@/generated/package-download-totals'
+import type { DownloadHistory } from '@/generated/package-downloads'
 import { COUNT_ICONS } from './lib/count-icons'
-import { choosePeriods } from './lib/periods'
+import { getPeriodEnds } from './lib/periods'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'
 import {
   RunningTotalChart,
@@ -11,19 +12,17 @@ export type DownloadsChartProps = Pick<
   RunningTotalChartProps,
   'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 > & {
-  history: WeeklyDownloads
+  history: DownloadHistory
   /** The registry the history is from, which the readout names */
   registry: Registry
 }
 
 /**
- * A package's downloads as a running total, week by week, on a small shaded
+ * A package's downloads as a running total, day by day, on a small shaded
  * line chart, reading out the total through the week under the pointer.
  *
- * Across a span under 50 days, it reads day by day instead.
- *
- * Pair it with `describeWeeklyDownloads` for screen readers. Needs two weeks
- * or more.
+ * Across a span under 50 days, it reads out each day instead. Pair it with
+ * `describeWeeklyDownloads` for screen readers. Needs two days or more.
  */
 export const DownloadsChart = ({
   history,
@@ -35,13 +34,11 @@ export const DownloadsChart = ({
   onPan,
 }: DownloadsChartProps) => (
   <RunningTotalChart
-    {...choosePeriods(
-      {
-        firstDay: history.firstDay,
-        periodEnds: getDownloadWeekEnds(history),
-        counts: history.weekly,
-      },
-      history.daily,
+    firstDay={history.firstDay}
+    daily={history.daily}
+    periodEnds={getPeriodEnds(
+      getDownloadWeekEnds(history),
+      history.firstDay,
       history.lastDay,
       span
     )}

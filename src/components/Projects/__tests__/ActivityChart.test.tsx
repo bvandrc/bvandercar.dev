@@ -1,20 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { CommitHistory } from '@/generated/repo-activity'
 import { SELECTORS } from '~/test-support/selectors'
 import { ActivityChart } from '../ActivityChart'
 
 const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
-// Read on Thursday, Mar 12, partway through its last week.
+// 3, 40, then 12 commits a week from Monday, Feb 23, read on Thursday,
+// Mar 12, partway through its last week.
 const ACTIVITY = {
-  firstWeek: '2026-02-23',
+  firstDay: '2026-02-23',
   lastDay: '2026-03-12',
-  commits: [3, 40, 12],
-  prs: [1, 9, 4],
-  // Each day from the first week's Monday, adding up to the weeks'.
-  dailyCommits: [1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5],
-} satisfies WeeklyActivity
+  commits: [1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5],
+} satisfies CommitHistory
 
 describe('ActivityChart', () => {
   it('charts the running total of commits, ending at them all', () => {
@@ -37,7 +35,7 @@ describe('ActivityChart', () => {
     render(
       <ActivityChart
         activity={ACTIVITY}
-        span={{ start: ACTIVITY.firstWeek, end: ACTIVITY.lastDay }}
+        span={{ start: ACTIVITY.firstDay, end: ACTIVITY.lastDay }}
       />
     )
 

@@ -21,6 +21,7 @@ export const SELECTORS = {
       TOTAL: 'running-total-chart-total',
       DOT: 'running-total-chart-dot',
       RELEASE: 'running-total-chart-release',
+      LINE: 'running-total-chart-line',
     },
   },
   SKILLS: {

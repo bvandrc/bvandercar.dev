@@ -7,22 +7,27 @@ import {
   type RunningTotalChartProps,
 } from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, DOT, RELEASE } =
+const { PLOT, READOUT, TOTAL, DOT, RELEASE, LINE } =
   SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
-/** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
+// Each day's commits for the three weeks from Mar 2: 5, 1,200, then 12.
+const DAILY = [
+  1, 0, 1, 0, 1, 1, 1, 200, 100, 300, 100, 200, 200, 100, 2, 2, 2, 2, 2, 1, 1,
+]
+
+/** Renders a chart of `DAILY`, reading out each week, summarized as "Commits". */
 const renderChart = (
   props?: Pick<
     RunningTotalChartProps,
-    'releases' | 'span' | 'startTotal' | 'zoomed' | 'onZoom' | 'onPan'
+    'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
   >
 ) =>
   render(
     <RunningTotalChart
       firstDay="2026-03-02"
+      daily={DAILY}
       periodEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
       noun="commit"
-      counts={[5, 1200, 12]}
       tone="COMMITS"
       icon="git-commit"
       summary="Commits"
@@ -93,17 +98,16 @@ describe('RunningTotalChart', () => {
     expect(readout.textContent).toBe('Commits')
   })
 
-  it('counts on from what was counted before its first day', () => {
-    renderChart({ startTotal: 100 })
+  it('draws its line through every day, though it reads out each week', () => {
+    renderChart()
 
-    movePointer(-20)
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 105 commits'
-    )
-    expect(screen.getByTestId(TOTAL).textContent).toBe('1.3K')
+    // A segment to each of the 21 days, from where the line starts.
+    expect(
+      screen.getByTestId(LINE).getAttribute('d')?.match(/L/g)
+    ).toHaveLength(21)
   })
 
-  it('leaves out the weeks before a later span start, starting from the total by then', () => {
+  it('leaves out the days before a later span start, starting from the total by then', () => {
     renderChart({ span: { start: '2026-03-10', end: '2026-03-22' } })
 
     // Its left edge is now in the second week, where the total had reached 1,205.

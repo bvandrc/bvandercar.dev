@@ -1,42 +1,45 @@
-import type { WeeklyActivity } from '@/generated/repo-activity'
-import { addDays, formatDay, formatMonth, getPeakWeek } from './weeks'
+import type { CommitHistory } from '@/generated/repo-activity'
+import {
+  addDays,
+  formatDay,
+  formatMonth,
+  getPeakWeek,
+  listDays,
+  sumWeeks,
+} from './weeks'
 
-/** The ISO date each of the activity's weeks starts on, oldest first. */
-export const getActivityWeekStarts = ({ firstWeek, commits }: WeeklyActivity) =>
-  commits.map((_, index) => addDays(firstWeek, index * 7))
+/** The ISO date each of the history's weeks ends on, oldest first: a Sunday, but for the one under way, which ends on its last day. */
+export const getActivityWeekEnds = ({ firstDay, lastDay }: CommitHistory) =>
+  listDays(firstDay, lastDay).filter(
+    // getUTCDay counts from Sunday, as 0.
+    (day) => new Date(day).getUTCDay() === 0 || day === lastDay
+  )
 
-/** The ISO date each of the activity's weeks ends on, oldest first: a Sunday, but for the one under way, which ends the day it was read. */
-export const getActivityWeekEnds = ({
-  firstWeek,
-  lastDay,
-  commits,
-}: WeeklyActivity) =>
-  commits.map((_, index) => {
-    const sunday = addDays(firstWeek, index * 7 + 6)
-    return sunday > lastDay ? lastDay : sunday
-  })
+/** The history's commits in each of its weeks, Monday to Sunday, the first starting on its first day. */
+export const getActivityWeeks = (history: CommitHistory) =>
+  sumWeeks(history.firstDay, history.commits, getActivityWeekEnds(history))
 
 /**
- * The ISO date of the week the running total of commits reaches `count`.
+ * The ISO date the running total of commits reaches `count`.
  *
- * The first week's, for a repo with fewer commits than that in all.
+ * The first day, for a repo with fewer commits than that in all.
  */
-export const getWeekReachingCommits = (
-  activity: WeeklyActivity,
+export const getDayReachingCommits = (
+  history: CommitHistory,
   count: number
 ) => {
   let total = 0
-  for (const [index, commits] of activity.commits.entries()) {
+  for (const [index, commits] of history.commits.entries()) {
     total += commits
     if (total >= count) {
-      return getActivityWeekStarts(activity)[index]
+      return addDays(history.firstDay, index)
     }
   }
-  return activity.firstWeek
+  return history.firstDay
 }
 
 /** The commits in a sentence, like "Weekly commits since Mar 2025, peaking at 40 in the week of Mar 2, 2026". */
-export const describeWeeklyCommits = (activity: WeeklyActivity) => {
-  const peak = getPeakWeek(activity.commits, getActivityWeekStarts(activity))
-  return `Weekly commits since ${formatMonth(activity.firstWeek)}, peaking at ${peak.count.toLocaleString('en-US')} in the week of ${formatDay(peak.start)}`
+export const describeWeeklyCommits = (history: CommitHistory) => {
+  const peak = getPeakWeek(getActivityWeeks(history))
+  return `Weekly commits since ${formatMonth(history.firstDay)}, peaking at ${peak.count.toLocaleString('en-US')} in the week of ${formatDay(peak.start)}`
 }
