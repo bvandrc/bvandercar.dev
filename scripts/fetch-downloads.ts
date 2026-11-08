@@ -10,9 +10,12 @@
  * daily counts are kept in PYPI_CACHE_FILE between runs, so a run queries only
  * the days since the last. A package that can't be read is left out with a
  * warning, and its card shows no chart, rather than failing the build over a
- * stats outage.
+ * stats outage. With `REUSE_FETCHED_DATA=true`, it keeps the file where it
+ * already exists, as a preview build does with recent data it restored from
+ * its cache.
  */
 
+import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
 import { chunk, sumBy } from 'es-toolkit'
@@ -283,6 +286,11 @@ const warnSkipped = (what: string, error: unknown) =>
   console.warn(
     `::warning::${what} could not be read, so no chart shows for it: ${error instanceof Error ? error.message : error}`
   )
+
+if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
+  console.log(`package downloads: reusing ${OUT_FILE}`)
+  process.exit(0)
+}
 
 const projects = await readFile(PROJECTS_FILE, 'utf8')
 /** The package names the projects give under `field`, sorted. */
