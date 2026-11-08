@@ -18,3 +18,6 @@ public/project-screenshots/
 
 # Daily download counts kept between runs by `pnpm fetch:downloads`
 .cache/
+
+# TypeScript's incremental build cache, written by tsc -b.
+*.tsbuildinfo
