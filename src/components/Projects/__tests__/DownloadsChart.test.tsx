@@ -4,7 +4,7 @@ import type { WeeklyDownloads } from '@/generated/package-downloads'
 import { SELECTORS } from '~/test-support/selectors'
 import { DownloadsChart } from '../DownloadsChart'
 
-const { PLOT, READOUT } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 const HISTORY = {
   firstDay: '2026-03-06',

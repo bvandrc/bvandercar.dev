@@ -2,23 +2,27 @@ import { createEvent, fireEvent, render, screen } from '@testing-library/react'
 
 import { SELECTORS } from '~/test-support/selectors'
 import { getWheelZoomFactor } from '../lib/weeks'
-import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
+import {
+  RunningTotalChart,
+  type RunningTotalChartProps,
+} from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, DOT, RELEASE } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL, DOT, RELEASE } =
+  SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 /** Renders a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
 const renderChart = (
   props?: Pick<
-    WeeklyChartProps,
+    RunningTotalChartProps,
     'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
   >
 ) =>
   render(
-    <WeeklyChart
+    <RunningTotalChart
       firstDay="2026-03-02"
-      weekEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
+      periodEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
       noun="commit"
-      weekly={[5, 1200, 12]}
+      counts={[5, 1200, 12]}
       tone="COMMITS"
       icon="git-commit"
       summary="Commits"
@@ -47,7 +51,7 @@ const turnWheel = (
 const movePointer = (clientX: number) =>
   fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX })
 
-describe('WeeklyChart', () => {
+describe('RunningTotalChart', () => {
   it('reads out its summary until hovered', () => {
     renderChart()
 

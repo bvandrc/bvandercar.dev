@@ -41,11 +41,13 @@ test('on a touch screen, spreading two fingers on a chart zooms it, not the page
   await page.goto('/')
   await getChartedCounts(page).tap()
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
-  const totals = tooltip.getByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.TOTAL)
+  const totals = tooltip.getByTestId(
+    SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.TOTAL
+  )
   await expect(totals).toHaveCount(2)
   const box = await tooltip
     .getByTestId(ACTIVITY_CHART)
-    .getByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.PLOT)
+    .getByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.PLOT)
     .boundingBox()
   if (!box) {
     throw new Error('The chart has no box')

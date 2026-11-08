@@ -1,10 +1,13 @@
 import type { WeeklyActivity } from '@/generated/repo-activity'
 import { COUNT_ICONS } from './lib/count-icons'
 import { getActivityWeekEnds } from './lib/weekly-activity'
-import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
+import {
+  RunningTotalChart,
+  type RunningTotalChartProps,
+} from './RunningTotalChart'
 
 export type ActivityChartProps = Pick<
-  WeeklyChartProps,
+  RunningTotalChartProps,
   'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 > & {
   activity: WeeklyActivity
@@ -25,15 +28,15 @@ export const ActivityChart = ({
   onZoom,
   onPan,
 }: ActivityChartProps) => (
-  <WeeklyChart
+  <RunningTotalChart
     firstDay={activity.firstWeek}
-    weekEnds={getActivityWeekEnds(activity)}
+    periodEnds={getActivityWeekEnds(activity)}
     span={span}
     zoomed={zoomed}
     onZoom={onZoom}
     onPan={onPan}
     noun="commit"
-    weekly={activity.commits}
+    counts={activity.commits}
     tone="COMMITS"
     icon={COUNT_ICONS.commits}
     summary="Commits"

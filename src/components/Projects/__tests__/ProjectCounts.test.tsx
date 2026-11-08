@@ -43,7 +43,7 @@ const {
   FRESH_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
-const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // The repo's counts in full: its commits and PRs from this site's fetch, and
 // its downloads from the profile's, with no package to fetch them for.
@@ -246,7 +246,7 @@ describe('ProjectCounts', () => {
       DOWNLOADS_CHART,
     ].map((chart) =>
       within(screen.getByTestId(chart))
-        .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+        .getAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)
         .map((line) => line.getAttribute('x1'))
     )
     expect(downloadsLines).toEqual(activityLines)
@@ -306,7 +306,7 @@ describe('ProjectCounts', () => {
     const getReleaseXs = () =>
       [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
         within(screen.getByTestId(chart))
-          .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+          .getAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)
           .map((line) => line.getAttribute('x1'))
       )
 
@@ -337,7 +337,7 @@ describe('ProjectCounts', () => {
     const getFirstReleaseXs = () =>
       [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
         within(screen.getByTestId(chart))
-          .queryAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)[0]
+          .queryAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)[0]
           ?.getAttribute('x1')
       )
     const plot = () =>
@@ -374,7 +374,7 @@ describe('ProjectCounts', () => {
     for (const chart of [ACTIVITY_CHART, DOWNLOADS_CHART]) {
       expect(
         within(screen.getByTestId(chart)).getAllByTestId(
-          SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE
+          SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE
         ),
         chart
       ).toHaveLength(2)

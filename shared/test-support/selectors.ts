@@ -15,12 +15,12 @@ export const SELECTORS = {
     CHARTS_LOADING: 'project-charts-loading',
     ACTIVITY_CHART: 'activity-chart',
     DOWNLOADS_CHART: 'downloads-chart',
-    WEEKLY_CHART: {
-      PLOT: 'weekly-chart-plot',
-      READOUT: 'weekly-chart-readout',
-      TOTAL: 'weekly-chart-total',
-      DOT: 'weekly-chart-dot',
-      RELEASE: 'weekly-chart-release',
+    RUNNING_TOTAL_CHART: {
+      PLOT: 'running-total-chart-plot',
+      READOUT: 'running-total-chart-readout',
+      TOTAL: 'running-total-chart-total',
+      DOT: 'running-total-chart-dot',
+      RELEASE: 'running-total-chart-release',
     },
   },
   SKILLS: {

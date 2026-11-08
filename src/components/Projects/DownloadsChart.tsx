@@ -1,10 +1,13 @@
 import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
 import { COUNT_ICONS } from './lib/count-icons'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'
-import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
+import {
+  RunningTotalChart,
+  type RunningTotalChartProps,
+} from './RunningTotalChart'
 
 export type DownloadsChartProps = Pick<
-  WeeklyChartProps,
+  RunningTotalChartProps,
   'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 > & {
   history: WeeklyDownloads
@@ -28,15 +31,15 @@ export const DownloadsChart = ({
   onZoom,
   onPan,
 }: DownloadsChartProps) => (
-  <WeeklyChart
+  <RunningTotalChart
     firstDay={history.firstDay}
-    weekEnds={getDownloadWeekEnds(history)}
+    periodEnds={getDownloadWeekEnds(history)}
     span={span}
     zoomed={zoomed}
     onZoom={onZoom}
     onPan={onPan}
     noun="download"
-    weekly={history.weekly}
+    counts={history.weekly}
     tone="DOWNLOADS"
     icon={COUNT_ICONS.downloads}
     summary={`${REGISTRY_NAMES[registry]} downloads`}

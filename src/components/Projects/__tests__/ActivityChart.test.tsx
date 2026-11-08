@@ -4,7 +4,7 @@ import type { WeeklyActivity } from '@/generated/repo-activity'
 import { SELECTORS } from '~/test-support/selectors'
 import { ActivityChart } from '../ActivityChart'
 
-const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // Read on Thursday, Mar 12, partway through its last week.
 const ACTIVITY = {
