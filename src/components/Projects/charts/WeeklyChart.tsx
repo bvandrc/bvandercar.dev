@@ -137,9 +137,12 @@ export const WeeklyChart = ({
   // A running total only grows, so it peaks at the end.
   const total = totals[lastIndex]
   const { start, end } = span ?? { start: firstDay, end: weekEnds[lastIndex] }
+  // Compared as times, not strings: a zoomed-in span's ends are ISO times,
+  // which sort after the plain ISO date of the same day.
   const startTime = Date.parse(start)
+  const endTime = Date.parse(end)
   // A span of one day still has width to draw across.
-  const spanTime = Date.parse(end) - startTime || DAY_MS
+  const spanTime = endTime - startTime || DAY_MS
   /** Where a day falls across the plot. */
   const toX = (day: string) =>
     INSET + ((Date.parse(day) - startTime) / spanTime) * (PLOT_RIGHT - INSET)
@@ -151,16 +154,19 @@ export const WeeklyChart = ({
   const lastX = toX(weekEnds[lastIndex])
   // The line starts on the first day, at nothing counted yet, or at a span's
   // later start, at what was counted by then.
-  const lineStart = [firstDay, start].sort()[1]
+  const lineStart = Date.parse(firstDay) < startTime ? start : firstDay
+  const lineStartTime = Date.parse(lineStart)
   const startX = toX(lineStart)
-  const firstShown = weekEnds.findIndex((weekEnd) => weekEnd >= lineStart)
+  const firstShown = weekEnds.findIndex(
+    (weekEnd) => Date.parse(weekEnd) >= lineStartTime
+  )
   const line = `M${startX},${toY(totals[firstShown - 1] ?? 0)}${totals
     .map((count, index) => [count, weekEnds[index]] as const)
     .slice(firstShown)
     .map(([count, weekEnd]) => `L${toX(weekEnd)},${toY(count)}`)
     .join('')}`
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
-    (day) => day >= start && day <= end
+    (day) => Date.parse(day) >= startTime && Date.parse(day) <= endTime
   )
   /** How far across the plot a pointer at `clientX` is. */
   const toPlotX = (clientX: number) =>
@@ -170,9 +176,9 @@ export const WeeklyChart = ({
     Math.min(
       Math.max(
         startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
-        Date.parse(lineStart)
+        lineStartTime
       ),
-      Date.parse(end)
+      endTime
     )
   // The release line within a few pixels of the pointer, which it snaps to
   // over a week.
@@ -195,7 +201,9 @@ export const WeeklyChart = ({
     const week = index === -1 ? lastIndex : index
     // A zoomed-in span can end partway through a week, whose end, where its
     // dot would sit, is out of view, so the week before it reads out instead.
-    return weekEnds[week] > end ? Math.max(week - 1, firstShown) : week
+    return Date.parse(weekEnds[week]) > endTime
+      ? Math.max(week - 1, firstShown)
+      : week
   }
   const activeWeek = getActiveWeek()
   const activeX =
@@ -294,7 +302,7 @@ export const WeeklyChart = ({
           className={TONE_CLASSES[tone].LINE}
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
-        {weekEnds[lastIndex] <= end && (
+        {Date.parse(weekEnds[lastIndex]) <= endTime && (
           <text
             x={lastX + 6}
             // Centred on the line's end, about a third of the text's height down.
