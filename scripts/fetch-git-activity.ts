@@ -18,6 +18,7 @@ import { DAY_MS, GENERATED_DIR } from './shared/constants.ts'
 import { isoDate } from './shared/dates.ts'
 import { getErrorMessage } from './shared/errors.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
+import { fetchOk } from './shared/http.ts'
 import { readProjectValues } from './shared/projects.ts'
 
 const OUT_FILE = `${GENERATED_DIR}/repo-activity.ts`
@@ -43,16 +44,13 @@ const fetchAll = async <T>(path: string) => {
   let url: string | undefined =
     `${API_URL}${path}${path.includes('?') ? '&' : '?'}per_page=100`
   while (url) {
-    const res: Response = await fetch(url, {
+    const res: Response = await fetchOk(url, {
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${token}`,
         'User-Agent': 'bvandercar.dev',
       },
     })
-    if (!res.ok) {
-      throw new Error(`GitHub API ${res.status} for ${url}`)
-    }
     items.push(...((await res.json()) as T[]))
     url = res.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
   }

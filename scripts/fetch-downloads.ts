@@ -24,6 +24,7 @@ import { DAY_MS, GENERATED_DIR } from './shared/constants.ts'
 import { earlierDay, isoDate, laterDay, listDays } from './shared/dates.ts'
 import { getErrorMessage } from './shared/errors.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
+import { fetchJson } from './shared/http.ts'
 import { readProjectValues } from './shared/projects.ts'
 
 const OUT_FILE = `${GENERATED_DIR}/package-downloads.ts`
@@ -60,15 +61,6 @@ type DailyCache = Record<string, Record<string, number> | undefined>
 type Release = { version: string; day: string }
 
 const byDay = (a: Release, b: Release) => a.day.localeCompare(b.day)
-
-/** A JSON response from `url`, throwing on any non-2xx status. */
-const fetchJson = async <T>(url: string) => {
-  const res = await fetch(url)
-  if (!res.ok) {
-    throw new Error(`${res.status} for ${url}`)
-  }
-  return (await res.json()) as T
-}
 
 // A scoped name's slash would otherwise read as a path segment.
 const encodeNpmName = (pkg: string) => pkg.replace('/', '%2F')
