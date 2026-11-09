@@ -74,7 +74,7 @@ vi.mock('@/generated/package-downloads', () => ({
         lastDay: '2026-03-24',
         daily: FIXTURES.DAILY_DOWNLOADS,
       },
-      // With no releases, so its charts start at its repo's first day.
+      // Released with its repo, but with only its last day's downloads counted.
       [FIXTURES.ONE_DAY_PACKAGE]: {
         firstDay: '2026-03-24',
         lastDay: '2026-03-24',
@@ -91,6 +91,7 @@ vi.mock('@/generated/package-downloads', () => ({
       ],
       // First released four days before its repo's history ends.
       [FIXTURES.FRESH_PACKAGE]: [{ version: '1.0.0', day: '2026-03-20' }],
+      [FIXTURES.ONE_DAY_PACKAGE]: [{ version: '1.0.0', day: '2026-02-23' }],
     },
     pypi: {},
   } satisfies typeof PACKAGE_RELEASES,
@@ -119,10 +120,10 @@ describe('getProjectCharts', () => {
     expect(getProjectCharts(REPO, undefined)?.span.start).toBe('2026-03-03')
   })
 
-  it('starts a package with no releases on the first day either counts', () => {
+  it('starts a package with no listed releases at its first download, as for one whose first releases were deleted', () => {
     expect(
       getProjectCharts(REPO, buildNpmPackage(UNRELEASED_PACKAGE))?.span.start
-    ).toBe('2026-02-23')
+    ).toBe('2026-03-04')
   })
 
   it('charts a repo with fewer than 20 commits only if it publishes a package', () => {

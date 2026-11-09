@@ -27,7 +27,7 @@ export type ProjectPackage = { registry: Registry; name: string }
  *
  * Undefined for nothing to chart: no history, a repo with no package and
  * under 20 commits, or a stretch under two weeks, like a package released
- * this week's. A package's charts start at its first release, and a repo
+ * this week's. A package's charts start at its first publish, and a repo
  * with no package's where its commits reach 15, past a slow start that would
  * squeeze the rest into their right edge.
  */
@@ -59,10 +59,15 @@ export const getProjectCharts = (
       end: downloads.history.lastDay,
     },
   ].filter(isNotNil)
-  /** Where the charts start: a package's first release, the day a repo with no package reaches 15 commits, or else the earliest day either counts. */
+  /** Where the charts start: a package's first publish, the day a repo with no package reaches 15 commits, or else the earliest day either counts. */
   const getSpanStart = () => {
-    if (releases?.[0]) {
-      return releases[0].day
+    // Its first release, or its first download where its first releases were
+    // deleted, which the registry no longer lists.
+    const firstPublish = [releases?.[0]?.day, downloadHistory?.firstDay]
+      .filter(isNotNil)
+      .sort()[0]
+    if (firstPublish) {
+      return firstPublish
     }
     if (!pkg && activity) {
       return getDayReachingCommits(activity, UNPACKAGED_START_COMMITS)
