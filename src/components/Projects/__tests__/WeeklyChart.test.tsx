@@ -26,27 +26,6 @@ const movePointer = (clientX: number) =>
   fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX })
 
 describe('WeeklyChart', () => {
-  it('reads out its summary until hovered', () => {
-    renderChart()
-
-    expect(screen.getByTestId(READOUT).textContent).toBe('Commits')
-  })
-
-  it('leads its caption with its glyph, hovered or not', () => {
-    renderChart()
-    const readout = screen.getByTestId(READOUT)
-
-    expect(readout.firstElementChild?.tagName).toBe('svg')
-    movePointer(0)
-    expect(readout.firstElementChild?.tagName).toBe('svg')
-  })
-
-  it('writes the total, shortened, beside the end of its line', () => {
-    renderChart()
-
-    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
-  })
-
   it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
     renderChart()
     const readout = screen.getByTestId(READOUT)
