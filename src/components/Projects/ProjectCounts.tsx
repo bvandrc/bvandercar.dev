@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import {
   type UsePressToggleOptions,
   usePressToggle,
@@ -7,7 +7,7 @@ import { isNotNil } from 'es-toolkit'
 import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
-import { Tooltip } from '@/components/primitives/Tooltip'
+import { Tooltip, type TooltipProps } from '@/components/primitives/Tooltip'
 import { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
@@ -43,7 +43,8 @@ const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
 
-export type ProjectCountsProps = Pick<Project, CountsField>
+export type ProjectCountsProps = Pick<Project, CountsField> &
+  Pick<TooltipProps, 'open' | 'onOpenChange'>
 
 /** The registry the project publishes a package to, and its name there, if any. */
 const getPackage = (
@@ -66,11 +67,17 @@ const getPackage = (
  * commits, and an npm or PyPI package's downloads, as running totals,
  * marking the package's releases on both, in place of the counts in words,
  * as `getProjectCharts` decides. The charts, and their data, load the first
- * time the counts are hovered.
+ * time the tooltip opens.
  * On a touch screen, which has no hover, a tap opens and closes the tooltip
- * instead, rather than following a link the counts sit in.
+ * instead, rather than following a link the counts sit in. Pass `open` and
+ * `onOpenChange` to also open it from elsewhere.
  */
-export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
+export const ProjectCounts = ({
+  repo,
+  open = false,
+  onOpenChange,
+  ...packages
+}: ProjectCountsProps) => {
   // Its pointerdown handler reads the state before Radix's own closes an open
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
@@ -99,10 +106,18 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
   const changeOpen = (next: boolean) => {
     setIsActive(next)
+    onOpenChange?.(next)
     if (next) {
       prefetchCharts()
     }
   }
+  // Opened from outside, it loads the charts as it opens too.
+  const prefetchOnOpen = useEffectEvent(prefetchCharts)
+  useEffect(() => {
+    if (open) {
+      prefetchOnOpen()
+    }
+  }, [open])
   // This site's own fetches are fresher than the profile's weekly counts, and
   // the charts are drawn from them, so a count they have wins, and each chart
   // ends at the count shown for it.
@@ -157,7 +172,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   }
   return (
     <Tooltip
-      open={isActive}
+      open={isActive || open}
       onOpenChange={changeOpen}
       content={getContent()}
       aria-label={description}
