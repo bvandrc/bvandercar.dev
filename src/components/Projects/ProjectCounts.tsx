@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import {
   type UsePressToggleOptions,
   usePressToggle,
@@ -16,19 +16,7 @@ import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { type CountsField, PACKAGE_FIELDS } from '~/counts'
 import type { ProjectPackage } from './charts/lib/project-charts'
-
-/** Loads the charts' code, and the histories they chart, which the module system keeps once loaded. */
-const loadCharts = () =>
-  Promise.all([
-    import('./charts/ProjectCharts'),
-    import('./charts/lib/project-charts'),
-  ]).then(([{ ProjectCharts }, { getProjectCharts }]) => ({
-    ProjectCharts,
-    getProjectCharts,
-  }))
-type Charts = Awaited<ReturnType<typeof loadCharts>>
-// Kept once loaded, so counts mounted later start with them.
-let loadedCharts: Charts | undefined
+import { useLazyCharts } from './hooks/useLazyCharts'
 
 // Charts size the tooltip to themselves, with text to match, where the
 // counts in words are a line of text.
@@ -42,6 +30,21 @@ const TOOLTIP_CLASSES = {
 const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
+
+type ChartsPlaceholderProps = {
+  /** How many charts may show */
+  count: number
+}
+
+/** A blank chart's size for each that may show, so the tooltip jumps as little as it can once they load. */
+const ChartsPlaceholder = ({ count }: ChartsPlaceholderProps) => (
+  <div className="flex flex-col gap-3" data-testid="project-charts-loading">
+    {Array.from({ length: count }, (_, index) => (
+      // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
+      <div key={index} className="h-21 w-82" />
+    ))}
+  </div>
+)
 
 export type ProjectCountsProps = Pick<Project, CountsField> &
   Pick<TooltipProps, 'open' | 'onOpenChange'>
@@ -82,27 +85,14 @@ export const ProjectCounts = ({
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  // Null once they've failed to load, offline say, which leaves the counts
-  // in words.
-  const [charts, setCharts] = useState<Charts | null | undefined>(loadedCharts)
   const activityTotals = REPO_ACTIVITY_TOTALS[repo]
   const pkg = getPackage(packages)
   const downloadTotal = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
   // Only what this site fetched a history for can be charted.
   const mayChart = activityTotals !== undefined || downloadTotal !== undefined
+  // Charts that failed to load leave the counts in words.
+  const { charts, prefetchCharts } = useLazyCharts(mayChart)
   const projectCharts = charts?.getProjectCharts(repo, pkg)
-  /** Starts loading the charts, if there may be any, ahead of the tooltip opening. */
-  const prefetchCharts = () => {
-    if (mayChart && charts === undefined) {
-      loadCharts().then(
-        (loaded) => {
-          loadedCharts = loaded
-          setCharts(loaded)
-        },
-        () => setCharts(null)
-      )
-    }
-  }
   /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
   const changeOpen = (next: boolean) => {
     setIsActive(next)
@@ -155,17 +145,10 @@ export const ProjectCounts = ({
       )
     }
     if (isLoading) {
-      // A blank chart's size for each that may show, so the tooltip jumps
-      // as little as it can once they load.
       return (
-        <div
-          className="flex flex-col gap-3"
-          data-testid="project-charts-loading">
-          {[activityTotals, downloadTotal].filter(isNotNil).map((_, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
-            <div key={index} className="h-21 w-82" />
-          ))}
-        </div>
+        <ChartsPlaceholder
+          count={[activityTotals, downloadTotal].filter(isNotNil).length}
+        />
       )
     }
     return label
