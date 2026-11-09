@@ -8,7 +8,8 @@ import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import type { Release } from '~/counts'
 import { addDays, DAY_MS, getDaysBetween } from '~/dates'
-import { type DaySpan, formatDay, formatLatestVersion } from './lib/weeks'
+import type { DaySpan } from './lib/spans'
+import { formatDay, formatLatestVersion, getRunningTotals } from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
 const WIDTH = 328
@@ -97,6 +98,12 @@ export type RunningTotalChartProps = {
   'data-testid': string
 }
 
+/** What a chart of a history takes from the charts shown with it: their releases, span, and zoom. */
+export type RunningTotalChartViewProps = Pick<
+  RunningTotalChartProps,
+  'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
+>
+
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
  * the total, written beside it.
@@ -133,13 +140,9 @@ export const RunningTotalChart = ({
   const days = daily.map((_, index) => addDays(firstDay, index))
   // It counts two days or more, so has a last.
   const lastDay = days.at(-1) ?? firstDay
-  let runningTotal = 0
-  const dayTotals = daily.map((count) => {
-    runningTotal += count
-    return runningTotal
-  })
+  const dayTotals = getRunningTotals(daily)
   // A running total only grows, so it peaks at the end.
-  const total = runningTotal
+  const total = dayTotals.at(-1) ?? 0
   const periodTotals = periodEnds.map(
     (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
   )

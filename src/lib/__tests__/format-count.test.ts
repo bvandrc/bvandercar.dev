@@ -1,4 +1,4 @@
-import { formatCompactCount, formatCount } from '../format-count'
+import { formatCompactCount, formatCount, formatNumber } from '../format-count'
 
 describe('formatCompactCount', () => {
   it('writes a count under a thousand in full', () => {
@@ -19,6 +19,13 @@ describe('formatCompactCount', () => {
     for (const [count, expected] of CASES) {
       expect(formatCompactCount(count), String(count)).toBe(expected)
     }
+  })
+})
+
+describe('formatNumber', () => {
+  it('writes a count in full, with separators', () => {
+    expect(formatNumber(999)).toBe('999')
+    expect(formatNumber(70_315)).toBe('70,315')
   })
 })
 

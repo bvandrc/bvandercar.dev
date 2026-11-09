@@ -8,6 +8,9 @@ const COMPACT_FORMAT = new Intl.NumberFormat('en-US', {
 export const formatCompactCount = (count: number) =>
   COMPACT_FORMAT.format(count)
 
+/** A count in full, with separators: `3120` → `'3,120'`. */
+export const formatNumber = (count: number) => count.toLocaleString('en-US')
+
 /** A count in full with its noun: `formatCount(1, 'PR')` → `'1 PR'`, `formatCount(3120, 'download')` → `'3,120 downloads'`. */
 export const formatCount = (count: number, noun: string) =>
-  `${count.toLocaleString('en-US')} ${count === 1 ? noun : `${noun}s`}`
+  `${formatNumber(count)} ${count === 1 ? noun : `${noun}s`}`

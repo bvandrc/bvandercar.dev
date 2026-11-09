@@ -7,6 +7,7 @@ import {
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { Registry } from '~/counts'
 import { DAY_MS } from '~/dates'
+import { getSpanMs } from './spans'
 import { describeWeeklyCommits, getDayReachingCommits } from './weekly-activity'
 import { describeWeeklyDownloads } from './weekly-downloads'
 
@@ -81,7 +82,7 @@ export const getProjectCharts = (
     start: getSpanStart(),
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
-  if (Date.parse(span.end) - Date.parse(span.start) < MIN_CHART_MS) {
+  if (getSpanMs(span) < MIN_CHART_MS) {
     return undefined
   }
   return {

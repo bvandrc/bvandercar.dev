@@ -19,9 +19,13 @@
  * its cache.
  */
 
-import { sumBy } from 'es-toolkit'
+import { mapValues, sumBy } from 'es-toolkit'
 
-import { PACKAGE_FIELDS, type Registry } from '../shared/counts.ts'
+import {
+  type DownloadHistory,
+  PACKAGE_FIELDS,
+  type Registry,
+} from '../shared/counts.ts'
 import type { RegistryHistory } from './fetch-downloads/common.ts'
 import { fetchNpmHistory } from './fetch-downloads/npm.ts'
 import { fetchPypiHistory } from './fetch-downloads/pypi.ts'
@@ -67,51 +71,52 @@ const kept = {
   pypi: keepCounted('pypi', await fetchPypiHistory(pypiPackages)),
 } satisfies Record<Registry, unknown>
 
-/** One record of the generated file, a line for each kept package of each registry, as `formatValue` writes its value. */
-const formatRecord = (
-  formatValue: (entry: (typeof kept)[Registry][number]) => string
+/** Each registry's kept packages, by package name, as `getValue` gives each one's value. */
+const byPackage = <T>(
+  getValue: (entry: (typeof kept)[Registry][number]) => T
 ) =>
-  `{
-  npm: {
-${kept.npm.map((entry) => `    '${entry.pkg}': ${formatValue(entry)},`).join('\n')}
-  },
-  pypi: {
-${kept.pypi.map((entry) => `    '${entry.pkg}': ${formatValue(entry)},`).join('\n')}
-  },
-}`
+  mapValues(kept, (entries) =>
+    Object.fromEntries(entries.map((entry) => [entry.pkg, getValue(entry)]))
+  )
 
 await writeGenerated(
   TOTALS_FILE,
   'fetch:downloads',
-  `import type { Registry } from '~/counts'
-
-/** Each package's downloads in all, by registry, then package name. */
-export const PACKAGE_DOWNLOAD_TOTALS: Record<
-  Registry,
-  Record<string, number | undefined>
-> = ${formatRecord(({ total }) => String(total))}
-`
+  "import type { Registry } from '~/counts'",
+  [
+    {
+      name: 'PACKAGE_DOWNLOAD_TOTALS',
+      doc: "Each package's downloads in all, by registry, then package name.",
+      type: 'Record<Registry, Record<string, number | undefined>>',
+      value: byPackage(({ total }) => total),
+    },
+  ]
 )
 await writeGenerated(
   HISTORY_FILE,
   'fetch:downloads',
-  `import type { DownloadHistory, Registry, Release } from '~/counts'
-
-/** Each package's daily downloads since its first publish, by registry, then package name. */
-export const PACKAGE_DOWNLOADS: Record<
-  Registry,
-  Record<string, DownloadHistory | undefined>
-> = ${formatRecord(
-    ({ days }) =>
-      `{ firstDay: '${days[0].day}', lastDay: '${days.at(-1)?.day}', daily: [${days.map(({ downloads }) => downloads).join(', ')}] }`
-  )}
-
-/** Each package's releases, oldest first and leaving out pre-releases, by registry, then package name. */
-export const PACKAGE_RELEASES: Record<
-  Registry,
-  Record<string, Release[] | undefined>
-> = ${formatRecord(({ releases }) => JSON.stringify(releases))}
-`
+  "import type { DownloadHistory, Registry, Release } from '~/counts'",
+  [
+    {
+      name: 'PACKAGE_DOWNLOADS',
+      doc: "Each package's daily downloads since its first publish, by registry, then package name.",
+      type: 'Record<Registry, Record<string, DownloadHistory | undefined>>',
+      value: byPackage(
+        ({ days }): DownloadHistory => ({
+          firstDay: days[0].day,
+          // Every kept package has a day counted, so a last one.
+          lastDay: days.at(-1)?.day ?? days[0].day,
+          daily: days.map(({ downloads }) => downloads),
+        })
+      ),
+    },
+    {
+      name: 'PACKAGE_RELEASES',
+      doc: "Each package's releases, oldest first and leaving out pre-releases, by registry, then package name.",
+      type: 'Record<Registry, Record<string, Release[] | undefined>>',
+      value: byPackage(({ releases }) => releases),
+    },
+  ]
 )
 console.log(
   `package downloads: totals and daily history for ${kept.npm.length} of ${npmPackages.length} npm and ${kept.pypi.length} of ${pypiPackages.length} PyPI packages`

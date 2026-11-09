@@ -1,6 +1,6 @@
 import type { DownloadHistory, Registry } from '~/counts'
 import { getDaysBetween, listDays } from '~/dates'
-import { formatDay, formatMonth, getPeakWeek, sumWeeks } from './weeks'
+import { describeWeekly, sumWeeks } from './weeks'
 
 /** Each registry's name, as written in a sentence. */
 export const REGISTRY_NAMES = {
@@ -28,7 +28,9 @@ export const getDownloadWeeks = (history: DownloadHistory) =>
 export const describeWeeklyDownloads = (
   history: DownloadHistory,
   registry: Registry
-) => {
-  const peak = getPeakWeek(getDownloadWeeks(history))
-  return `Weekly ${REGISTRY_NAMES[registry]} downloads since ${formatMonth(history.firstDay)}, peaking at ${peak.count.toLocaleString('en-US')} in the week of ${formatDay(peak.start)}`
-}
+) =>
+  describeWeekly(
+    `${REGISTRY_NAMES[registry]} downloads`,
+    history.firstDay,
+    getDownloadWeeks(history)
+  )

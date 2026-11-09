@@ -5,7 +5,7 @@ import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import {
   RunningTotalChart,
-  type RunningTotalChartProps,
+  type RunningTotalChartViewProps,
 } from '../RunningTotalChart'
 
 const { PLOT, READOUT, TOTAL, DOT, RELEASE, LINE } =
@@ -16,13 +16,8 @@ const DAILY = [
   1, 0, 1, 0, 1, 1, 1, 200, 100, 300, 100, 200, 200, 100, 2, 2, 2, 2, 2, 1, 1,
 ]
 
-type ChartOptions = Pick<
-  RunningTotalChartProps,
-  'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
->
-
 /** Builds a chart of `DAILY`, reading out each week, summarized as "Commits". */
-const buildChart = (props?: ChartOptions) => (
+const buildChart = (props?: RunningTotalChartViewProps) => (
   <RunningTotalChart
     firstDay="2026-03-02"
     daily={DAILY}
@@ -37,7 +32,8 @@ const buildChart = (props?: ChartOptions) => (
 )
 
 /** Renders `buildChart`'s chart. */
-const renderChart = (props?: ChartOptions) => render(buildChart(props))
+const renderChart = (props?: RunningTotalChartViewProps) =>
+  render(buildChart(props))
 
 /** Moves the pointer to `clientX` on the plot, which the test DOM lays out from x = 0. */
 const movePointer = (clientX: number) =>

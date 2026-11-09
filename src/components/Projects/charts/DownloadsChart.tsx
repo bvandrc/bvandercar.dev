@@ -4,13 +4,10 @@ import { getPeriodEnds } from './lib/periods'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'
 import {
   RunningTotalChart,
-  type RunningTotalChartProps,
+  type RunningTotalChartViewProps,
 } from './RunningTotalChart'
 
-export type DownloadsChartProps = Pick<
-  RunningTotalChartProps,
-  'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
-> & {
+export type DownloadsChartProps = RunningTotalChartViewProps & {
   history: DownloadHistory
   /** The registry the history is from, which the readout names */
   registry: Registry
@@ -34,8 +31,7 @@ export const DownloadsChart = ({
     daily={history.daily}
     periodEnds={getPeriodEnds(
       getDownloadWeekEnds(history),
-      history.firstDay,
-      history.lastDay,
+      history,
       chartProps.span
     )}
     noun="download"
