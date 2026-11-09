@@ -34,7 +34,7 @@
     "fetch:downloads": "node scripts/fetch-downloads.ts",
     "__c1": "====================[ Linting & Type Checking ]==================",
     "check": "pnpm fetch:content && pnpm format && pnpm ts:check && pnpm pw:ts:check",
-    "format": "npx biome check . --fix",
+    "format": "biome check . --fix",
     "ts:check": "tsc",
     "pw:ts:check": "tsc --project playwright/tsconfig.json",
     "__c2": "====================[ Unit Testing ]=============================",

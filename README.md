@@ -52,12 +52,12 @@ public/
   llms.txt        LLM-readable site summary
 src/
   components/
-    primitives/   Presentational building blocks (Button, Card, Badge)
+    primitives/   Presentational building blocks (Card, Link, List, Tooltip, ...)
     ...           Page sections composed from primitives
     __tests__/    Unit tests, beside the modules they cover (in every src/ folder)
-  hooks/          camelCase files, e.g. useMobile.ts
+  hooks/          Shared hooks, camelCase files, e.g. useZoomPanGestures.ts
+  lib/            Shared non-React helpers, e.g. cn.ts and theme-colors.ts
   styles/         Tailwind entrypoint and theme tokens
-  utils/          Shared helpers
 scripts/
   fetch-profile.ts      Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
   fetch-git-activity.ts Fetches each project repo's commits and PRs (src/generated/repo-activity-totals.ts, repo-activity.ts) from GitHub
@@ -71,6 +71,7 @@ playwright/
 shared/
   counts.ts       The counts' project fields and package registries, which the app and the fetch scripts share
   dates.ts        Day helpers, which the app and the fetch scripts share
+  github.ts       The GitHub owner, and its profile and repo URLs, which the app and the fetch scripts share
   test-support/   Test helpers either suite can import
     selectors.ts  The data-testid registry
 tsconfig.json     App TypeScript config

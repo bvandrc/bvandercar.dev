@@ -19,7 +19,8 @@
 import { countBy } from 'es-toolkit'
 
 import type { ActivityTotals, CommitHistory } from '../shared/counts.ts'
-import { DAY_MS, isoDate } from '../shared/dates.ts'
+import { earlierDay, isoDate, listDays } from '../shared/dates.ts'
+import { GITHUB_OWNER } from '../shared/github.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
 import { fetchOk } from './shared/http.ts'
@@ -28,14 +29,10 @@ import { reportSkipped } from './shared/skipped.ts'
 
 const TOTALS_FILE = `${GENERATED_DIR}/repo-activity-totals.ts`
 const HISTORY_FILE = `${GENERATED_DIR}/repo-activity.ts`
-const OWNER = 'bvandrc'
 // Actions sets this, to GitHub Enterprise's API on an Enterprise server.
 const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
 // Actions passes an unset secret as an empty string.
 const token = process.env.GITHUB_TOKEN || undefined
-
-/** The start of the day, UTC, `time` falls on. */
-const getDayStart = (time: number) => Math.floor(time / DAY_MS) * DAY_MS
 
 /** Every item of a paginated GitHub list, following its Link headers. */
 const fetchAll = async <T>(path: string) => {
@@ -64,43 +61,38 @@ const fetchAll = async <T>(path: string) => {
  * Every commit is in a day, so the days sum to the commits' total.
  */
 const fetchActivity = async (repo: string) => {
+  const repoPath = `/repos/${GITHUB_OWNER}/${repo}`
   const [commits, pulls] = await Promise.all([
     fetchAll<{
       commit: {
         committer: { date: string } | null
         author: { date: string } | null
       }
-    }>(`/repos/${OWNER}/${repo}/commits`),
-    fetchAll<{ created_at: string }>(`/repos/${OWNER}/${repo}/pulls?state=all`),
+    }>(`${repoPath}/commits`),
+    fetchAll<{ created_at: string }>(`${repoPath}/pulls?state=all`),
   ])
-  const today = getDayStart(Date.now())
+  const today = isoDate(Date.now())
   const commitDays = commits.map(({ commit }) =>
     // A commit can lack a committer, so its author dates it instead, and one
     // with neither still counts, as today's. One dated ahead, by a skewed
     // clock, counts as today's too, so the days still sum to the total.
-    Math.min(
-      getDayStart(
+    earlierDay(
+      isoDate(
         Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
       ),
       today
     )
   )
-  const prDays = pulls.map(({ created_at }) =>
-    getDayStart(Date.parse(created_at))
-  )
-  const firstDay = Math.min(today, ...commitDays, ...prDays)
-  const counts = countBy(commitDays, String)
-  const daily: number[] = []
-  for (let day = firstDay; day <= today; day += DAY_MS) {
-    daily.push(counts[day] ?? 0)
-  }
+  const prDays = pulls.map(({ created_at }) => isoDate(Date.parse(created_at)))
+  const firstDay = [today, ...commitDays, ...prDays].reduce(earlierDay)
+  const counts = countBy(commitDays, (day) => day)
   return {
     commits: commits.length,
     prs: pulls.length,
     history: {
-      firstDay: isoDate(firstDay),
-      lastDay: isoDate(today),
-      commits: daily,
+      firstDay,
+      lastDay: today,
+      commits: listDays(firstDay, today).map((day) => counts[day] ?? 0),
     },
   }
 }

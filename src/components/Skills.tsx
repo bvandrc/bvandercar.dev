@@ -4,17 +4,14 @@ import a11yPlugin from 'colord/plugins/a11y'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
+import { cn } from '@/lib/cn'
 import { skillIconSlug } from '@/lib/icons'
-import { cn } from '@/utils'
+import { THEME_COLORS } from '@/lib/theme-colors'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Section, SubSection } from './Section'
 
 // Adds colord's WCAG contrast and luminance methods.
 extend([a11yPlugin])
-
-// Mirror the surface and ink theme tokens in src/styles/index.css.
-const CHIP_BACKGROUND = '141a25'
-const CHIP_INK = 'f0f4fa'
 
 /** Below this WCAG contrast ratio against the chip, a brand color is too dark to see. */
 const MIN_ICON_CONTRAST = 2
@@ -33,9 +30,10 @@ const skillIconColor = ({ logoColor, path }: SkillBadge) => {
   )?.[1]
   const brand = colord(`#${logoHex}`).isValid() ? logoHex : badgeHex
   return brand &&
-    colord(`#${brand}`).contrast(`#${CHIP_BACKGROUND}`) >= MIN_ICON_CONTRAST
+    colord(`#${brand}`).contrast(`#${THEME_COLORS.SURFACE}`) >=
+      MIN_ICON_CONTRAST
     ? brand
-    : CHIP_INK
+    : THEME_COLORS.INK
 }
 
 export const Skills = () => (
@@ -62,9 +60,8 @@ export const Skills = () => (
                       key={skill.alt}
                       className={cn(
                         'inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm',
-                        'transition-[box-shadow,border-color] duration-200',
                         // Glows orange on hover, like the project cards.
-                        'hover:border-orange-400 hover:shadow-glow-12 hover:shadow-orange-500'
+                        'hover-glow-12'
                       )}>
                       <BrandIcon
                         slug={skillIconSlug(skill)}

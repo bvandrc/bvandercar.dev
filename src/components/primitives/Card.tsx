@@ -1,4 +1,4 @@
-import { cn } from '@/utils'
+import { cn } from '@/lib/cn'
 
 /** Elements a click on goes to themselves, rather than to the card around them. */
 const CONTROLS = 'a, button, input, select, textarea, label, summary'

@@ -2,8 +2,8 @@ import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
 import type { GroupGlyph } from '@/generated/profile/content/sections'
+import { cn } from '@/lib/cn'
 import type { GlyphName } from '@/lib/icons'
-import { cn } from '@/utils'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Icon } from './primitives/Icon'
 

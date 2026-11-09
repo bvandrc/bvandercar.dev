@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 
-import { cn } from '@/utils'
+import { cn } from '@/lib/cn'
 
 const linkVariants = cva('', {
   variants: {
