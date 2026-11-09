@@ -16,6 +16,10 @@ import { COUNTS_FIELDS } from '~/counts'
 import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
+// A name's sizes, largest first, which it steps down only to keep its counts
+// on its line.
+const NAME_SIZES = ['text-lg', 'text-base', 'text-sm']
+
 export type ProjectCardProps = {
   project: Project
   /** Whether it centers its name and blurb from md, as one spanning its group's full width does. */
@@ -39,8 +43,7 @@ export const ProjectCard = ({
   const { counts } = getProjectCounts(pick(project, COUNTS_FIELDS))
   const headerRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLDivElement>(null)
-  // Smaller only where that keeps its counts on the name's line.
-  const isNameSmall = useShrinkToFit(headerRef, nameRef)
+  const nameStep = useShrinkToFit(headerRef, nameRef, NAME_SIZES.length)
   const [previewOpen, setPreviewOpen] = useState(false)
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -83,7 +86,7 @@ export const ProjectCard = ({
           <h4
             className={cn(
               'font-semibold',
-              isNameSmall ? 'text-base' : 'text-lg',
+              NAME_SIZES[nameStep],
               // On the 24px line the name had before, whatever its size, so the
               // card keeps its height. After the size, whose own line height
               // would otherwise win.

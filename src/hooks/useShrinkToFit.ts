@@ -1,20 +1,22 @@
 import { useLayoutEffect, useState } from 'react'
 
-type Fit = { size: 'LARGE' | 'SMALL'; isSettled: boolean }
+type Fit = { step: number; isSettled: boolean }
 
-const UNMEASURED: Fit = { size: 'LARGE', isSettled: false }
+const UNMEASURED: Fit = { step: 0, isSettled: false }
 
 /**
- * Whether a line's text takes its smaller size: only where that keeps the
- * line on one line, and its larger size doesn't.
+ * How many steps down from its largest size a line's text takes: the fewest
+ * that keep the line on one line, or none where no step does.
  *
- * `lineRef` is the line, and `textRef` the text whose height one line is. It
- * measures before the browser paints, so neither size flashes, and again
- * whenever the line's width changes, or its fonts load.
+ * `lineRef` is the line, `textRef` the text whose height one line is, and
+ * `stepCount` how many sizes the text has, largest first. It measures before
+ * the browser paints, so no size flashes, and again whenever the line's
+ * width changes, or its fonts load.
  */
 export const useShrinkToFit = (
   lineRef: React.RefObject<HTMLElement | null>,
-  textRef: React.RefObject<HTMLElement | null>
+  textRef: React.RefObject<HTMLElement | null>,
+  stepCount: number
 ) => {
   const [fit, setFit] = useState<Fit>(UNMEASURED)
   useLayoutEffect(() => {
@@ -24,18 +26,15 @@ export const useShrinkToFit = (
       return
     }
     // Wrapped, where the line runs taller than its text's own line.
-    const isWrapped = line.offsetHeight > text.offsetHeight
-    if (fit.size === 'LARGE') {
-      setFit(
-        isWrapped
-          ? { size: 'SMALL', isSettled: false }
-          : { size: 'LARGE', isSettled: true }
-      )
-      return
+    if (line.offsetHeight <= text.offsetHeight) {
+      setFit({ step: fit.step, isSettled: true })
+    } else if (fit.step < stepCount - 1) {
+      setFit({ step: fit.step + 1, isSettled: false })
+    } else {
+      // Where even the smallest size wraps, shrinking saves nothing.
+      setFit({ step: 0, isSettled: true })
     }
-    // Where the smaller size wraps too, it saves nothing, so the larger stays.
-    setFit({ size: isWrapped ? 'LARGE' : 'SMALL', isSettled: true })
-  }, [fit, lineRef, textRef])
+  }, [fit, lineRef, textRef, stepCount])
   useLayoutEffect(() => {
     const line = lineRef.current
     if (!line) {
@@ -54,5 +53,5 @@ export const useShrinkToFit = (
     document.fonts?.ready.then(() => setFit(UNMEASURED))
     return () => observer.disconnect()
   }, [lineRef])
-  return fit.size === 'SMALL'
+  return fit.step
 }

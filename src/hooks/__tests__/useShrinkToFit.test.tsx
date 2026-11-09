@@ -7,25 +7,30 @@ import { useShrinkToFit } from '../useShrinkToFit'
 // One line's height, as the text's own.
 const LINE_HEIGHT = 24
 
-// What the test DOM, which lays nothing out, measures: the line's width, and
-// whether it wraps at each size.
-const layout = { width: 400, wrapsLarge: false, wrapsSmall: false }
+// The text's sizes, largest first.
+const SIZES = ['large', 'medium', 'small'] as const
 
-/** A line around its text, whose size says whether the hook shrinks it. */
+type Size = (typeof SIZES)[number]
+
+// What the test DOM, which lays nothing out, measures: the line's width, and
+// the sizes it wraps at.
+const layout: { width: number; wrapsAt: Size[] } = { width: 400, wrapsAt: [] }
+
+/** A line around its text, whose content is the size the hook steps it to. */
 const ShrinkingLine = () => {
   const lineRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLSpanElement>(null)
-  const isSmall = useShrinkToFit(lineRef, textRef)
+  const step = useShrinkToFit(lineRef, textRef, SIZES.length)
   return (
     <div ref={lineRef} data-testid="line">
       <span ref={textRef} data-testid="text">
-        {isSmall ? 'small' : 'large'}
+        {SIZES[step]}
       </span>
     </div>
   )
 }
 
-/** Measures the line's height by whether it wraps at the text's size, and its width as set. */
+/** Measures the line two lines tall where it wraps at its text's size, and as wide as set. */
 const mockLayout = () => {
   vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(
     () => layout.width
@@ -35,51 +40,51 @@ const mockLayout = () => {
       if (this.dataset.testid !== 'line') {
         return LINE_HEIGHT
       }
-      const isSmall = this.textContent === 'small'
-      const isWrapped = isSmall ? layout.wrapsSmall : layout.wrapsLarge
-      return isWrapped ? LINE_HEIGHT * 2 : LINE_HEIGHT
+      const size = this.textContent as Size
+      return layout.wrapsAt.includes(size) ? LINE_HEIGHT * 2 : LINE_HEIGHT
     }
   )
 }
 
-/** The size the hook gave the text. */
+/** The size the hook stepped the text to. */
 const getSize = () => screen.getByTestId('text').textContent
 
 describe('useShrinkToFit', () => {
   beforeEach(() => {
-    Object.assign(layout, { width: 400, wrapsLarge: false, wrapsSmall: false })
+    Object.assign(layout, { width: 400, wrapsAt: [] })
     mockLayout()
   })
 
-  it('shrinks only where the smaller size saves a wrap the larger one makes', () => {
+  it('steps down to the largest size that keeps the line from wrapping', () => {
     const CASES = [
       // Fits as it is, so nothing to save.
-      [{ wrapsLarge: false, wrapsSmall: false }, 'large'],
-      // Fits once smaller.
-      [{ wrapsLarge: true, wrapsSmall: false }, 'small'],
-      // Wraps either way, so shrinking saves nothing.
-      [{ wrapsLarge: true, wrapsSmall: true }, 'large'],
+      [[], 'large'],
+      [['large'], 'medium'],
+      // A step further, where the first step still wraps.
+      [['large', 'medium'], 'small'],
+      // Wraps at every size, so shrinking saves nothing.
+      [['large', 'medium', 'small'], 'large'],
     ] as const
-    for (const [wraps, expected] of CASES) {
-      Object.assign(layout, wraps)
+    for (const [wrapsAt, expected] of CASES) {
+      layout.wrapsAt = [...wrapsAt]
       const { unmount } = render(<ShrinkingLine />)
-      expect(getSize(), JSON.stringify(wraps)).toBe(expected)
+      expect(getSize(), `wraps at ${wrapsAt.join(', ')}`).toBe(expected)
       unmount()
     }
   })
 
   it('measures again when the line widens, and not when only its height changes', () => {
     const resize = mockResizeObserver()
-    Object.assign(layout, { wrapsLarge: true })
+    layout.wrapsAt = ['large', 'medium']
     render(<ShrinkingLine />)
     expect(getSize()).toBe('small')
 
-    // Taller, as shrinking or growing its text would make it, at its width.
-    Object.assign(layout, { wrapsLarge: false })
+    // Taller or shorter, as stepping its text makes it, at its width.
+    layout.wrapsAt = []
     resize()
     expect(getSize()).toBe('small')
 
-    // Wide enough now for the larger size.
+    // Wide enough now for the largest size.
     layout.width = 800
     resize()
     expect(getSize()).toBe('large')
