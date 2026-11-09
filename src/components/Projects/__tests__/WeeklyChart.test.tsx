@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
+import { getWheelZoomFactor } from '@/hooks/useZoomPanGestures'
 import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
-import { getWheelZoomFactor } from '../lib/weeks'
 import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
 
 const { PLOT, READOUT, TOTAL, DOT, RELEASE } = SELECTORS.PROJECTS.WEEKLY_CHART

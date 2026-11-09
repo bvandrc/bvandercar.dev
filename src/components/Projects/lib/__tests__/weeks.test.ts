@@ -1,11 +1,5 @@
 import { DAY_MS } from '~/dates'
-import {
-  formatLatestVersion,
-  getPeakWeek,
-  getWheelZoomFactor,
-  panSpan,
-  zoomSpan,
-} from '../weeks'
+import { formatLatestVersion, getPeakWeek, panSpan, zoomSpan } from '../weeks'
 
 describe('getPeakWeek', () => {
   const WEEK_STARTS = ['2026-03-02', '2026-03-09', '2026-03-16']
@@ -29,13 +23,6 @@ describe('formatLatestVersion', () => {
   it('names only the latest of several, by their numbers rather than their order', () => {
     // 1.10.0 sorts before 1.9.0 as text.
     expect(formatLatestVersion(['1.9.0', '1.10.0', '1.0.5'])).toBe('v1.10.0')
-  })
-})
-
-describe('getWheelZoomFactor', () => {
-  it('zooms in for a wheel turned up, and out by as much for one turned down', () => {
-    expect(getWheelZoomFactor(-100)).toBeLessThan(1)
-    expect(getWheelZoomFactor(-100) * getWheelZoomFactor(100)).toBeCloseTo(1)
   })
 })
 

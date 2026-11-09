@@ -39,15 +39,9 @@ export const formatLatestVersion = (versions: string[]) =>
 /** The dates a chart runs from and to, as ISO dates or times. */
 export type DaySpan = { start: string; end: string }
 
-// How far a wheel zooms per unit of its `deltaY`: about a fifth per notch.
-const WHEEL_ZOOM_RATE = 0.002
 // The narrowest a zoom goes: four weeks, so there's still a line to draw, or
 // a quarter of a shorter chart's span.
 const MIN_ZOOM_MS = 28 * DAY_MS
-
-/** How much a wheel's turn scales a chart's span: under 1, zooming in, for a negative `deltaY`, and over 1, zooming out, for a positive one. */
-export const getWheelZoomFactor = (deltaY: number) =>
-  Math.exp(deltaY * WHEEL_ZOOM_RATE)
 
 /**
  * `span` zoomed around `anchor`, a time within it, its width scaled by
