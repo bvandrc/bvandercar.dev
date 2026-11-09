@@ -1,5 +1,4 @@
-import type { DownloadHistory } from '@/generated/package-downloads'
-import type { Registry } from '~/counts'
+import type { DownloadHistory, Registry } from '~/counts'
 import { getDaysBetween, listDays } from '~/dates'
 import { formatDay, formatMonth, getPeakWeek, sumWeeks } from './weeks'
 

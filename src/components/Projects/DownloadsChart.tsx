@@ -1,5 +1,4 @@
-import type { DownloadHistory } from '@/generated/package-downloads'
-import type { Registry } from '~/counts'
+import type { DownloadHistory, Registry } from '~/counts'
 import { COUNT_ICONS } from './lib/count-icons'
 import { getPeriodEnds } from './lib/periods'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'

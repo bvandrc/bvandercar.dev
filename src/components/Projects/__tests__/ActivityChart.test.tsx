@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import type { CommitHistory } from '@/generated/repo-activity'
+import type { CommitHistory } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { ActivityChart } from '../ActivityChart'
 

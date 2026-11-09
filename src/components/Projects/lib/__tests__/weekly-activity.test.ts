@@ -1,4 +1,4 @@
-import type { CommitHistory } from '@/generated/repo-activity'
+import type { CommitHistory } from '~/counts'
 import {
   describeWeeklyCommits,
   getActivityWeekEnds,

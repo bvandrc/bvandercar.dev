@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import type { DownloadHistory } from '@/generated/package-downloads'
+import type { DownloadHistory } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { DownloadsChart } from '../DownloadsChart'
 

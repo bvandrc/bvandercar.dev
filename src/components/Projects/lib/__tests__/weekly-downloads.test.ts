@@ -1,4 +1,4 @@
-import type { DownloadHistory } from '@/generated/package-downloads'
+import type { DownloadHistory } from '~/counts'
 import { describeWeeklyDownloads, getDownloadWeeks } from '../weekly-downloads'
 
 // 5, 1,200, then 12 downloads a week ending Mar 24, the first cut short by a

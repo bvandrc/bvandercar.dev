@@ -1,4 +1,4 @@
-import type { CommitHistory } from '@/generated/repo-activity'
+import type { CommitHistory } from '~/counts'
 import { addDays, listDays } from '~/dates'
 import { formatDay, formatMonth, getPeakWeek, sumWeeks } from './weeks'
 

@@ -137,11 +137,10 @@ if (token === undefined) {
 await writeGenerated(
   TOTALS_FILE,
   'fetch:git-activity',
-  `/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
-export const REPO_ACTIVITY_TOTALS: Record<
-  string,
-  { commits: number; prs: number } | undefined
-> = {
+  `import type { ActivityTotals } from '~/counts'
+
+/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
+export const REPO_ACTIVITY_TOTALS: Record<string, ActivityTotals | undefined> = {
 ${entries.join('\n')}
 }
 `
@@ -149,14 +148,7 @@ ${entries.join('\n')}
 await writeGenerated(
   HISTORY_FILE,
   'fetch:git-activity',
-  `export type CommitHistory = {
-  /** ISO date of the repo's first commit or pull request */
-  firstDay: string
-  /** ISO date the history was read */
-  lastDay: string
-  /** Commits on the default branch each day from \`firstDay\` through \`lastDay\`, oldest first; they sum to the repo's total */
-  commits: number[]
-}
+  `import type { CommitHistory } from '~/counts'
 
 /** Each project repo's commits per day, keyed by repo name. */
 export const REPO_ACTIVITY: Record<string, CommitHistory | undefined> = {
