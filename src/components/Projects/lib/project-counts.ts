@@ -57,5 +57,3 @@ export const getProjectCounts = ({
     chartCount: [activityTotals, downloadTotal].filter(isNotNil).length,
   }
 }
-
-export type ProjectCounts = ReturnType<typeof getProjectCounts>

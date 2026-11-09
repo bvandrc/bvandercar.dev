@@ -9,23 +9,12 @@ import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { fillBlurb, type Project } from '@/generated/profile/content/projects'
+import { useShrinkToFit } from '@/hooks/useShrinkToFit'
 import { cn } from '@/lib/cn'
-import { formatCompactCount } from '@/lib/format-count'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
-import { getProjectCounts, type ProjectCounts } from './lib/project-counts'
+import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
-
-// A header longer than this, in characters, takes a smaller name, so its
-// counts still fit beside it. Each count counts its digits, and 2 for its icon.
-const LONG_HEADER_LENGTH = 33
-
-/** How long a header is, in characters: its name's, and its counts as shown. */
-const getHeaderLength = (name: string, counts: ProjectCounts['shown']) =>
-  counts.reduce(
-    (length, { count }) => length + formatCompactCount(count).length + 2,
-    name.length
-  )
 
 export type ProjectCardProps = {
   project: Project
@@ -47,7 +36,11 @@ export const ProjectCard = ({
   const cardRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const typeIcon = TYPE_ICONS[project.type]
-  const { counts, shown } = getProjectCounts(pick(project, COUNTS_FIELDS))
+  const { counts } = getProjectCounts(pick(project, COUNTS_FIELDS))
+  const headerRef = useRef<HTMLDivElement>(null)
+  const nameRef = useRef<HTMLDivElement>(null)
+  // Smaller only where that keeps its counts on the name's line.
+  const isNameSmall = useShrinkToFit(headerRef, nameRef)
   const [previewOpen, setPreviewOpen] = useState(false)
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -73,6 +66,7 @@ export const ProjectCard = ({
       )}
       data-testid="project-card">
       <div
+        ref={headerRef}
         className={cn(
           'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
           // A centered card spans its group's width, so from md, where other
@@ -81,17 +75,15 @@ export const ProjectCard = ({
           centered && 'md:grid md:grid-cols-[1fr_auto_1fr]'
         )}>
         <div
+          ref={nameRef}
           className={cn(
             'flex shrink-0 items-center gap-2',
             centered && 'md:col-start-2'
           )}>
           <h4
-            data-testid="project-name"
             className={cn(
               'font-semibold',
-              getHeaderLength(project.name, shown) > LONG_HEADER_LENGTH
-                ? 'text-base'
-                : 'text-lg',
+              isNameSmall ? 'text-base' : 'text-lg',
               // On the 24px line the name had before, whatever its size, so the
               // card keeps its height. After the size, whose own line height
               // would otherwise win.
