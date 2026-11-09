@@ -32,6 +32,8 @@ export const Header = () => (
         <p key={line}>{line}</p>
       ))}
     </div>
-    <SocialLinks />
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+      <SocialLinks />
+    </div>
   </header>
 )

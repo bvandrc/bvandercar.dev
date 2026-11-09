@@ -34,9 +34,9 @@ const SocialLink = ({
 
 type SocialLinksProps = Pick<SocialLinkProps, 'tone'>
 
-/** Links to my GitHub and LinkedIn profiles, side by side. */
+/** Links to my GitHub and LinkedIn profiles, laid out by the row they're placed in. */
 export const SocialLinks = ({ tone }: SocialLinksProps) => (
-  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+  <>
     <SocialLink
       href={GITHUB_PROFILE_URL}
       tone={tone}
@@ -51,5 +51,5 @@ export const SocialLinks = ({ tone }: SocialLinksProps) => (
       icon="simple-icons:linkedin">
       LinkedIn
     </SocialLink>
-  </div>
+  </>
 )

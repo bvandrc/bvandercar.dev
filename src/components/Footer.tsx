@@ -11,29 +11,29 @@ export const Footer = () => {
   return (
     <footer
       className={cn(
-        'flex flex-col items-center gap-3 border-t border-border pt-6 text-sm text-ink-muted',
+        'border-t border-border pt-6 text-sm text-ink-muted',
+        // One row where it fits, wrapping onto more on a narrow screen.
+        'flex flex-wrap items-center justify-center gap-x-6 gap-y-2',
         // With the column's own gap, as far below the last section as the sections are apart.
         'mt-4'
       )}
       data-testid="footer">
       <SocialLinks tone="muted" />
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-        <Link
-          href={getRepoUrl('bvandercar.dev')}
-          tone="muted"
-          newTab
-          className="inline-flex items-center gap-2"
-          data-testid="footer-source-link">
-          <Icon name="code-xml" className="size-4" />
-          Source on GitHub
-        </Link>
-        <p>
-          Built{' '}
-          <time dateTime={buildDate} data-testid="footer-build-date">
-            {formatDay(buildDate)}
-          </time>
-        </p>
-      </div>
+      <Link
+        href={getRepoUrl('bvandercar.dev')}
+        tone="muted"
+        newTab
+        className="inline-flex items-center gap-2"
+        data-testid="footer-source-link">
+        <Icon name="code-xml" className="size-4" />
+        Source on GitHub
+      </Link>
+      <p>
+        Built{' '}
+        <time dateTime={buildDate} data-testid="footer-build-date">
+          {formatDay(buildDate)}
+        </time>
+      </p>
     </footer>
   )
 }
