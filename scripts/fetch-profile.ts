@@ -13,12 +13,14 @@ import { cp, mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+import { PROFILE_DIR } from './shared/constants.ts'
+
 const REPO_URL = 'https://github.com/bvandrc/bvandrc'
 // The bvandrc branch this site's content is developed on, so a change there
 // reaches every build here without merging to bvandrc's main first. Once it's
 // merged and deleted, builds read main.
 const PROFILE_DEV_BRANCH = 'feat/bvandercar-dev-content'
-const OUT_DIR = 'src/generated/profile'
+const OUT_DIR = PROFILE_DIR
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8' }).trim()

@@ -16,13 +16,17 @@
  * restored from its cache.
  */
 
-import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
 import { chunk, sumBy } from 'es-toolkit'
 
-const PROJECTS_FILE = 'src/generated/profile/content/projects.ts'
-const OUT_FILE = 'src/generated/package-downloads.ts'
+import { DAY_MS, GENERATED_DIR } from './shared/constants.ts'
+import { earlierDay, isoDate, laterDay, listDays } from './shared/dates.ts'
+import { getErrorMessage } from './shared/errors.ts'
+import { exitIfReusing, writeGenerated } from './shared/generated.ts'
+import { readProjectValues } from './shared/projects.ts'
+
+const OUT_FILE = `${GENERATED_DIR}/package-downloads.ts`
 // Gitignored; CI's deploy and preview builds carry it between runs in the
 // Actions cache.
 const CACHE_DIR = '.cache'
@@ -36,7 +40,6 @@ const PYPI_WINDOW_DAYS = 180
 
 /** Days per npm query, inside the 18 months the API answers at once. */
 const NPM_WINDOW_DAYS = 365
-const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
  * The most a PyPI query may bill: 50 GB.
@@ -57,23 +60,6 @@ type DailyCache = Record<string, Record<string, number> | undefined>
 type Release = { version: string; day: string }
 
 const byDay = (a: Release, b: Release) => a.day.localeCompare(b.day)
-
-const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
-
-/** The earlier of two ISO dates, which sort as strings. */
-const earlierDay = (a: string, b: string) => [a, b].sort()[0]
-
-/** The later of two ISO dates. */
-const laterDay = (a: string, b: string) => [a, b].sort()[1]
-
-/** Every ISO date from `first` through `last`. */
-const listDays = (first: string, last: string) => {
-  const days: string[] = []
-  for (let time = Date.parse(first); time <= Date.parse(last); time += DAY_MS) {
-    days.push(isoDate(time))
-  }
-  return days
-}
 
 /** A JSON response from `url`, throwing on any non-2xx status. */
 const fetchJson = async <T>(url: string) => {
@@ -285,26 +271,16 @@ const formatEntry = (pkg: string, days: DailyDownloads[]) => {
 
 const warnSkipped = (what: string, error: unknown) =>
   console.warn(
-    `::warning::${what} could not be read, so its glyph keeps the profile's count: ${error instanceof Error ? error.message : error}`
+    `::warning::${what} could not be read, so its glyph keeps the profile's count: ${getErrorMessage(error)}`
   )
 
-if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
-  console.log(`package downloads: reusing ${OUT_FILE}`)
-  process.exit(0)
-}
-
-const projects = await readFile(PROJECTS_FILE, 'utf8')
-/** The package names the projects give under `field`, sorted. */
-const getPackages = (field: 'npmPackage' | 'pypiPackage') =>
-  [...projects.matchAll(new RegExp(`${field}:\\s*'([^']+)'`, 'g'))]
-    .map(([, pkg]) => pkg)
-    .sort()
+exitIfReusing('package downloads', [OUT_FILE])
 
 /** A line of the generated file listing one package's releases. */
 const formatReleases = (pkg: string, releases: Release[]) =>
   `    '${pkg}': ${JSON.stringify(releases)},`
 
-const npmPackages = getPackages('npmPackage')
+const npmPackages = await readProjectValues('npmPackage')
 const npmEntries: string[] = []
 const npmReleaseEntries: string[] = []
 for (const pkg of npmPackages) {
@@ -319,7 +295,7 @@ for (const pkg of npmPackages) {
   }
 }
 
-const pypiPackages = getPackages('pypiPackage')
+const pypiPackages = await readProjectValues('pypiPackage')
 const pypiEntries: string[] = []
 const pypiReleaseEntries: string[] = []
 // Releases need no credentials, so they're read even when downloads aren't.
@@ -356,12 +332,10 @@ if (pypiFirstDays.length > 0 && !hasGoogleCredentials) {
   }
 }
 
-await mkdir('src/generated', { recursive: true })
-await writeFile(
+await writeGenerated(
   OUT_FILE,
-  `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:downloads\`.
-
-/** A package registry whose downloads are counted. */
+  'fetch:downloads',
+  `/** A package registry whose downloads are counted. */
 export type Registry = 'npm' | 'pypi'
 
 export type WeeklyDownloads = {

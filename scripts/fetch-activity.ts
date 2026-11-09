@@ -12,22 +12,22 @@
  * exists, as a preview build does with recent data it restored from its cache.
  */
 
-import { existsSync } from 'node:fs'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { countBy } from 'es-toolkit'
 
-const PROJECTS_FILE = 'src/generated/profile/content/projects.ts'
-const OUT_FILE = 'src/generated/repo-activity.ts'
+import { DAY_MS, GENERATED_DIR } from './shared/constants.ts'
+import { isoDate } from './shared/dates.ts'
+import { getErrorMessage } from './shared/errors.ts'
+import { exitIfReusing, writeGenerated } from './shared/generated.ts'
+import { readProjectValues } from './shared/projects.ts'
+
+const OUT_FILE = `${GENERATED_DIR}/repo-activity.ts`
 const OWNER = 'bvandrc'
 // Actions sets this, to GitHub Enterprise's API on an Enterprise server.
 const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
 // Actions passes an unset secret as an empty string.
 const token = process.env.GITHUB_TOKEN || undefined
 
-const DAY_MS = 24 * 60 * 60 * 1000
 const WEEK_MS = 7 * DAY_MS
-
-const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
 
 /** The start of the Monday, UTC, of the week `time` falls in. */
 const getWeekStart = (time: number) => {
@@ -107,17 +107,9 @@ const fetchActivity = async (repo: string) => {
   }
 }
 
-if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
-  console.log(`repo activity: reusing ${OUT_FILE}`)
-  process.exit(0)
-}
+exitIfReusing('repo activity', [OUT_FILE])
 
-const projects = await readFile(PROJECTS_FILE, 'utf8')
-const repos = [
-  ...new Set(
-    [...projects.matchAll(/\brepo:\s*'([^']+)'/g)].map(([, repo]) => repo)
-  ),
-].sort()
+const repos = await readProjectValues('repo')
 
 const entries: string[] = []
 if (token === undefined) {
@@ -130,7 +122,7 @@ if (token === undefined) {
     const repo = repos[index]
     if (result.status === 'rejected') {
       console.warn(
-        `::warning::Activity for ${repo} could not be read, so its glyphs keep the profile's counts: ${result.reason instanceof Error ? result.reason.message : result.reason}`
+        `::warning::Activity for ${repo} could not be read, so its glyphs keep the profile's counts: ${getErrorMessage(result.reason)}`
       )
     } else if (result.value) {
       const { firstWeek, lastDay, commits, prs } = result.value
@@ -141,12 +133,10 @@ if (token === undefined) {
   })
 }
 
-await mkdir('src/generated', { recursive: true })
-await writeFile(
+await writeGenerated(
   OUT_FILE,
-  `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:activity\`.
-
-export type WeeklyActivity = {
+  'fetch:activity',
+  `export type WeeklyActivity = {
   /** ISO date of the Monday the first week starts on */
   firstWeek: string
   /** ISO date the history was read, which ends the last week, the one under way */
