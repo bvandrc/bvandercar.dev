@@ -21,8 +21,8 @@ Built on:
 | `pnpm icons` | Generate favicon.ico and the PNG icons into `public/` |
 | `pnpm fetch:content` | The three fetches below, which `dev`, `build`, `check`, and `test` run first |
 | `pnpm fetch:profile` | Fetch the profile content and screenshots from bvandrc/bvandrc |
-| `pnpm fetch:activity` | Fetch each project repo's commits and PRs per week, for the chart in its counts tooltip; needs `GITHUB_TOKEN` |
-| `pnpm fetch:downloads` | Fetch each npm and PyPI package's weekly downloads, for the chart in its counts tooltip; PyPI's need `GOOGLE_APPLICATION_CREDENTIALS` |
+| `pnpm fetch:git-activity` | Fetch each project repo's commits and PRs, in all and per week, for its counts and chart; needs `GITHUB_TOKEN` |
+| `pnpm fetch:downloads` | Fetch each npm and PyPI package's downloads, in all and per week, and its releases, for its counts and chart; PyPI's need `GOOGLE_APPLICATION_CREDENTIALS` |
 | `pnpm check` | Format + lint + type check (app and Playwright) |
 | `pnpm test` | Vitest unit tests, once |
 | `pnpm test:watch` | Vitest in watch mode |
@@ -59,14 +59,18 @@ src/
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
 scripts/
-  fetch-profile.ts   Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
-  fetch-activity.ts  Fetches each project repo's weekly commits and PRs (src/generated/repo-activity.ts) from GitHub
-  fetch-downloads.ts Fetches each package's weekly downloads (src/generated/package-downloads.ts) from npm and BigQuery
+  fetch-profile.ts      Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
+  fetch-git-activity.ts Fetches each project repo's commits and PRs (src/generated/repo-activity-totals.ts, repo-activity.ts) from GitHub
+  fetch-downloads.ts    Fetches each package's downloads and releases (src/generated/package-download-totals.ts, package-downloads.ts) from npm, PyPI, and BigQuery
+  fetch-downloads/      Its npm and PyPI fetches
+  shared/               Paths and helpers the fetch scripts share
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests
   lighthouse/     google lighthouse tests
 shared/
+  counts.ts       The counts' project fields and package registries, which the app and the fetch scripts share
+  dates.ts        Day helpers, which the app and the fetch scripts share
   test-support/   Test helpers either suite can import
     selectors.ts  The data-testid registry
 tsconfig.json     App TypeScript config

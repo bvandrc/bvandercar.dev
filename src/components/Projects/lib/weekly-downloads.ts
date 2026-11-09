@@ -1,4 +1,5 @@
-import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import type { WeeklyDownloads } from '@/generated/package-downloads'
+import type { Registry } from '~/counts'
 import { addDays, formatDay, formatMonth, getPeakWeek } from './weeks'
 
 /** Each registry's name, as written in a sentence. */

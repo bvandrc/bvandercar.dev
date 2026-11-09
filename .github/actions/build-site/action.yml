@@ -9,6 +9,10 @@ inputs:
     description: Google Cloud service account key, as JSON, for PyPI's download counts; without it, the build still passes and PyPI projects show none
     required: false
     default: ''
+  require-fetched-data:
+    description: Whether a repo or package whose counts can't be fetched fails the build, rather than showing the profile's count in their place
+    required: false
+    default: 'false'
   reuse-fetched-data:
     description: Whether to reuse the data a preview or deploy fetched the same UTC day, with the same scripts, rather than fetch it again; either way, data this fetches is saved for the next build to reuse
     required: false
@@ -31,20 +35,9 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: src/generated/*.ts
-        key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ steps.today.outputs.date }}
+        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/counts.ts', 'shared/dates.ts') }}-${{ steps.today.outputs.date }}
 
-    # PyPI's daily download counts from earlier runs, so the build queries
-    # BigQuery for just the days since. Each run saves its own copy, and the
-    # next restores the newest. Nothing queries BigQuery when the fetched data
-    # is reused.
-    - name: Cache PyPI downloads
-      if: inputs.bigquery-credentials != '' && steps.data.outputs.cache-hit != 'true'
-      uses: actions/cache@v6
-      with:
-        path: .cache
-        key: pypi-downloads-${{ github.run_id }}-${{ github.run_attempt }}
-        restore-keys: pypi-downloads-
-
+    # Nothing queries BigQuery when the fetched data is reused.
     - name: Authenticate to Google Cloud
       if: inputs.bigquery-credentials != '' && steps.data.outputs.cache-hit != 'true'
       uses: google-github-actions/auth@v3
@@ -56,6 +49,7 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        REQUIRE_FETCHED_DATA: ${{ inputs.require-fetched-data }}
         # Keeps the restored data rather than fetching it again.
         REUSE_FETCHED_DATA: ${{ steps.data.outputs.cache-hit == 'true' }}
 
@@ -66,4 +60,4 @@ runs:
       uses: actions/cache/save@v6
       with:
         path: src/generated/*.ts
-        key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ steps.today.outputs.date }}
+        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/counts.ts', 'shared/dates.ts') }}-${{ steps.today.outputs.date }}

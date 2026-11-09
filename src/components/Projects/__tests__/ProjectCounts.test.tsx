@@ -1,14 +1,13 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import type {
-  Registry,
-  Release,
-  WeeklyDownloads,
-} from '@/generated/package-downloads'
+import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
+import type { Release, WeeklyDownloads } from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
+import type { Registry } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
@@ -53,6 +52,25 @@ vi.mock('@/generated/profile/repo-counts', () => ({
     [FIXTURES.OTHER_REPO]: { commits: 7, prs: 3 },
     [FIXTURES.SMALL_REPO]: { commits: 12, prs: 2 },
   } satisfies typeof REPO_COUNTS,
+}))
+
+// The sums of the histories below, as the fetches write them.
+vi.mock('@/generated/repo-activity-totals', () => ({
+  REPO_ACTIVITY_TOTALS: {
+    [FIXTURES.REPO]: { commits: 55, prs: 14 },
+    [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
+    [FIXTURES.SMALL_REPO]: { commits: 12, prs: 2 },
+  } satisfies typeof REPO_ACTIVITY_TOTALS,
+}))
+
+vi.mock('@/generated/package-download-totals', () => ({
+  PACKAGE_DOWNLOAD_TOTALS: {
+    npm: {
+      [FIXTURES.NPM_PACKAGE]: 1217,
+      [FIXTURES.NEW_NPM_PACKAGE]: 30,
+    },
+    pypi: { [FIXTURES.PYPI_PACKAGE]: 1240 },
+  } satisfies typeof PACKAGE_DOWNLOAD_TOTALS,
 }))
 
 vi.mock('@/generated/repo-activity', () => ({

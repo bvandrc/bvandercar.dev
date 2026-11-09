@@ -6,6 +6,7 @@ import type { Release } from '@/generated/package-downloads'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
+import { DAY_MS } from '~/dates'
 import { type DaySpan, formatDay, formatLatestVersion } from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
@@ -23,7 +24,6 @@ const PLOT_TOP = CAPTION_HEIGHT + INSET
 const TOTAL_WIDTH = 46
 // Where the last day is drawn.
 const PLOT_RIGHT = WIDTH - TOTAL_WIDTH
-const DAY_MS = 24 * 60 * 60 * 1000
 
 /** What a chart counts, which picks its color, the same on every chart. */
 export type ChartTone = 'COMMITS' | 'DOWNLOADS'

@@ -1,5 +1,6 @@
-import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import type { WeeklyDownloads } from '@/generated/package-downloads'
 import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { Registry } from '~/counts'
 import { ActivityChart, type ActivityChartProps } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
 

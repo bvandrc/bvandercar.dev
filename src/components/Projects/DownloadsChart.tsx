@@ -1,4 +1,5 @@
-import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import type { WeeklyDownloads } from '@/generated/package-downloads'
+import type { Registry } from '~/counts'
 import { COUNT_ICONS } from './lib/count-icons'
 import { getDownloadWeekEnds, REGISTRY_NAMES } from './lib/weekly-downloads'
 import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'
