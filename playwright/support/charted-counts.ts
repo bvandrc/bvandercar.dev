@@ -14,7 +14,7 @@ const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
  * reach npm. Only npm's downloads count, since CI's test builds have no
  * credentials for PyPI's.
  */
-export const getChartedRepoLink = (page: Page) => {
+const getChartedRepoLink = (page: Page) => {
   const project = PROJECTS.flatMap(({ projects }) => projects).find(
     ({ repo, npmPackage }) => {
       if (!npmPackage) {
