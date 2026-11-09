@@ -8,15 +8,16 @@
  * an hour without one; without it, every repo is skipped. A private repo
  * needs a token granted it. A repo that can't be read is left out with a
  * warning, and its glyphs keep the profile's counts, rather than failing the
- * build. With `REUSE_FETCHED_DATA=true`, it keeps the file where it already
- * exists, as a preview build does with recent data it restored from its cache.
+ * build, unless `REQUIRE_FETCHED_DATA=true`, as the deploy sets it. With
+ * `REUSE_FETCHED_DATA=true`, it keeps the file where it already exists, as a
+ * preview build does with recent data it restored from its cache.
  */
 
 import { GENERATED_DIR } from './shared/constants.ts'
-import { getErrorMessage } from './shared/errors.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
 import { fetchOk } from './shared/http.ts'
 import { readProjectValues } from './shared/projects.ts'
+import { reportSkipped } from './shared/skipped.ts'
 
 const OUT_FILE = `${GENERATED_DIR}/repo-activity-totals.ts`
 const OWNER = 'bvandrc'
@@ -59,17 +60,13 @@ const repos = await readProjectValues('repo')
 
 const entries: string[] = []
 if (token === undefined) {
-  console.warn(
-    "::notice::GITHUB_TOKEN is not set, so every project's glyphs keep the profile's counts"
-  )
+  reportSkipped("Every repo's commits and PRs", 'GITHUB_TOKEN is not set')
 } else {
   const results = await Promise.allSettled(repos.map(fetchActivity))
   results.forEach((result, index) => {
     const repo = repos[index]
     if (result.status === 'rejected') {
-      console.warn(
-        `::warning::Activity for ${repo} could not be read, so its glyphs keep the profile's counts: ${getErrorMessage(result.reason)}`
-      )
+      reportSkipped(`Commits and PRs for ${repo}`, result.reason)
     } else {
       const { commits, prs } = result.value
       entries.push(`  '${repo}': { commits: ${commits}, prs: ${prs} },`)

@@ -13,11 +13,8 @@ import { BigQuery } from '@google-cloud/bigquery'
 import { DAY_MS } from '../shared/constants.ts'
 import { earlierDay, isoDate, laterDay, listDays } from '../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
-import {
-  type DailyDownloads,
-  type RegistryHistory,
-  warnSkipped,
-} from './common.ts'
+import { reportSkipped } from '../shared/skipped.ts'
+import type { DailyDownloads, RegistryHistory } from './common.ts'
 
 // Gitignored; CI's deploy and preview builds carry it between runs in the
 // Actions cache.
@@ -171,7 +168,7 @@ const writePypiCache = async (cache: DailyCache) => {
 
 /**
  * Each of the PyPI `packages`' downloads per day since its first upload,
- * leaving out with a warning any that can't be read.
+ * leaving out, and reporting, any that can't be read.
  *
  * Without `GOOGLE_APPLICATION_CREDENTIALS`, it reads none.
  */
@@ -184,8 +181,9 @@ export const fetchPypiHistory = async (
   }
   // Checked before the first days are read, which would go unused without it.
   if (!hasGoogleCredentials) {
-    console.warn(
-      "::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages' glyphs keep the profile's counts"
+    reportSkipped(
+      "Every PyPI package's downloads",
+      'GOOGLE_APPLICATION_CREDENTIALS is not set'
     )
     return history
   }
@@ -194,7 +192,7 @@ export const fetchPypiHistory = async (
   results.forEach((result, index) => {
     const pkg = packages[index]
     if (result.status === 'rejected') {
-      warnSkipped(`PyPI downloads for ${pkg}`, result.reason)
+      reportSkipped(`PyPI downloads for ${pkg}`, result.reason)
     } else {
       firstDays.push({ pkg, firstDay: result.value })
     }
@@ -213,7 +211,7 @@ export const fetchPypiHistory = async (
       await writePypiCache(cache)
     }
   } catch (error) {
-    warnSkipped('PyPI downloads', error)
+    reportSkipped('PyPI downloads', error)
   }
   return history
 }

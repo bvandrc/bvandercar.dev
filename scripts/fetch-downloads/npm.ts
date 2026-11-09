@@ -7,11 +7,8 @@
 import { DAY_MS } from '../shared/constants.ts'
 import { isoDate } from '../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
-import {
-  type DailyDownloads,
-  type RegistryHistory,
-  warnSkipped,
-} from './common.ts'
+import { reportSkipped } from '../shared/skipped.ts'
+import type { DailyDownloads, RegistryHistory } from './common.ts'
 
 /** Days per npm query, inside the 18 months the API answers at once. */
 const NPM_WINDOW_DAYS = 365
@@ -52,7 +49,7 @@ const fetchNpmDailyDownloads = async (pkg: string, firstDay: string) => {
   return days
 }
 
-/** Each of the npm `packages`' downloads per day since its first publish, leaving out with a warning any that can't be read. */
+/** Each of the npm `packages`' downloads per day since its first publish, leaving out, and reporting, any that can't be read. */
 export const fetchNpmHistory = async (
   packages: string[]
 ): Promise<RegistryHistory> => {
@@ -62,7 +59,7 @@ export const fetchNpmHistory = async (
       const firstDay = await fetchNpmFirstDay(pkg)
       history.push({ pkg, days: await fetchNpmDailyDownloads(pkg, firstDay) })
     } catch (error) {
-      warnSkipped(`npm downloads for ${pkg}`, error)
+      reportSkipped(`npm downloads for ${pkg}`, error)
     }
   }
   return history

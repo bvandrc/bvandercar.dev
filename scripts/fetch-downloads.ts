@@ -9,9 +9,10 @@
  * `GOOGLE_APPLICATION_CREDENTIALS` points at Google Cloud credentials; without
  * them, PyPI packages are skipped. A package that can't be read is left out
  * with a warning, and its glyph keeps the profile's count, rather than failing
- * the build over a stats outage. With `REUSE_FETCHED_DATA=true`, it keeps the
- * file where it already exists, as a preview build does with recent data it
- * restored from its cache.
+ * the build over a stats outage, unless `REQUIRE_FETCHED_DATA=true`, as the
+ * deploy sets it. With `REUSE_FETCHED_DATA=true`, it keeps the file where it
+ * already exists, as a preview build does with recent data it restored from
+ * its cache.
  */
 
 import { sumBy } from 'es-toolkit'
