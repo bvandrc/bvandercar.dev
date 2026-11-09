@@ -1,7 +1,7 @@
 /**
- * Fetches each project repo's commits and pull requests in all, which its
- * counts' glyphs show, and its commits day by day, for the commits chart in
- * its counts' tooltip.
+ * Fetches each project repo's commits and merged pull requests in all, which
+ * its counts' glyphs show, and its commits day by day, for the commits chart
+ * in its counts' tooltip.
  *
  * Writes the totals to src/generated/repo-activity-totals.ts, and the daily
  * histories to src/generated/repo-activity.ts, which only the lazily loaded
@@ -57,9 +57,9 @@ const octokit = new Octokit({
 })
 
 /**
- * A repo's commits on its default branch, and its pull requests, each counted
- * in all, and its commits by the day each was made, from the day of its first
- * commit or pull request through today.
+ * A repo's commits on its default branch, and its merged pull requests, each
+ * counted in all, and its commits by the day each was made, from the day of
+ * its first commit or merged pull request through today.
  *
  * Every commit is in a day, so the days sum to the commits' total.
  */
@@ -82,12 +82,14 @@ const fetchActivity = async (repo: string) => {
       today
     )
   )
-  const prDays = pulls.map(({ created_at }) => isoDate(Date.parse(created_at)))
+  // Ones closed unmerged, or still open, never landed, so don't count.
+  const merged = pulls.filter(({ merged_at }) => merged_at !== null)
+  const prDays = merged.map(({ created_at }) => isoDate(Date.parse(created_at)))
   const firstDay = [today, ...commitDays, ...prDays].reduce(earlierDay)
   const counts = countBy(commitDays, (day) => day)
   return {
     commits: commits.length,
-    prs: pulls.length,
+    prs: merged.length,
     history: {
       firstDay,
       lastDay: today,

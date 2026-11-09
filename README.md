@@ -21,7 +21,7 @@ Built on:
 | `pnpm icons` | Generate favicon.ico and the PNG icons into `public/` |
 | `pnpm fetch:content` | The three fetches below, which `dev`, `build`, `check`, and `test` run first |
 | `pnpm fetch:profile` | Fetch the profile content and screenshots from bvandrc/bvandrc |
-| `pnpm fetch:git-activity` | Fetch each project repo's commits and PRs in all, and its commits per day, for its counts and chart; needs `GITHUB_TOKEN` |
+| `pnpm fetch:git-activity` | Fetch each project repo's commits and merged PRs in all, and its commits per day, for its counts and chart; needs `GITHUB_TOKEN` |
 | `pnpm fetch:downloads` | Fetch each npm and PyPI package's downloads, in all and per day, and its releases, for its counts and chart; PyPI's need `GOOGLE_APPLICATION_CREDENTIALS` |
 | `pnpm check` | Format + lint + type check (app and Playwright) |
 | `pnpm test` | Vitest unit tests, once |
@@ -60,7 +60,7 @@ src/
   styles/         Tailwind entrypoint and theme tokens
 scripts/
   fetch-profile.ts      Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
-  fetch-git-activity.ts Fetches each project repo's commits and PRs (src/generated/repo-activity-totals.ts, repo-activity.ts) from GitHub
+  fetch-git-activity.ts Fetches each project repo's commits and merged PRs (src/generated/repo-activity-totals.ts, repo-activity.ts) from GitHub
   fetch-downloads.ts    Fetches each package's downloads and releases (src/generated/package-download-totals.ts, package-downloads.ts) from npm, PyPI, and BigQuery
   fetch-downloads/      Its npm and PyPI fetches
   shared/               Paths and helpers the fetch scripts share
