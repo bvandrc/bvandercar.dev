@@ -1,11 +1,4 @@
-import { addDays, getDaysBetween, listDays } from '../dates'
-
-describe('addDays', () => {
-  it('moves an ISO date forward or back, across month ends', () => {
-    expect(addDays('2026-02-26', 7)).toBe('2026-03-05')
-    expect(addDays('2026-03-05', -7)).toBe('2026-02-26')
-  })
-})
+import { getDaysBetween, listDays } from '../dates'
 
 describe('getDaysBetween', () => {
   it('counts the days from one ISO date to another, across month ends', () => {

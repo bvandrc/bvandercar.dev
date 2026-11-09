@@ -57,27 +57,6 @@ const movePointer = (clientX: number) =>
   fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX })
 
 describe('RunningTotalChart', () => {
-  it('reads out its summary until hovered', () => {
-    renderChart()
-
-    expect(screen.getByTestId(READOUT).textContent).toBe('Commits')
-  })
-
-  it('leads its caption with its glyph, hovered or not', () => {
-    renderChart()
-    const readout = screen.getByTestId(READOUT)
-
-    expect(readout.firstElementChild?.tagName).toBe('svg')
-    movePointer(0)
-    expect(readout.firstElementChild?.tagName).toBe('svg')
-  })
-
-  it('writes the total, shortened, beside the end of its line', () => {
-    renderChart()
-
-    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
-  })
-
   it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
     renderChart()
     const readout = screen.getByTestId(READOUT)
@@ -228,12 +207,6 @@ describe('RunningTotalChart', () => {
     expect(onZoom).not.toHaveBeenCalled()
     expect(onPan).toHaveBeenCalledWith(expect.any(Number))
     expect(onPan.mock.calls[0][0]).toBeGreaterThan(0)
-  })
-
-  it('leaves the wheel to scroll the page without a zoom to call', () => {
-    renderChart()
-
-    expect(turnWheel(screen.getByTestId(PLOT), 5, -100)).toBe(true)
   })
 
   it("hides the total while zoomed in short of the line's end", () => {

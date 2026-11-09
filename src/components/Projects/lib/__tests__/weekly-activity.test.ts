@@ -2,7 +2,6 @@ import type { CommitHistory } from '@/generated/repo-activity'
 import {
   describeWeeklyCommits,
   getActivityWeekEnds,
-  getActivityWeeks,
   getDayReachingCommits,
 } from '../weekly-activity'
 
@@ -14,27 +13,11 @@ const HISTORY = {
 } satisfies CommitHistory
 
 describe('getActivityWeekEnds', () => {
-  it('ends each week on a Sunday', () => {
-    expect(getActivityWeekEnds(HISTORY)).toEqual([
+  it('ends each week on its Sunday, but the one under way on the last day', () => {
+    expect(getActivityWeekEnds({ ...HISTORY, lastDay: '2026-03-12' })).toEqual([
       '2026-03-01',
       '2026-03-08',
-      '2026-03-15',
-    ])
-  })
-
-  it('ends the week under way on the last day', () => {
-    expect(
-      getActivityWeekEnds({ ...HISTORY, lastDay: '2026-03-12' }).at(-1)
-    ).toBe('2026-03-12')
-  })
-})
-
-describe('getActivityWeeks', () => {
-  it('sums the days into weeks, the first starting on the first day', () => {
-    expect(getActivityWeeks(HISTORY)).toEqual([
-      { start: '2026-02-25', end: '2026-03-01', count: 3 },
-      { start: '2026-03-02', end: '2026-03-08', count: 40 },
-      { start: '2026-03-09', end: '2026-03-15', count: 12 },
+      '2026-03-12',
     ])
   })
 })

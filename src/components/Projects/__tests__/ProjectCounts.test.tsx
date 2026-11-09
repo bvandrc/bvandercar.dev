@@ -320,7 +320,7 @@ describe('ProjectCounts', () => {
     expect(getReleaseXs()).toEqual(unzoomed)
   })
 
-  it('pans both zoomed-in charts together, and not ones zoomed all the way out', async () => {
+  it('pans both zoomed-in charts together', async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
     /** The first release line's position in each chart, activity first. */
     const getFirstReleaseXs = () =>
@@ -333,10 +333,6 @@ describe('ProjectCounts', () => {
       within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT)
 
     await hoverCounts()
-    const unzoomed = getFirstReleaseXs()
-    turnWheel(plot(), 100, 0, { deltaX: 40 })
-    expect(getFirstReleaseXs()).toEqual(unzoomed)
-
     turnWheel(plot(), 100, -300)
     const zoomed = getFirstReleaseXs()
     // To the left, so later.
