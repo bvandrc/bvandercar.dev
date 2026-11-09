@@ -17,13 +17,13 @@
  */
 
 import { countBy } from 'es-toolkit'
+import { Octokit } from 'octokit'
 
 import type { ActivityTotals, CommitHistory } from '../shared/counts.ts'
 import { earlierDay, isoDate, listDays } from '../shared/dates.ts'
 import { GITHUB_OWNER } from '../shared/github.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
-import { fetchOk } from './shared/http.ts'
 import { findShortfall, getProjectValues } from './shared/projects.ts'
 import { reportSkipped } from './shared/skipped.ts'
 
@@ -34,24 +34,27 @@ const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
 // Actions passes an unset secret as an empty string.
 const token = process.env.GITHUB_TOKEN || undefined
 
-/** Every item of a paginated GitHub list, following its Link headers. */
-const fetchAll = async <T>(path: string) => {
-  const items: T[] = []
-  let url: string | undefined =
-    `${API_URL}${path}${path.includes('?') ? '&' : '?'}per_page=100`
-  while (url) {
-    const res: Response = await fetchOk(url, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'User-Agent': 'bvandercar.dev',
-      },
-    })
-    items.push(...((await res.json()) as T[]))
-    url = res.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
-  }
-  return items
-}
+// How many times a rate-limited request is retried, after waiting as long as
+// GitHub asks, before the repo's counts are left out.
+const MAX_RATE_LIMIT_RETRIES = 2
+
+/** Whether to retry a rate-limited request, as Octokit's throttling asks. */
+const shouldRetryRateLimit = (
+  _retryAfter: number,
+  _options: unknown,
+  _octokit: unknown,
+  retryCount: number
+) => retryCount < MAX_RATE_LIMIT_RETRIES
+
+const octokit = new Octokit({
+  auth: token,
+  baseUrl: API_URL,
+  userAgent: 'bvandercar.dev',
+  throttle: {
+    onRateLimit: shouldRetryRateLimit,
+    onSecondaryRateLimit: shouldRetryRateLimit,
+  },
+})
 
 /**
  * A repo's commits on its default branch, and its pull requests, each counted
@@ -61,15 +64,11 @@ const fetchAll = async <T>(path: string) => {
  * Every commit is in a day, so the days sum to the commits' total.
  */
 const fetchActivity = async (repo: string) => {
-  const repoPath = `/repos/${GITHUB_OWNER}/${repo}`
+  const repoParams = { owner: GITHUB_OWNER, repo, per_page: 100 }
+  // Octokit follows each list's pages, and retries one GitHub fails briefly.
   const [commits, pulls] = await Promise.all([
-    fetchAll<{
-      commit: {
-        committer: { date: string } | null
-        author: { date: string } | null
-      }
-    }>(`${repoPath}/commits`),
-    fetchAll<{ created_at: string }>(`${repoPath}/pulls?state=all`),
+    octokit.paginate(octokit.rest.repos.listCommits, repoParams),
+    octokit.paginate(octokit.rest.pulls.list, { ...repoParams, state: 'all' }),
   ])
   const today = isoDate(Date.now())
   const commitDays = commits.map(({ commit }) =>
