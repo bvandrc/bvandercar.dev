@@ -10,6 +10,7 @@
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
+import { explain } from '@renovatebot/pep440'
 
 import type { Release } from '../../shared/counts.ts'
 import {
@@ -80,11 +81,11 @@ const fetchPypiReleases = async (pkg: string) => {
   }>(`https://pypi.org/pypi/${pkg}/json`)
   return (
     Object.entries(releases)
-      // A release with no files was deleted. A pre-release ends in a, b, rc,
-      // or dev and a number, like 2.0b1.
+      // A release with no files was deleted. A pre-release is one like 2.0b1,
+      // 2.0.dev1, or 2.0a1.post1; a post-release, like 2.0.post1, isn't.
       .filter(
         ([version, files]) =>
-          files.length > 0 && !/(a|b|rc|dev)\d*$/i.test(version)
+          files.length > 0 && !explain(version)?.is_prerelease
       )
       .map(
         ([version, files]): Release => ({
