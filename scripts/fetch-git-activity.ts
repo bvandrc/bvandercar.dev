@@ -60,16 +60,15 @@ const fetchAll = async <T>(path: string) => {
  * Every commit is in a day, so the days sum to the commits' total.
  */
 const fetchActivity = async (repo: string) => {
+  const repoPath = `/repos/${GITHUB_OWNER}/${repo}`
   const [commits, pulls] = await Promise.all([
     fetchAll<{
       commit: {
         committer: { date: string } | null
         author: { date: string } | null
       }
-    }>(`/repos/${GITHUB_OWNER}/${repo}/commits`),
-    fetchAll<{ created_at: string }>(
-      `/repos/${GITHUB_OWNER}/${repo}/pulls?state=all`
-    ),
+    }>(`${repoPath}/commits`),
+    fetchAll<{ created_at: string }>(`${repoPath}/pulls?state=all`),
   ])
   const today = isoDate(Date.now())
   const commitDays = commits.map(({ commit }) =>
