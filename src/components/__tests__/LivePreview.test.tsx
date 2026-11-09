@@ -1,3 +1,4 @@
+import { mockMobile } from '@bvandrc/react-toolkit/test-support'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -26,6 +27,38 @@ describe('LivePreview', () => {
 
     await user.click(screen.getByTestId(TOGGLE))
     expect(screen.queryByTestId(FRAME)).toBeNull()
+  })
+
+  describe('at a scale', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('draws the page at that scale on a wide screen', async () => {
+      mockMobile(false)
+      const user = userEvent.setup()
+      render(<LivePreview src={SRC} title="Example" scale={0.5} />)
+
+      await user.click(screen.getByTestId(TOGGLE))
+      expect(screen.getByTestId(FRAME).style).toMatchObject({
+        width: '200%',
+        height: '200%',
+        transform: 'scale(0.5)',
+      })
+    })
+
+    it('draws the page untransformed, at full size, on a phone', async () => {
+      mockMobile(true)
+      const user = userEvent.setup()
+      render(<LivePreview src={SRC} title="Example" scale={0.5} />)
+
+      await user.click(screen.getByTestId(TOGGLE))
+      expect(screen.getByTestId(FRAME).style).toMatchObject({
+        width: '',
+        height: '',
+        transform: '',
+      })
+    })
   })
 
   it('pulses its toggle only while asked to', () => {

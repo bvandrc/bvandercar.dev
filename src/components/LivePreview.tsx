@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import {
+  useIsMobile,
   useMaybeControlled,
   useScrollIntoView,
   useTimer,
@@ -20,7 +21,7 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     src: string
     /** What the page is, which names the frame for screen readers. */
     title: string
-    /** How far to shrink the page, so more of its layout fits: 0.5 is half size. */
+    /** How far to shrink the page on a wide screen, so more of its layout fits: 0.5 is half size. A phone shows it at full size. */
     scale?: number
     /** Pulses a glow around the toggle, to draw the eye to it. */
     pulse?: boolean
@@ -54,6 +55,10 @@ export const LivePreview = ({
     onOpenChange,
     false
   )
+  // iOS Safari can't touch-scroll a page inside a transformed iframe, so a
+  // phone draws it untransformed, at full size, where the portrait frame
+  // gives it its own phone layout anyway.
+  const frameScale = useIsMobile() ? 1 : scale
   const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
   useEffect(() => {
@@ -119,12 +124,16 @@ export const LivePreview = ({
             // own origin's storage, and its links can still open new tabs.
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
             // Drawn at 1/scale the frame's size, then shrunk back to fit it.
-            style={{
-              width: `${100 / scale}%`,
-              height: `${100 / scale}%`,
-              transform: `scale(${scale})`,
-            }}
-            className="origin-top-left border-0"
+            style={
+              frameScale === 1
+                ? undefined
+                : {
+                    width: `${100 / frameScale}%`,
+                    height: `${100 / frameScale}%`,
+                    transform: `scale(${frameScale})`,
+                  }
+            }
+            className="size-full origin-top-left border-0"
             data-testid="live-preview-frame"
           />
         </div>
