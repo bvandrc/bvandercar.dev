@@ -11,16 +11,18 @@ const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
  * The repo link of the first project whose counts, on hover, chart both its
  * activity and its npm downloads.
  *
- * Throws if none has more than a week of both, as when the build had no
- * `GITHUB_TOKEN` or couldn't reach npm. Only npm's downloads count, since
- * CI's test builds have no credentials for PyPI's.
+ * Throws if none has enough of both, as when the build had no `GITHUB_TOKEN`
+ * or couldn't reach npm. Only npm's downloads count, since CI's test builds
+ * have no credentials for PyPI's.
  */
 const getChartedRepoLink = (page: Page) => {
   const project = PROJECTS.flatMap(({ projects }) => projects).find(
     ({ repo, npmPackage }) =>
       (REPO_ACTIVITY[repo]?.commits.length ?? 0) > 1 &&
       npmPackage &&
-      (PACKAGE_DOWNLOADS.npm[npmPackage]?.weekly.length ?? 0) > 1
+      // Three weeks of downloads span the two weeks from the first publish a
+      // chart needs, where two can fall short, for a package released days ago.
+      (PACKAGE_DOWNLOADS.npm[npmPackage]?.weekly.length ?? 0) >= 3
   )
   if (!project) {
     throw new Error(

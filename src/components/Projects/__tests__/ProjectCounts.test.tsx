@@ -133,7 +133,11 @@ vi.mock('@/generated/package-downloads', () => ({
         { version: '1.1.0', day: '2026-03-12' },
       ],
     },
-    pypi: {},
+    pypi: {
+      // Its earlier releases were deleted, so the first listed comes long
+      // after its first download.
+      [FIXTURES.PYPI_PACKAGE]: [{ version: '1.1.1', day: '2026-03-12' }],
+    },
   } satisfies Record<Registry, Record<string, Release[]>>,
 }))
 
@@ -222,6 +226,20 @@ describe('ProjectCounts', () => {
       within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
         .textContent
     ).toBe('PyPI downloads')
+  })
+
+  it("starts both charts at the package's first download where it comes before its first listed release", async () => {
+    renderWithProviders(
+      <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
+    )
+
+    await hoverCounts()
+    const downloads = within(screen.getByTestId(DOWNLOADS_CHART))
+    fireEvent.pointerMove(downloads.getByTestId(PLOT), { clientX: 0 })
+    // Its first week, rather than the one the Mar 12 release falls in.
+    expect(downloads.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 10, 2026: 40 downloads'
+    )
   })
 
   it('charts nothing with a single week to show, leaving the counts alone', async () => {
