@@ -35,7 +35,7 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: src/generated/*.ts
-        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**') }}-${{ steps.today.outputs.date }}
+        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/counts.ts', 'shared/dates.ts') }}-${{ steps.today.outputs.date }}
 
     # Nothing queries BigQuery when the fetched data is reused.
     - name: Authenticate to Google Cloud
@@ -60,4 +60,4 @@ runs:
       uses: actions/cache/save@v6
       with:
         path: src/generated/*.ts
-        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**') }}-${{ steps.today.outputs.date }}
+        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/counts.ts', 'shared/dates.ts') }}-${{ steps.today.outputs.date }}

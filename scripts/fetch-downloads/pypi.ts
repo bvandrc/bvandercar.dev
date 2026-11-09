@@ -1,6 +1,7 @@
 /**
  * PyPI's side of `pnpm fetch:downloads`: a package's first upload day, and its
- * downloads per day, from Google BigQuery's public PyPI dataset.
+ * downloads per day, from Google BigQuery's public PyPI dataset, and its
+ * releases, from PyPI's JSON API.
  *
  * Its first days and daily counts are published with the site, which the next
  * run reads them back from, so a run queries only the days since the last
@@ -10,13 +11,19 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
 
+import type { Release } from '../../shared/counts.ts'
+import {
+  DAY_MS,
+  earlierDay,
+  isoDate,
+  laterDay,
+  listDays,
+} from '../../shared/dates.ts'
 import { SITE_URL } from '../../site.config.ts'
-import { DAY_MS } from '../shared/constants.ts'
-import { earlierDay, isoDate, laterDay, listDays } from '../shared/dates.ts'
 import { getErrorMessage } from '../shared/errors.ts'
 import { fetchJson } from '../shared/http.ts'
 import { reportSkipped } from '../shared/skipped.ts'
-import type { DailyDownloads, RegistryHistory } from './common.ts'
+import { byDay, type DailyDownloads, type RegistryHistory } from './common.ts'
 
 // Copied into the built site, gitignored. The site never loads them; only the
 // next build does, from the live site, where they last as long as the deploy,
@@ -60,6 +67,37 @@ const readPublished = async <T extends object>(file: string): Promise<T> => {
     )
     return {} as T
   }
+}
+
+/**
+ * A PyPI package's releases, oldest first, leaving out pre-releases and
+ * deleted ones, which its JSON API no longer lists.
+ */
+const fetchPypiReleases = async (pkg: string) => {
+  const { releases } = await fetchJson<{
+    releases: Record<string, { upload_time_iso_8601: string }[]>
+  }>(`https://pypi.org/pypi/${pkg}/json`)
+  return (
+    Object.entries(releases)
+      // A release with no files was deleted. A pre-release ends in a, b, rc,
+      // or dev and a number, like 2.0b1.
+      .filter(
+        ([version, files]) =>
+          files.length > 0 && !/(a|b|rc|dev)\d*$/i.test(version)
+      )
+      .map(
+        ([version, files]): Release => ({
+          version,
+          // The day its first file was uploaded.
+          day: files
+            .map(({ upload_time_iso_8601 }) =>
+              upload_time_iso_8601.slice(0, 10)
+            )
+            .sort()[0],
+        })
+      )
+      .sort(byDay)
+  )
 }
 
 /**
@@ -216,8 +254,8 @@ const writePublished = async (file: string, data: object) => {
 }
 
 /**
- * Each of the PyPI `packages`' downloads per day since its first upload,
- * leaving out, and reporting, any that can't be read.
+ * Each of the PyPI `packages`' downloads per day since its first upload, and
+ * its releases, leaving out, and reporting, any that can't be read.
  *
  * Without `GOOGLE_APPLICATION_CREDENTIALS`, it reads none.
  */
@@ -245,9 +283,26 @@ export const fetchPypiHistory = async (
           reportSkipped(`PyPI downloads for ${pkg}`, 'BigQuery has no uploads')
         }
       }
+      // Read alongside the BigQuery queries, which they don't depend on.
+      const releasesRead = Promise.allSettled(
+        firstDays.map(({ pkg }) => fetchPypiReleases(pkg))
+      )
       const days = await fetchPypiDailyDownloads(firstDays, cache)
+      const releases = await releasesRead
       firstDays.forEach(({ pkg }, index) => {
-        history.push({ pkg, days: days[index] })
+        const result = releases[index]
+        // Releases only mark the charts, so a package whose releases can't
+        // be read keeps its downloads, rather than losing its count too.
+        if (result.status === 'rejected') {
+          console.warn(
+            `::warning::PyPI releases for ${pkg} could not be read, so its charts mark none: ${getErrorMessage(result.reason)}`
+          )
+        }
+        history.push({
+          pkg,
+          days: days[index],
+          releases: result.status === 'fulfilled' ? result.value : [],
+        })
       })
     } finally {
       await writePublished(FIRST_DAYS_FILE, firstDaysCache)

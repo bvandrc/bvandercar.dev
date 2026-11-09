@@ -3,5 +3,3 @@ export const GENERATED_DIR = 'src/generated'
 
 /** Where `pnpm fetch:profile` copies the profile's content and counts. */
 export const PROFILE_DIR = `${GENERATED_DIR}/profile`
-
-export const DAY_MS = 24 * 60 * 60 * 1000
