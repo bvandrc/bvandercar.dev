@@ -19,10 +19,10 @@ const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
 
-export type ProjectCountsProps = Pick<
-  Project,
-  'repo' | 'npmPackage' | 'pypiPackage'
->
+/** The fields of a project its counts are read from. */
+export const COUNTS_FIELDS = ['repo', 'npmPackage', 'pypiPackage'] as const
+
+export type ProjectCountsProps = Pick<Project, (typeof COUNTS_FIELDS)[number]>
 
 /** The registry the project publishes a package to, and its name there, if any. */
 const getPackage = ({
