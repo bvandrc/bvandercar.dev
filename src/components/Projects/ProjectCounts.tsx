@@ -2,12 +2,17 @@ import {
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
+import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
+import { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
+import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import { type CountsField, PACKAGE_FIELDS } from '~/counts'
 
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
 // hover, clicks through to the link the counts sit in.
@@ -15,9 +20,17 @@ const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
 
-export type ProjectCountsProps = {
-  /** GitHub repo name under bvandrc */
-  repo: string
+export type ProjectCountsProps = Pick<Project, CountsField>
+
+/** The registry the project publishes a package to, and its name there, if any. */
+const getPackage = (packages: Omit<ProjectCountsProps, 'repo'>) => {
+  for (const [registry, field] of objectEntries(PACKAGE_FIELDS)) {
+    const name = packages[field]
+    if (name) {
+      return { registry, name }
+    }
+  }
+  return undefined
 }
 
 /**
@@ -28,20 +41,28 @@ export type ProjectCountsProps = {
  * hover, a tap opens and closes the tooltip instead, rather than following a
  * link the counts sit in.
  */
-export const ProjectCounts = ({ repo }: ProjectCountsProps) => {
+export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   // Its pointerdown handler reads the state before Radix's own closes an open
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  const counts = REPO_COUNTS[repo]
-  if (!counts) {
-    return null
+  const pkg = getPackage(packages)
+  const downloads = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
+  // This site's own fetches are fresher than the profile's weekly counts, so
+  // a count they have wins.
+  const counts = {
+    ...REPO_COUNTS[repo],
+    ...REPO_ACTIVITY_TOTALS[repo],
+    ...(downloads !== undefined && { downloads }),
   }
   // The profile README badge's counts, in its order and with its icons.
   const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
     const count = counts[key]
     return count === undefined ? [] : [{ key, icon, noun, count }]
   })
+  if (shown.length === 0) {
+    return null
+  }
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')

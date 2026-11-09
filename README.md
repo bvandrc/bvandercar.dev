@@ -19,7 +19,10 @@ Built on:
 | `pnpm build` | Production build into `dist` |
 | `pnpm preview` | Build, then serve `dist` |
 | `pnpm icons` | Generate favicon.ico and the PNG icons into `public/` |
+| `pnpm fetch:content` | The three fetches below, which `dev`, `build`, `check`, and `test` run first |
 | `pnpm fetch:profile` | Fetch the profile content and screenshots from bvandrc/bvandrc |
+| `pnpm fetch:git-activity` | Fetch each project repo's commits and PRs in all; needs `GITHUB_TOKEN` |
+| `pnpm fetch:downloads` | Fetch each npm and PyPI package's downloads in all; PyPI's need `GOOGLE_APPLICATION_CREDENTIALS` |
 | `pnpm check` | Format + lint + type check (app and Playwright) |
 | `pnpm test` | Vitest unit tests, once |
 | `pnpm test:watch` | Vitest in watch mode |
@@ -56,12 +59,17 @@ src/
   styles/         Tailwind entrypoint and theme tokens
   utils/          Shared helpers
 scripts/
-  fetch-profile.ts   Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
+  fetch-profile.ts      Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
+  fetch-git-activity.ts Fetches each project repo's commit and PR totals (src/generated/repo-activity-totals.ts) from GitHub
+  fetch-downloads.ts    Fetches each package's download totals (src/generated/package-download-totals.ts) from npm and BigQuery
+  fetch-downloads/      Its npm and PyPI fetches
+  shared/               Paths and helpers the fetch scripts share
 playwright/
   e2e/            e2e tests
   a11y/           axe accessibility tests
   lighthouse/     google lighthouse tests
 shared/
+  counts.ts       The counts' project fields and package registries, which the app and the fetch scripts share
   test-support/   Test helpers either suite can import
     selectors.ts  The data-testid registry
 tsconfig.json     App TypeScript config
@@ -78,5 +86,5 @@ index.html        HTML entry point (title, meta, og tags)
 - **CI** — lint, type check, unit tests, and the three Playwright suites on every push and PR, and weekly so the site redeploys with fresh profile content
 - **PR CI** — pull-request-only jobs: the changed-line count, written to the run's job summary
 - **Deploy** — once CI passes on the default branch, build and publish `dist` to Cloudflare with Wrangler
-- **Preview** — on every PR, upload the build as a Cloudflare version (not deployed) and link its preview URL from the PR's "View deployment" button, stable per PR as `pr-<number>`
+- **Preview** — on every PR, upload the build as a Cloudflare version (not deployed) and link its preview URL from the PR's "View deployment" button, stable per PR as `pr-<number>`. It reuses the data the build fetches from a preview or deploy that fetched it the same UTC day; add the `refresh-data` label to fetch it fresh
 - **Production Lighthouse** — audits the live site 15 minutes after each deploy

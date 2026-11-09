@@ -3,9 +3,17 @@ name: Preview
 # Uploads each PR's build as a Cloudflare version, without deploying it, and
 # links its preview URL from the PR's "View deployment" button, which posts no
 # comment. The `pr-<number>` alias keeps one stable URL per PR across pushes.
+#
+# The data the build fetches from GitHub, npm, and BigQuery is reused from a
+# preview or deploy that fetched it the same UTC day, with the same scripts, so
+# it has the shape this build expects. Add the `refresh-data` label to build a
+# preview with fresh data; while the label stays, every push fetches fresh
+# data.
 
 on:
   pull_request:
+    # Labeled only for `refresh-data`, which the job checks.
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: read
@@ -18,8 +26,11 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
-    # A fork PR gets no secrets, so it can't upload.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # A fork PR gets no secrets, so it can't upload. Any label but
+    # `refresh-data` leaves the preview as it was.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' || github.event.label.name == 'refresh-data')
     environment:
       name: preview
       url: ${{ steps.upload.outputs.url }}
@@ -31,8 +42,14 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Build project
-        run: pnpm build
+      - name: Build site
+        uses: ./.github/actions/build-site
+        with:
+          # The workflow's own token reads public repos; PROJECT_REPOS_TOKEN,
+          # if set, reads every project repo, private ones too.
+          github-token: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
+          bigquery-credentials: ${{ secrets.BIGQUERY_CREDENTIALS }}
+          reuse-fetched-data: ${{ !contains(github.event.pull_request.labels.*.name, 'refresh-data') }}
 
       - name: Upload preview version
         id: upload

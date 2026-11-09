@@ -1,7 +1,11 @@
 name: Deploy
 
 # Deploys to Cloudflare once CI passes on main. Needs the repo secrets
-# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, BIGQUERY_CREDENTIALS, a Google
+# Cloud service account key, for PyPI download counts, and PROJECT_REPOS_TOKEN,
+# a read-only GitHub token for every project repo, private ones included. The
+# build fails if any project's counts can't be fetched, so the live site never
+# shows the profile's older counts in their place.
 
 on:
   workflow_run:
@@ -36,8 +40,14 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Build project
-        run: pnpm build
+      # Always fetched fresh here, then saved for that day's previews to
+      # reuse.
+      - name: Build site
+        uses: ./.github/actions/build-site
+        with:
+          github-token: ${{ secrets.PROJECT_REPOS_TOKEN }}
+          bigquery-credentials: ${{ secrets.BIGQUERY_CREDENTIALS }}
+          require-fetched-data: true
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3

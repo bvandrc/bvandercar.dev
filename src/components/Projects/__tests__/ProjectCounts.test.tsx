@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { objectKeys } from 'ts-extras'
 
-import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { formatCompactCount, formatCount } from '@/lib/format-count'
+import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
+import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
@@ -11,37 +11,67 @@ import { ProjectCounts } from '../ProjectCounts'
 const { COUNTS } = SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
+// Hoisted with the mocks below, which run before the file's other top-level code.
+const FIXTURES = vi.hoisted(() => ({
+  REPO: 'some-repo',
+  OTHER_REPO: 'other-repo',
+  NPM_PACKAGE: 'some-package',
+}))
+const { REPO, OTHER_REPO, NPM_PACKAGE } = FIXTURES
+
+vi.mock('@/generated/profile/repo-counts', () => ({
+  // Older than this site's fetches, which differ from them as they would.
+  REPO_COUNTS: {
+    [FIXTURES.REPO]: { commits: 25, prs: 31, downloads: 3120 },
+    [FIXTURES.OTHER_REPO]: { commits: 7, prs: 3 },
+  } satisfies typeof REPO_COUNTS,
+}))
+
+vi.mock('@/generated/repo-activity-totals', () => ({
+  REPO_ACTIVITY_TOTALS: {
+    [FIXTURES.REPO]: { commits: 55, prs: 14 },
+  } satisfies typeof REPO_ACTIVITY_TOTALS,
+}))
+
+vi.mock('@/generated/package-download-totals', () => ({
+  PACKAGE_DOWNLOAD_TOTALS: {
+    npm: { [FIXTURES.NPM_PACKAGE]: 1217 },
+    pypi: {},
+  } satisfies typeof PACKAGE_DOWNLOAD_TOTALS,
+}))
+
 describe('ProjectCounts', () => {
   it('shows the counts shortened, and in full as its name and tooltip', async () => {
     const user = userEvent.setup()
-    // A repo with downloads in the thousands, so they're shortened.
-    const REPO = objectKeys(REPO_COUNTS).find(
-      (repo) => (REPO_COUNTS[repo]?.downloads ?? 0) >= 1000
-    )
-    const REPO_COUNT = REPO ? REPO_COUNTS[REPO] : undefined
-    if (!(REPO && REPO_COUNT?.downloads)) {
-      throw new Error('No repo has downloads in the thousands')
-    }
-    const { commits, prs, downloads } = REPO_COUNT
-    const LABEL = [
-      formatCount(commits, 'commit'),
-      formatCount(prs, 'PR'),
-      formatCount(downloads, 'download'),
-    ].join(', ')
     renderWithProviders(<ProjectCounts repo={REPO} />)
     const counts = screen.getByTestId(COUNTS)
+    // Its commits and PRs from this site's fetch, and its downloads from the
+    // profile's, with no package to fetch them for.
+    const LABEL = '55 commits, 14 PRs, 3,120 downloads'
 
-    expect(counts.textContent).toContain(formatCompactCount(downloads))
-    expect(counts.textContent).not.toContain('download')
+    expect(counts.textContent).toBe('55143.1K')
     expect(counts.getAttribute('aria-label')).toBe(LABEL)
     await user.hover(counts)
     expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(LABEL)
   })
 
-  describe('in a link', () => {
-    // Any repo with counts.
-    const REPO = objectKeys(REPO_COUNTS)[0]
+  it("counts with this site's own fetches where it has them", () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
+    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
+      '55 commits, 14 PRs, 1,217 downloads'
+    )
+  })
+
+  it("keeps the profile's counts for a repo this site fetched nothing for", () => {
+    renderWithProviders(<ProjectCounts repo={OTHER_REPO} />)
+
+    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
+      '7 commits, 3 PRs'
+    )
+  })
+
+  describe('in a link', () => {
     /** Renders the counts in a link, and records whether each click on the page goes on to follow it. */
     const renderInLink = () => {
       const followed: boolean[] = []

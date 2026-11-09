@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { useIsMobile } from '@bvandrc/react-toolkit'
+import { pick } from 'es-toolkit'
 
 import { LivePreview } from '@/components/LivePreview'
 import { BrandIcon } from '@/components/primitives/BrandIcon'
@@ -9,6 +10,7 @@ import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type { Project } from '@/generated/profile/content/projects'
 import { cn } from '@/utils'
+import { COUNTS_FIELDS } from '~/counts'
 import { RepoLink } from './RepoLink'
 
 // Matches the ink-muted theme token in src/styles/index.css.
@@ -80,7 +82,7 @@ export const ProjectCard = ({
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
       <p className="text-xs">
-        <RepoLink repo={project.repo} nameId={nameId} />
+        <RepoLink {...pick(project, COUNTS_FIELDS)} nameId={nameId} />
       </p>
       {project.embed ? (
         <LivePreview
