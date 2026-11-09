@@ -1,4 +1,8 @@
-import { lazy, Suspense, useRef, useState } from 'react'
+import { lazy, Suspense } from 'react'
+import {
+  type UsePressToggleOptions,
+  usePressToggle,
+} from '@bvandrc/react-toolkit'
 import { isNotNil, sum } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
@@ -17,7 +21,6 @@ import {
   getWeekReachingCommits,
 } from './lib/weekly-activity'
 import { describeWeeklyDownloads } from './lib/weekly-downloads'
-import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
 // The type alone, which leaves the charts' code to the lazy import below.
 import type { ProjectChartsProps } from './ProjectCharts'
 
@@ -43,6 +46,12 @@ const UNPACKAGED_MIN_COMMITS = 20
 const UNPACKAGED_START_COMMITS = 15
 // The shortest stretch of dates the charts are drawn over: two weeks.
 const MIN_CHART_MS = 14 * 24 * 60 * 60 * 1000
+
+// A tap stands in for the hover a touch screen lacks; a mouse, which can
+// hover, clicks through to the link the counts sit in.
+const TOGGLE_OPTIONS = {
+  pointerTypes: ['touch'],
+} satisfies UsePressToggleOptions
 
 export type ProjectCountsProps = Pick<
   Project,
@@ -75,18 +84,10 @@ const getPackage = ({
  * instead, rather than following a link the counts sit in.
  */
 export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
-  const [open, setOpen] = useState(false)
-  // Shared by both charts, so a release stays lined up across them as they zoom.
-  const [zoomedSpan, setZoomedSpan] = useState<DaySpan>()
-  /** Opens or closes the tooltip, closing it zoomed back out. */
-  const changeOpen = (next: boolean) => {
-    setOpen(next)
-    if (!next) {
-      setZoomedSpan(undefined)
-    }
-  }
-  // Read at pointerdown, before Radix's own handler closes an open tooltip.
-  const tapRef = useRef({ isTouch: false, wasOpen: false })
+  // Its pointerdown handler reads the state before Radix's own closes an open
+  // tooltip, and its click handler cancels the click, which also stops
+  // Radix's from closing it again.
+  const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
   const activity = REPO_ACTIVITY[repo]
   const pkg = getPackage(packages)
   const history = pkg && PACKAGE_DOWNLOADS[pkg.registry][pkg.name]
@@ -153,17 +154,6 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     // Too short a stretch, like a package released this week, has nothing
     // to chart yet.
     Date.parse(fullSpan.end) - Date.parse(fullSpan.start) >= MIN_CHART_MS
-  const span = zoomedSpan ?? fullSpan
-  // Each from the span before, so gestures landing in one frame build on
-  // each other rather than all starting from the same one.
-  /** Zooms both charts around a time under the pointer, scaling their width by `factor`. */
-  const zoom = (anchor: number, factor: number) =>
-    setZoomedSpan((previous) =>
-      zoomSpan(previous ?? fullSpan, fullSpan, anchor, factor)
-    )
-  /** Moves both zoomed-in charts `delta` milliseconds later. */
-  const pan = (delta: number) =>
-    setZoomedSpan((previous) => panSpan(previous, fullSpan, delta))
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -186,8 +176,8 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     .join('. ')
   return (
     <Tooltip
-      open={open}
-      onOpenChange={changeOpen}
+      open={isActive}
+      onOpenChange={setIsActive}
       content={
         hasCharts ? (
           <Suspense
@@ -209,10 +199,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
               activity={chartedActivity}
               downloads={chartedDownloads}
               releases={releases}
-              span={span}
-              zoomed={zoomedSpan !== undefined}
-              onZoom={zoom}
-              onPan={pan}
+              span={fullSpan}
             />
           </Suspense>
         ) : (
@@ -224,11 +211,11 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       className={hasCharts ? 'max-w-none p-3 text-sm' : undefined}>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: a tap only stands in for the hover a touch screen lacks; keyboards focus the link around it. */}
       <span
         role="img"
         aria-label={label}
         className="inline-flex items-center gap-2.5"
+        {...triggerProps}
         // Starts loading the charts as the pointer arrives, ahead of the
         // tooltip's open delay, or with a tap.
         onPointerEnter={hasCharts ? prefetchCharts : undefined}
@@ -236,17 +223,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
           if (hasCharts) {
             prefetchCharts()
           }
-          tapRef.current = {
-            isTouch: event.pointerType === 'touch',
-            wasOpen: open,
-          }
-        }}
-        onClick={(event) => {
-          if (tapRef.current.isTouch) {
-            // Also stops Radix's own handler, which would close it again.
-            event.preventDefault()
-            changeOpen(!tapRef.current.wasOpen)
-          }
+          triggerProps.onPointerDown(event)
         }}
         data-testid="project-counts">
         {shown.map(({ key, icon, count }) => (
