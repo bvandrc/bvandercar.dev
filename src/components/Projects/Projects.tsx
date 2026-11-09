@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { List } from '@/components/primitives/List'
 import { Section, SubSection } from '@/components/Section'
 import type { ProjectSection } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
@@ -35,8 +36,7 @@ export const Projects = () => {
           {group.intro && (
             <p className="font-semibold text-ink-muted">{group.intro}</p>
           )}
-          {/* biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics once Tailwind removes the bullets. */}
-          <ul role="list" className={GRID_CLASSES[gridLayout(group)]}>
+          <List className={GRID_CLASSES[gridLayout(group)]}>
             {group.projects.map((project) => (
               <li key={project.repo}>
                 <ProjectCard
@@ -46,7 +46,7 @@ export const Projects = () => {
                 />
               </li>
             ))}
-          </ul>
+          </List>
         </SubSection>
       ))}
     </Section>

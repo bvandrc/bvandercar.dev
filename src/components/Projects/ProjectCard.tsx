@@ -9,12 +9,10 @@ import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type { Project } from '@/generated/profile/content/projects'
-import { cn } from '@/utils'
+import { cn } from '@/lib/cn'
+import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
 import { RepoLink } from './RepoLink'
-
-// Matches the ink-muted theme token in src/styles/index.css.
-const TYPE_ICON_COLOR = '9fb0c8'
 
 export type ProjectCardProps = {
   project: Project
@@ -50,10 +48,8 @@ export const ProjectCard = ({
         'flex h-full flex-col gap-3',
         // Edge to edge on a phone, past the page's px-5 gutter in App.tsx.
         '-mx-5 rounded-none border-x-0 md:mx-0 md:rounded-xl md:border-x',
-        'transition-[box-shadow,border-color] duration-200',
         // Glows orange on hover, or while a link inside has keyboard focus.
-        'hover:border-orange-400 hover:shadow-glow-24 hover:shadow-orange-500',
-        'has-focus-visible:border-orange-400 has-focus-visible:shadow-glow-24 has-focus-visible:shadow-orange-500'
+        'hover-glow-24'
       )}
       data-testid="project-card">
       {/* Equal side columns center the name on the card, with the icon beside it. */}
@@ -73,7 +69,7 @@ export const ProjectCard = ({
         <Tooltip content={TYPE_ICONS[project.type].title}>
           <BrandIcon
             slug={TYPE_ICONS[project.type].slug}
-            color={TYPE_ICON_COLOR}
+            color={THEME_COLORS.INK_MUTED}
             alt={TYPE_ICONS[project.type].title}
             size={14}
             className="size-3.5"

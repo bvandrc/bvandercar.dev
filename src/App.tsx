@@ -5,7 +5,7 @@ import { Header } from './components/Header'
 import { Projects } from './components/Projects'
 import { TooltipProvider } from './components/primitives/Tooltip'
 import { Skills } from './components/Skills'
-import { cn } from './utils'
+import { cn } from './lib/cn'
 
 export const App = () => (
   <TooltipProvider>

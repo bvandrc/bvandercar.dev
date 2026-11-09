@@ -13,9 +13,11 @@ import { cp, mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+import { GITHUB_OWNER, getRepoUrl } from '../shared/github.ts'
 import { PROFILE_DIR } from './shared/constants.ts'
 
-const REPO_URL = 'https://github.com/bvandrc/bvandrc'
+// A GitHub profile's README comes from the repo named after its owner.
+const REPO_URL = getRepoUrl(GITHUB_OWNER)
 // The bvandrc branch this site's content is developed on, so a change there
 // reaches every build here without merging to bvandrc's main first. Once it's
 // merged and deleted, builds read main.

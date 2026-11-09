@@ -7,7 +7,7 @@ import {
 import { Collapsible } from 'radix-ui'
 import type { RequireAllOrNone } from 'type-fest'
 
-import { cn } from '@/utils'
+import { cn } from '@/lib/cn'
 import { Icon } from './primitives/Icon'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &

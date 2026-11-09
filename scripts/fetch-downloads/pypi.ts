@@ -13,11 +13,12 @@ import { BigQuery } from '@google-cloud/bigquery'
 
 import type { Release } from '../../shared/counts.ts'
 import {
-  DAY_MS,
+  addDays,
   earlierDay,
   isoDate,
   laterDay,
   listDays,
+  listWindows,
 } from '../../shared/dates.ts'
 import { SITE_URL } from '../../site.config.ts'
 import { getErrorMessage } from '../shared/errors.ts'
@@ -91,9 +92,9 @@ const fetchPypiReleases = async (pkg: string) => {
           // The day its first file was uploaded.
           day: files
             .map(({ upload_time_iso_8601 }) =>
-              upload_time_iso_8601.slice(0, 10)
+              isoDate(Date.parse(upload_time_iso_8601))
             )
-            .sort()[0],
+            .reduce(earlierDay),
         })
       )
       .sort(byDay)
@@ -203,7 +204,7 @@ const fetchPypiDailyDownloads = async (
 ) => {
   // Two days back, like npm's latest, so a day still being loaded into the
   // dataset never reads as a drop.
-  const lastDay = isoDate(Date.now() - 2 * DAY_MS)
+  const lastDay = addDays(isoDate(Date.now()), -2)
   // The day each package's query starts on: its first, unless cached from it.
   const starts = packages.map(({ pkg, firstDay }) => {
     const cached = cache[pkg]
@@ -211,20 +212,16 @@ const fetchPypiDailyDownloads = async (
       .sort()
       .at(-1)
     return cached?.[firstDay] !== undefined && latestCached
-      ? isoDate(Date.parse(latestCached) - PYPI_REFRESH_DAYS * DAY_MS)
+      ? addDays(latestCached, -PYPI_REFRESH_DAYS)
       : firstDay
   })
   // A whole history in one query bills more than the cap allows, so it's
-  // read a window at a time, oldest first.
-  for (
-    let from = starts.toSorted()[0];
-    from <= lastDay;
-    from = isoDate(Date.parse(from) + PYPI_WINDOW_DAYS * DAY_MS)
-  ) {
-    const windowEnd = isoDate(
-      Date.parse(from) + (PYPI_WINDOW_DAYS - 1) * DAY_MS
-    )
-    const to = earlierDay(windowEnd, lastDay)
+  // read a window at a time, oldest first, from the earliest start, if any.
+  const windows =
+    starts.length > 0
+      ? listWindows(starts.reduce(earlierDay), lastDay, PYPI_WINDOW_DAYS)
+      : []
+  for (const { from, to } of windows) {
     const counts = await queryPypiDownloads(
       packages.map(({ pkg }) => pkg),
       from,
