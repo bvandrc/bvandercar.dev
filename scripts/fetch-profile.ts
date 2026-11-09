@@ -20,7 +20,6 @@ const REPO_URL = 'https://github.com/bvandrc/bvandrc'
 // reaches every build here without merging to bvandrc's main first. Once it's
 // merged and deleted, builds read main.
 const PROFILE_DEV_BRANCH = 'feat/bvandercar-dev-content'
-const OUT_DIR = PROFILE_DIR
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8' }).trim()
@@ -53,13 +52,13 @@ try {
   const commit = git('rev-parse', '--short', 'HEAD')
 
   // Cleared first, so a module bvandrc removed doesn't linger here.
-  await rm(OUT_DIR, { recursive: true, force: true })
-  await cp(join(checkout, 'src/content'), join(OUT_DIR, 'content'), {
+  await rm(PROFILE_DIR, { recursive: true, force: true })
+  await cp(join(checkout, 'src/content'), join(PROFILE_DIR, 'content'), {
     recursive: true,
   })
   await cp(
     join(checkout, 'src/generated/repo-counts.ts'),
-    join(OUT_DIR, 'repo-counts.ts')
+    join(PROFILE_DIR, 'repo-counts.ts')
   )
 
   // Screenshot paths are repo-relative ('./project-screenshots/…'), which is
