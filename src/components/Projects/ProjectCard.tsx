@@ -8,10 +8,11 @@ import { Card } from '@/components/primitives/Card'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
-import type { Project } from '@/generated/profile/content/projects'
+import { fillBlurb, type Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
+import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
 export type ProjectCardProps = {
@@ -81,7 +82,13 @@ export const ProjectCard = ({
           />
         </Tooltip>
       </div>
-      <p className="text-sm text-ink-muted">{project.blurb}</p>
+      <p className="text-sm text-ink-muted" data-testid="project-blurb">
+        {/* Its counts are the ones its glyphs show. */}
+        {fillBlurb(
+          project.blurb,
+          getProjectCounts(pick(project, COUNTS_FIELDS)).counts
+        )}
+      </p>
       <p className="text-xs">
         <RepoLink {...pick(project, COUNTS_FIELDS)} nameId={nameId} />
       </p>

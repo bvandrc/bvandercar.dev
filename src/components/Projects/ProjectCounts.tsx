@@ -3,20 +3,15 @@ import {
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
-import { isNotNil } from 'es-toolkit'
-import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip, type TooltipProps } from '@/components/primitives/Tooltip'
-import { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
-import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
-import { type CountsField, PACKAGE_FIELDS } from '~/counts'
-import type { ProjectPackage } from './charts/lib/project-charts'
+import type { CountsField } from '~/counts'
 import { useLazyCharts } from './hooks/useLazyCharts'
+import { getProjectCounts } from './lib/project-counts'
 
 // Charts size the tooltip to themselves, with text to match, where the
 // counts in words are a line of text.
@@ -49,19 +44,6 @@ const ChartsPlaceholder = ({ count }: ChartsPlaceholderProps) => (
 export type ProjectCountsProps = Pick<Project, CountsField> &
   Pick<TooltipProps, 'open' | 'onOpenChange'>
 
-/** The registry the project publishes a package to, and its name there, if any. */
-const getPackage = (
-  packages: Omit<ProjectCountsProps, 'repo'>
-): ProjectPackage | undefined => {
-  for (const [registry, field] of objectEntries(PACKAGE_FIELDS)) {
-    const name = packages[field]
-    if (name) {
-      return { registry, name }
-    }
-  }
-  return undefined
-}
-
 /**
  * A repo's counts as glyphs with shortened numbers, in full as alt text, and
  * on hover where there's nothing to chart, like "3,120 downloads".
@@ -85,11 +67,8 @@ export const ProjectCounts = ({
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  const activityTotals = REPO_ACTIVITY_TOTALS[repo]
-  const pkg = getPackage(packages)
-  const downloadTotal = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
-  // Only what this site fetched a history for can be charted.
-  const mayChart = activityTotals !== undefined || downloadTotal !== undefined
+  const { counts, pkg, chartCount } = getProjectCounts({ repo, ...packages })
+  const mayChart = chartCount > 0
   // Charts that failed to load leave the counts in words.
   const { charts, prefetchCharts } = useLazyCharts(mayChart)
   const projectCharts = charts?.getProjectCharts(repo, pkg)
@@ -108,14 +87,6 @@ export const ProjectCounts = ({
       prefetchOnOpen()
     }
   }, [open])
-  // This site's own fetches are fresher than the profile's weekly counts, and
-  // the charts are drawn from them, so a count they have wins, and each chart
-  // ends at the count shown for it.
-  const counts = {
-    ...REPO_COUNTS[repo],
-    ...activityTotals,
-    ...(downloadTotal !== undefined && { downloads: downloadTotal }),
-  }
   // The profile README badge's counts, in its order and with its icons.
   const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
     const count = counts[key]
@@ -145,11 +116,7 @@ export const ProjectCounts = ({
       )
     }
     if (isLoading) {
-      return (
-        <ChartsPlaceholder
-          count={[activityTotals, downloadTotal].filter(isNotNil).length}
-        />
-      )
+      return <ChartsPlaceholder count={chartCount} />
     }
     return label
   }
