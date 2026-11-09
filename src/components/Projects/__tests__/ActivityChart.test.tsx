@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { WeeklyActivity } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { ActivityChart } from '../ActivityChart'
 

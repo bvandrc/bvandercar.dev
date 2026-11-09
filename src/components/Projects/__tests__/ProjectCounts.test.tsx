@@ -8,12 +8,15 @@ import {
 import userEvent from '@testing-library/user-event'
 
 import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
-import type { Release, WeeklyDownloads } from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import type { WeeklyActivity } from '@/generated/repo-activity'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
-import type { Registry } from '~/counts'
+import type {
+  Registry,
+  Release,
+  WeeklyActivity,
+  WeeklyDownloads,
+} from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 

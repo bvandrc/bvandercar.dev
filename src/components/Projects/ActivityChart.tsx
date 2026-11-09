@@ -1,4 +1,4 @@
-import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { WeeklyActivity } from '~/counts'
 import { COUNT_ICONS } from './lib/count-icons'
 import { getActivityWeekEnds } from './lib/weekly-activity'
 import { WeeklyChart, type WeeklyChartProps } from './WeeklyChart'

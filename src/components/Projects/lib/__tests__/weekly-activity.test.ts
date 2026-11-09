@@ -1,4 +1,4 @@
-import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { WeeklyActivity } from '~/counts'
 import {
   describeWeeklyCommits,
   getActivityWeekEnds,

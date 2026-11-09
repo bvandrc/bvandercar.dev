@@ -4,15 +4,11 @@
  * downloads API. Neither needs credentials.
  */
 
+import type { Release } from '../../shared/counts.ts'
 import { DAY_MS, isoDate } from '../../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
 import { reportSkipped } from '../shared/skipped.ts'
-import {
-  byDay,
-  type DailyDownloads,
-  type RegistryHistory,
-  type Release,
-} from './common.ts'
+import { byDay, type DailyDownloads, type RegistryHistory } from './common.ts'
 
 /** Days per npm query, inside the 18 months the API answers at once. */
 const NPM_WINDOW_DAYS = 365
