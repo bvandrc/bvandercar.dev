@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent } from 'react'
+import { Fragment, useEffect, useEffectEvent } from 'react'
 import {
   type UsePressToggleOptions,
   usePressToggle,
@@ -6,8 +6,8 @@ import {
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip, type TooltipProps } from '@/components/primitives/Tooltip'
-import { getShownCountKinds } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
+import { cn } from '@/lib/cn'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { CountsField } from '~/counts'
 import { useLazyCharts } from './hooks/useLazyCharts'
@@ -25,6 +25,20 @@ const TOOLTIP_CLASSES = {
 const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
+
+/**
+ * The gap between two counts: 10px with room, closing to 4px without.
+ *
+ * Its width is 10px at most and 4px at least, which a flex `gap` can't be.
+ */
+const PairGap = () => (
+  // Its pieces wrap onto lines no one sees, so it can shrink to the widest.
+  <span className="flex h-0 flex-wrap overflow-hidden">
+    <span className="w-1" />
+    <span className="w-1" />
+    <span className="w-0.5" />
+  </span>
+)
 
 type ChartsPlaceholderProps = {
   /** How many charts may show */
@@ -67,7 +81,7 @@ export const ProjectCounts = ({
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  const { counts, pkg, chartCount } = getProjectCounts({ repo, ...packages })
+  const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
   const mayChart = chartCount > 0
   // Charts that failed to load leave the counts in words.
   const { charts, prefetchCharts } = useLazyCharts(mayChart)
@@ -87,12 +101,6 @@ export const ProjectCounts = ({
       prefetchOnOpen()
     }
   }, [open])
-  // The profile README badge's counts, in its order and with its icons, and
-  // its PRs only where its rule shows them.
-  const shown = getShownCountKinds(counts).flatMap(({ key, icon, noun }) => {
-    const count = counts[key]
-    return count === undefined ? [] : [{ key, icon, noun, count }]
-  })
   if (shown.length === 0) {
     return null
   }
@@ -135,7 +143,12 @@ export const ProjectCounts = ({
       <span
         role="img"
         aria-label={label}
-        className="inline-flex items-center gap-2.5"
+        className={cn(
+          'flex items-center',
+          // Takes the room its gaps need at their tightest, then grows them
+          // back as room allows, so they close up before "repo" wraps below.
+          'max-w-max grow basis-0'
+        )}
         {...triggerProps}
         // Starts loading the charts as the pointer arrives, ahead of the
         // tooltip's open delay, or with a tap.
@@ -145,11 +158,14 @@ export const ProjectCounts = ({
           triggerProps.onPointerDown(event)
         }}
         data-testid="project-counts">
-        {shown.map(({ key, icon, count }) => (
-          <span key={key} className="inline-flex items-center gap-1">
-            <Icon name={icon} className="size-[1.1em]" />
-            {formatCompactCount(count)}
-          </span>
+        {shown.map(({ key, icon, count }, index) => (
+          <Fragment key={key}>
+            {index > 0 && <PairGap />}
+            <span className="inline-flex items-center gap-1">
+              <Icon name={icon} className="size-[1.1em]" />
+              {formatCompactCount(count)}
+            </span>
+          </Fragment>
         ))}
       </span>
     </Tooltip>

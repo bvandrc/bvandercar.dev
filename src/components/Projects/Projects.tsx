@@ -29,29 +29,33 @@ export const Projects = () => {
       glyph={SECTIONS.PROJECTS.glyph}
       title={SECTIONS.PROJECTS.title}
       data-testid="projects">
-      {PROJECTS.map((group) => (
-        <SubSection
-          key={group.title}
-          id={sectionAnchor(group.title)}
-          // React Websites has its logo and no glyph; every other group, a glyph.
-          icon={group.glyph ?? group.icon}
-          title={group.title}>
-          {group.intro && (
-            <p className="font-semibold text-ink-muted">{group.intro}</p>
-          )}
-          <List className={GRID_CLASSES[getGridLayout(group)]}>
-            {group.projects.map((project) => (
-              <li key={project.repo}>
-                <ProjectCard
-                  project={project}
-                  pulsePreview={!previewOpened}
-                  onPreviewOpen={() => setPreviewOpened(true)}
-                />
-              </li>
-            ))}
-          </List>
-        </SubSection>
-      ))}
+      {PROJECTS.map((group) => {
+        const layout = getGridLayout(group)
+        return (
+          <SubSection
+            key={group.title}
+            id={sectionAnchor(group.title)}
+            // React Websites has its logo and no glyph; every other group, a glyph.
+            icon={group.glyph ?? group.icon}
+            title={group.title}>
+            {group.intro && (
+              <p className="font-semibold text-ink-muted">{group.intro}</p>
+            )}
+            <List className={GRID_CLASSES[layout]}>
+              {group.projects.map((project) => (
+                <li key={project.repo}>
+                  <ProjectCard
+                    project={project}
+                    centered={layout === 'PREVIEW'}
+                    pulsePreview={!previewOpened}
+                    onPreviewOpen={() => setPreviewOpened(true)}
+                  />
+                </li>
+              ))}
+            </List>
+          </SubSection>
+        )
+      })}
     </Section>
   )
 }

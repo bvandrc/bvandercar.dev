@@ -37,6 +37,11 @@ describe('getProjectCounts', () => {
   it("counts with this site's own fetches where it has them, with a chart for each", () => {
     expect(getProjectCounts({ repo: REPO, npmPackage: NPM_PACKAGE })).toEqual({
       counts: { commits: 55, prs: 14, downloads: 1217 },
+      // Too few PRs to show, by their rule.
+      shown: [
+        expect.objectContaining({ key: 'commits', count: 55 }),
+        expect.objectContaining({ key: 'downloads', count: 1217 }),
+      ],
       pkg: { registry: 'npm', name: NPM_PACKAGE },
       chartCount: 2,
     })
@@ -47,6 +52,7 @@ describe('getProjectCounts', () => {
       getProjectCounts({ repo: PROFILE_ONLY_REPO, pypiPackage: PYPI_PACKAGE })
     ).toEqual({
       counts: { commits: 7, prs: 3 },
+      shown: [expect.objectContaining({ key: 'commits', count: 7 })],
       pkg: { registry: 'pypi', name: PYPI_PACKAGE },
       chartCount: 0,
     })

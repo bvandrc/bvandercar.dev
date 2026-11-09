@@ -36,7 +36,12 @@ const ALL_PROJECTS = PROJECTS.flatMap((group) => group.projects)
 
 const renderCard = (project: Project, onPreviewOpen: () => void = vi.fn()) =>
   renderWithProviders(
-    <ProjectCard project={project} pulsePreview onPreviewOpen={onPreviewOpen} />
+    <ProjectCard
+      project={project}
+      centered={false}
+      pulsePreview
+      onPreviewOpen={onPreviewOpen}
+    />
   )
 
 /** Renders a card with a live preview, and returns it. */
