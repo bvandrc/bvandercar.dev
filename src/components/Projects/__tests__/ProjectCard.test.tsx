@@ -83,12 +83,18 @@ describe('ProjectCard', () => {
     expect(within(card).queryByTestId(LIVE_PREVIEW.FRAME)).toBeNull()
   })
 
-  it("shows a live preview's screenshot as a thumbnail", () => {
+  it("shows a live preview's screenshot as a thumbnail, until the preview opens", async () => {
+    const user = userEvent.setup()
     const card = renderPreviewCard()
-
     expect(within(card).getByTestId(THUMBNAIL).getAttribute('src')).toMatch(
       /^\/project-screenshots\/.+\.png$/
     )
+
+    await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
+    expect(within(card).queryByTestId(THUMBNAIL)).toBeNull()
+
+    await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
+    expect(within(card).getByTestId(THUMBNAIL)).toBeDefined()
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {

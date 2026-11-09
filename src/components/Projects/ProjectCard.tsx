@@ -49,7 +49,7 @@ export const ProjectCard = ({
   const screenshotSrc =
     project.screenshot &&
     `${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`
-  // A live preview's card shows its screenshot small, beside the blurb.
+  // A live preview's card shows its screenshot beside its name and blurb.
   const thumbnailSrc = project.embed ? screenshotSrc : undefined
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -74,91 +74,87 @@ export const ProjectCard = ({
         'hover-glow-24'
       )}
       data-testid="project-card">
-      <div
-        ref={headerRef}
-        className={cn(
-          'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
-          // A centered card spans its group's width, so from md, where other
-          // groups' cards pair up, it centers its name and blurb, with its
-          // counts on the right. Below md, it lines up like the rest.
-          centered && 'md:grid md:grid-cols-[1fr_auto_1fr]'
-        )}>
-        <div
-          ref={nameRef}
-          className={cn(
-            'flex shrink-0 items-center gap-2',
-            centered && 'md:col-start-2'
-          )}>
-          <h4
+      <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+          <div
+            ref={headerRef}
             className={cn(
-              'font-semibold',
-              NAME_SIZES[nameStep],
-              // On the 24px line the name had before, whatever its size, so the
-              // card keeps its height. After the size, whose own line height
-              // would otherwise win.
-              'leading-6'
+              'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
+              // A centered card spans its group's width, so from md, where other
+              // groups' cards pair up, it centers its name and blurb, with its
+              // counts on the right. Below md, it lines up like the rest.
+              centered && 'md:grid md:grid-cols-[1fr_auto_1fr]'
             )}>
-            <Tooltip content={project.href}>
-              <Link href={project.href} newTab>
-                <span id={nameId}>{project.name}</span>
-              </Link>
-            </Tooltip>
-          </h4>
-          <Tooltip content={typeIcon.title}>
-            <BrandIcon
-              slug={typeIcon.slug}
-              color={THEME_COLORS.INK_MUTED}
-              alt={typeIcon.title}
-              size={14}
-              className="size-3.5"
-            />
-          </Tooltip>
+            <div
+              ref={nameRef}
+              className={cn(
+                'flex shrink-0 items-center gap-2',
+                centered && 'md:col-start-2'
+              )}>
+              <h4
+                className={cn(
+                  'font-semibold',
+                  NAME_SIZES[nameStep],
+                  // On the 24px line the name had before, whatever its size, so the
+                  // card keeps its height. After the size, whose own line height
+                  // would otherwise win.
+                  'leading-6'
+                )}>
+                <Tooltip content={project.href}>
+                  <Link href={project.href} newTab>
+                    <span id={nameId}>{project.name}</span>
+                  </Link>
+                </Tooltip>
+              </h4>
+              <Tooltip content={typeIcon.title}>
+                <BrandIcon
+                  slug={typeIcon.slug}
+                  color={THEME_COLORS.INK_MUTED}
+                  alt={typeIcon.title}
+                  size={14}
+                  className="size-3.5"
+                />
+              </Tooltip>
+            </div>
+            <p
+              className={cn(
+                'flex text-xs',
+                // Grows from nothing, so it stays beside the name while its counts
+                // fit, with "repo" wrapping below them, and only then drops below.
+                'grow basis-0 justify-end',
+                // Its 20px height, 2px down, centers the counts' 16px line on the
+                // name's 24px one; with "repo" wrapped below, the pair outgrows it
+                // and starts 2px down.
+                'mt-0.5 min-h-5 items-center',
+                centered && 'md:col-start-3'
+              )}>
+              <RepoLink {...countsFields} nameId={nameId} />
+            </p>
+          </div>
+          <p
+            className={cn(
+              'text-left text-sm text-ink-muted',
+              // Closer to the name than the card's gap, as the name's own words.
+              '-mt-1',
+              centered && 'md:text-center'
+            )}
+            data-testid="project-blurb">
+            {/* Its counts are the ones its glyphs show. */}
+            {fillBlurb(project.blurb, counts)}
+          </p>
         </div>
-        <p
-          className={cn(
-            'flex text-xs',
-            // Grows from nothing, so it stays beside the name while its counts
-            // fit, with "repo" wrapping below them, and only then drops below.
-            'grow basis-0 justify-end',
-            // Its 20px height, 2px down, centers the counts' 16px line on the
-            // name's 24px one; with "repo" wrapped below, the pair outgrows it
-            // and starts 2px down.
-            'mt-0.5 min-h-5 items-center',
-            centered && 'md:col-start-3'
-          )}>
-          <RepoLink {...countsFields} nameId={nameId} />
-        </p>
-      </div>
-      <div
-        className={cn(
-          'flex items-center gap-4',
-          // Closer to the name than the card's gap, as the name's own words.
-          '-mt-1'
-        )}>
-        <p
-          className={cn(
-            'min-w-0 flex-1 text-left text-sm text-ink-muted',
-            centered && 'md:text-center',
-            // Inset as far as the thumbnail and its gap take on the right, so
-            // a centered blurb stays centered under the name.
-            centered && thumbnailSrc && 'md:ml-34'
-          )}
-          data-testid="project-blurb">
-          {/* Its counts are the ones its glyphs show. */}
-          {fillBlurb(project.blurb, counts)}
-        </p>
-        {thumbnailSrc && (
-          // A glimpse of the site before its preview is opened, from md; a
-          // phone shows the toggle alone.
+        {thumbnailSrc && !previewOpen && (
+          // What the site looks like, until its live preview takes over. From
+          // md: a phone shows the toggle alone.
           <img
             src={thumbnailSrc}
             alt={`${project.name} screenshot`}
             loading="lazy"
             className={cn(
-              'hidden w-30 shrink-0 rounded-sm border border-border md:block',
-              // The screenshots' 9:4, set ahead of the image so it holds its
-              // space while it loads.
-              'aspect-[9/4] object-cover object-top'
+              'hidden shrink-0 rounded-md border border-border md:block',
+              // One size for every card, its screenshot cropped to fit from
+              // the top, so they line up down the group.
+              'h-27 w-60 object-cover object-top'
             )}
             data-testid="project-thumbnail"
           />
