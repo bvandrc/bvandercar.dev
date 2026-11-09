@@ -170,6 +170,20 @@ describe('RunningTotalChart', () => {
     expect(screen.getAllByTestId(RELEASE)).toHaveLength(3)
   })
 
+  it("marks a release on a zoomed-in span's first day, as panned all the way back to it", () => {
+    renderChart({
+      releases: [{ version: '1.0.0', day: '2026-03-02' }],
+      // A zoomed-in span's ends are times, where the release's is a date.
+      span: {
+        start: '2026-03-02T00:00:00.000Z',
+        end: '2026-03-16T00:00:00.000Z',
+      },
+      zoomed: true,
+    })
+
+    expect(screen.getAllByTestId(RELEASE)).toHaveLength(1)
+  })
+
   it('zooms with the wheel, around the time under the pointer, in place of scrolling the page', () => {
     const onZoom = vi.fn()
     renderChart({ onZoom })

@@ -144,9 +144,12 @@ export const RunningTotalChart = ({
     (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
   )
   const { start, end } = span ?? { start: firstDay, end: lastDay }
+  // Compared as times, not strings: a zoomed-in span's ends are ISO times,
+  // which sort after the plain ISO date of the same day.
   const startTime = Date.parse(start)
+  const endTime = Date.parse(end)
   // A span of one day still has width to draw across.
-  const spanTime = Date.parse(end) - startTime || DAY_MS
+  const spanTime = endTime - startTime || DAY_MS
   /** Where a day falls across the plot. */
   const toX = (day: string) =>
     INSET + ((Date.parse(day) - startTime) / spanTime) * (PLOT_RIGHT - INSET)
@@ -158,9 +161,10 @@ export const RunningTotalChart = ({
   const lastX = toX(lastDay)
   // The line starts on the first day, at what was counted before it, or at a
   // span's later start, at what was counted by then.
-  const lineStart = [firstDay, start].sort()[1]
+  const lineStart = Date.parse(firstDay) < startTime ? start : firstDay
+  const lineStartTime = Date.parse(lineStart)
   const startX = toX(lineStart)
-  const firstShown = days.findIndex((day) => day >= lineStart)
+  const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
   // Through every day, whichever periods it reads out.
   const line = `M${startX},${toY(dayTotals[firstShown - 1] ?? 0)}${dayTotals
     .map((count, index) => [count, days[index]] as const)
@@ -168,7 +172,7 @@ export const RunningTotalChart = ({
     .map(([count, day]) => `L${toX(day)},${toY(count)}`)
     .join('')}`
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
-    (day) => day >= start && day <= end
+    (day) => Date.parse(day) >= startTime && Date.parse(day) <= endTime
   )
   /** How far across the plot a pointer at `clientX` is. */
   const toPlotX = (clientX: number) =>
@@ -178,9 +182,9 @@ export const RunningTotalChart = ({
     Math.min(
       Math.max(
         startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
-        Date.parse(lineStart)
+        lineStartTime
       ),
-      Date.parse(end)
+      endTime
     )
   // The release line within a few pixels of the pointer, which it snaps to
   // over a period.
@@ -203,7 +207,9 @@ export const RunningTotalChart = ({
     const period = index === -1 ? lastIndex : index
     // A zoomed-in span can end partway through a week, whose end, where its
     // dot would sit, is out of view, so the period before it reads out instead.
-    return periodEnds[period] > end ? Math.max(period - 1, 0) : period
+    return Date.parse(periodEnds[period]) > endTime
+      ? Math.max(period - 1, 0)
+      : period
   }
   const activePeriod = getActivePeriod()
   const activeX =
@@ -303,7 +309,7 @@ export const RunningTotalChart = ({
           data-testid="running-total-chart-line"
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
-        {lastDay <= end && (
+        {Date.parse(lastDay) <= endTime && (
           <text
             x={lastX + 6}
             // Centred on the line's end, about a third of the text's height down.
