@@ -1,3 +1,4 @@
+import { DAY_MS } from '~/dates'
 import {
   addDays,
   formatDay,
@@ -66,7 +67,6 @@ describe('getWheelZoomFactor', () => {
 
 describe('zoomSpan', () => {
   const FULL = { start: '2025-04-11', end: '2026-04-11' }
-  const DAY_MS = 24 * 60 * 60 * 1000
   /** A span's width, in days. */
   const getDays = ({ start, end }: { start: string; end: string }) =>
     (Date.parse(end) - Date.parse(start)) / DAY_MS
@@ -115,7 +115,6 @@ describe('zoomSpan', () => {
 describe('panSpan', () => {
   const FULL = { start: '2026-01-01', end: '2026-04-11' }
   const ZOOMED = { start: '2026-02-01', end: '2026-03-01' }
-  const DAY_MS = 24 * 60 * 60 * 1000
 
   it('moves a zoomed-in span later or earlier, keeping its width', () => {
     expect(panSpan(ZOOMED, FULL, 7 * DAY_MS)).toEqual({

@@ -10,6 +10,7 @@ import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type { Project } from '@/generated/profile/content/projects'
 import { cn } from '@/utils'
+import { COUNTS_FIELDS } from '~/counts'
 import { RepoLink } from './RepoLink'
 
 // Matches the ink-muted theme token in src/styles/index.css.
@@ -81,10 +82,7 @@ export const ProjectCard = ({
       </div>
       <p className="text-sm text-ink-muted">{project.blurb}</p>
       <p className="text-xs">
-        <RepoLink
-          {...pick(project, ['repo', 'npmPackage', 'pypiPackage'])}
-          nameId={nameId}
-        />
+        <RepoLink {...pick(project, COUNTS_FIELDS)} nameId={nameId} />
       </p>
       {project.embed ? (
         <LivePreview

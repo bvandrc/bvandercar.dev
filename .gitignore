@@ -16,8 +16,9 @@ public/apple-touch-icon-*.png
 src/generated/
 public/project-screenshots/
 
-# Daily download counts kept between runs by `pnpm fetch:downloads`
-.cache/
+# PyPI's daily download counts, which `pnpm fetch:downloads` publishes with
+# the site for the next build to read back
+public/data/
 
 # TypeScript's incremental build cache, written by tsc -b.
 *.tsbuildinfo

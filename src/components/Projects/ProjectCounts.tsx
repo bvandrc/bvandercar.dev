@@ -4,9 +4,11 @@ import {
   usePressToggle,
 } from '@bvandrc/react-toolkit'
 import { isNotNil, sum } from 'es-toolkit'
+import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
+import { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
@@ -15,7 +17,10 @@ import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
+import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import { type CountsField, PACKAGE_FIELDS } from '~/counts'
+import { DAY_MS } from '~/dates'
 import {
   describeWeeklyCommits,
   getWeekReachingCommits,
@@ -45,7 +50,7 @@ const UNPACKAGED_MIN_COMMITS = 20
 // How many commits a repo with no package has made before its chart starts.
 const UNPACKAGED_START_COMMITS = 15
 // The shortest stretch of dates the charts are drawn over: two weeks.
-const MIN_CHART_MS = 14 * 24 * 60 * 60 * 1000
+const MIN_CHART_MS = 14 * DAY_MS
 
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
 // hover, clicks through to the link the counts sit in.
@@ -53,21 +58,15 @@ const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
 
-export type ProjectCountsProps = Pick<
-  Project,
-  'repo' | 'npmPackage' | 'pypiPackage'
->
+export type ProjectCountsProps = Pick<Project, CountsField>
 
 /** The registry the project publishes a package to, and its name there, if any. */
-const getPackage = ({
-  npmPackage,
-  pypiPackage,
-}: Omit<ProjectCountsProps, 'repo'>) => {
-  if (npmPackage) {
-    return { registry: 'npm', name: npmPackage } as const
-  }
-  if (pypiPackage) {
-    return { registry: 'pypi', name: pypiPackage } as const
+const getPackage = (packages: Omit<ProjectCountsProps, 'repo'>) => {
+  for (const [registry, field] of objectEntries(PACKAGE_FIELDS)) {
+    const name = packages[field]
+    if (name) {
+      return { registry, name }
+    }
   }
   return undefined
 }
@@ -88,16 +87,18 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  const activity = REPO_ACTIVITY[repo]
   const pkg = getPackage(packages)
+  const downloads = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
+  // Histories, for the charts, written for the same repos and packages as the
+  // totals, so each chart ends at the count shown for it.
+  const activity = REPO_ACTIVITY[repo]
   const history = pkg && PACKAGE_DOWNLOADS[pkg.registry][pkg.name]
-  // This site's own fetches are fresher than the profile's weekly counts, and
-  // the charts are drawn from them, so a count they have wins, and each chart
-  // ends at the count shown for it.
+  // This site's own fetches are fresher than the profile's weekly counts, so
+  // a count they have wins.
   const counts = {
     ...REPO_COUNTS[repo],
-    ...(activity && { commits: sum(activity.commits), prs: sum(activity.prs) }),
-    ...(history && { downloads: sum(history.weekly) }),
+    ...REPO_ACTIVITY_TOTALS[repo],
+    ...(downloads !== undefined && { downloads }),
   }
   // The profile README badge's counts, in its order and with its icons.
   const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {

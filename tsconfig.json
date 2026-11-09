@@ -8,12 +8,14 @@
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"],
-      "~/test-support/*": ["./shared/test-support/*"]
+      "~/*": ["./shared/*"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    // Scripts run by Node directly import their siblings by their .ts names.
+    "allowImportingTsExtensions": true,
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
@@ -23,5 +25,5 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "vitest/globals"]
   },
-  "include": ["src", "scripts", "__tests__", "./*.ts"]
+  "include": ["src", "scripts", "shared", "__tests__", "./*.ts"]
 }

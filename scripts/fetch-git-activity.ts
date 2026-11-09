@@ -1,33 +1,38 @@
 /**
- * Fetches each project repo's commits and pull requests per week, for the
- * activity chart in its counts tooltip.
+ * Fetches each project repo's commits and pull requests: in all, which its
+ * counts' glyphs show, and week by week, for the commits chart in its counts'
+ * tooltip.
  *
- * Writes src/generated/repo-activity.ts, gitignored. Reads the repos from the
- * content `pnpm fetch:profile` copied, so run that first. Needs a
+ * Writes src/generated/repo-activity-totals.ts and
+ * src/generated/repo-activity.ts, gitignored, for the same repos. Reads the repos
+ * from the content `pnpm fetch:profile` copied, so run that first. Needs a
  * `GITHUB_TOKEN`, since a build makes about as many requests as GitHub allows
  * an hour without one; without it, every repo is skipped. A private repo
  * needs a token granted it. A repo that can't be read is left out with a
- * warning, and its card shows no chart, rather than failing the build. With
+ * warning, and its glyphs keep the profile's counts, rather than failing the
+ * build, unless `REQUIRE_FETCHED_DATA=true`, as the deploy sets it. With
  * `REUSE_FETCHED_DATA=true`, it keeps the file where it already exists, as a
  * preview build does with recent data it restored from its cache.
  */
 
-import { existsSync } from 'node:fs'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { countBy } from 'es-toolkit'
 
-const PROJECTS_FILE = 'src/generated/profile/content/projects.ts'
-const OUT_FILE = 'src/generated/repo-activity.ts'
+import { DAY_MS, isoDate } from '../shared/dates.ts'
+import { GENERATED_DIR } from './shared/constants.ts'
+import { exitIfReusing, writeGenerated } from './shared/generated.ts'
+import { fetchOk } from './shared/http.ts'
+import { findShortfall, getProjectValues } from './shared/projects.ts'
+import { reportSkipped } from './shared/skipped.ts'
+
+const TOTALS_FILE = `${GENERATED_DIR}/repo-activity-totals.ts`
+const HISTORY_FILE = `${GENERATED_DIR}/repo-activity.ts`
 const OWNER = 'bvandrc'
 // Actions sets this, to GitHub Enterprise's API on an Enterprise server.
 const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
 // Actions passes an unset secret as an empty string.
 const token = process.env.GITHUB_TOKEN || undefined
 
-const DAY_MS = 24 * 60 * 60 * 1000
 const WEEK_MS = 7 * DAY_MS
-
-const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10)
 
 /** The start of the Monday, UTC, of the week `time` falls in. */
 const getWeekStart = (time: number) => {
@@ -43,16 +48,13 @@ const fetchAll = async <T>(path: string) => {
   let url: string | undefined =
     `${API_URL}${path}${path.includes('?') ? '&' : '?'}per_page=100`
   while (url) {
-    const res: Response = await fetch(url, {
+    const res: Response = await fetchOk(url, {
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${token}`,
         'User-Agent': 'bvandercar.dev',
       },
     })
-    if (!res.ok) {
-      throw new Error(`GitHub API ${res.status} for ${url}`)
-    }
     items.push(...((await res.json()) as T[]))
     url = res.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
   }
@@ -60,11 +62,11 @@ const fetchAll = async <T>(path: string) => {
 }
 
 /**
- * A repo's commits on its default branch, and its pull requests by when they
- * were opened, counted per week from its first through the one under way.
+ * A repo's commits on its default branch, and its pull requests, each counted
+ * in all, and by the week each was made or opened in, from its first week
+ * through the one under way.
  *
- * Every commit and PR is counted, so the weeks sum to the repo's totals.
- * Undefined for a repo with neither.
+ * Every commit and PR is in a week, so the weeks sum to the totals.
  */
 const fetchActivity = async (repo: string) => {
   const [commits, pulls] = await Promise.all([
@@ -89,10 +91,7 @@ const fetchActivity = async (repo: string) => {
   const now = Date.now()
   // A running total never drops, so the week under way is charted too.
   const lastWeek = getWeekStart(now)
-  const firstWeek = Math.min(...commitWeeks, ...prWeeks)
-  if (!(firstWeek <= lastWeek)) {
-    return undefined
-  }
+  const firstWeek = Math.min(lastWeek, ...commitWeeks, ...prWeeks)
   const commitCounts = countBy(commitWeeks, String)
   const prCounts = countBy(prWeeks, String)
   const weeks: number[] = []
@@ -100,53 +99,63 @@ const fetchActivity = async (repo: string) => {
     weeks.push(week)
   }
   return {
-    firstWeek: isoDate(firstWeek),
-    lastDay: isoDate(now),
-    commits: weeks.map((week) => commitCounts[week] ?? 0),
-    prs: weeks.map((week) => prCounts[week] ?? 0),
+    commits: commits.length,
+    prs: pulls.length,
+    history: {
+      firstWeek: isoDate(firstWeek),
+      lastDay: isoDate(now),
+      commits: weeks.map((week) => commitCounts[week] ?? 0),
+      prs: weeks.map((week) => prCounts[week] ?? 0),
+    },
   }
 }
 
-if (process.env.REUSE_FETCHED_DATA === 'true' && existsSync(OUT_FILE)) {
-  console.log(`repo activity: reusing ${OUT_FILE}`)
-  process.exit(0)
-}
+exitIfReusing('git activity', [TOTALS_FILE, HISTORY_FILE])
 
-const projects = await readFile(PROJECTS_FILE, 'utf8')
-const repos = [
-  ...new Set(
-    [...projects.matchAll(/\brepo:\s*'([^']+)'/g)].map(([, repo]) => repo)
-  ),
-].sort()
+const repos = getProjectValues('repo')
 
 const entries: string[] = []
+const historyEntries: string[] = []
 if (token === undefined) {
-  console.warn(
-    '::notice::GITHUB_TOKEN is not set, so no project shows an activity chart'
-  )
+  reportSkipped("every repo's commits and PRs", 'GITHUB_TOKEN is not set')
 } else {
   const results = await Promise.allSettled(repos.map(fetchActivity))
   results.forEach((result, index) => {
     const repo = repos[index]
     if (result.status === 'rejected') {
-      console.warn(
-        `::warning::Activity for ${repo} could not be read, so its card shows no chart: ${result.reason instanceof Error ? result.reason.message : result.reason}`
-      )
-    } else if (result.value) {
-      const { firstWeek, lastDay, commits, prs } = result.value
-      entries.push(
-        `  '${repo}': { firstWeek: '${firstWeek}', lastDay: '${lastDay}', commits: [${commits.join(', ')}], prs: [${prs.join(', ')}] },`
+      reportSkipped(`commits and PRs for ${repo}`, result.reason)
+      return
+    }
+    const { commits, prs, history } = result.value
+    // Fewer than the profile's older count means the fetch missed some.
+    const shortfall = findShortfall(repo, { commits, prs })
+    if (shortfall) {
+      reportSkipped(`commits and PRs for ${repo}`, shortfall)
+    } else {
+      entries.push(`  '${repo}': { commits: ${commits}, prs: ${prs} },`)
+      historyEntries.push(
+        `  '${repo}': { firstWeek: '${history.firstWeek}', lastDay: '${history.lastDay}', commits: [${history.commits.join(', ')}], prs: [${history.prs.join(', ')}] },`
       )
     }
   })
 }
 
-await mkdir('src/generated', { recursive: true })
-await writeFile(
-  OUT_FILE,
-  `// GENERATED FILE — do not edit directly. Run \`pnpm fetch:activity\`.
-
-export type WeeklyActivity = {
+await writeGenerated(
+  TOTALS_FILE,
+  'fetch:git-activity',
+  `/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
+export const REPO_ACTIVITY_TOTALS: Record<
+  string,
+  { commits: number; prs: number } | undefined
+> = {
+${entries.join('\n')}
+}
+`
+)
+await writeGenerated(
+  HISTORY_FILE,
+  'fetch:git-activity',
+  `export type WeeklyActivity = {
   /** ISO date of the Monday the first week starts on */
   firstWeek: string
   /** ISO date the history was read, which ends the last week, the one under way */
@@ -159,10 +168,10 @@ export type WeeklyActivity = {
 
 /** Each project repo's commits and pull requests per week, keyed by repo name. */
 export const REPO_ACTIVITY: Record<string, WeeklyActivity | undefined> = {
-${entries.join('\n')}
+${historyEntries.join('\n')}
 }
 `
 )
 console.log(
-  `repo activity: weekly history for ${entries.length} of ${repos.length} repos`
+  `git activity: totals and weekly history for ${entries.length} of ${repos.length} repos`
 )
