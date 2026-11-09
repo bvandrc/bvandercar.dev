@@ -1,9 +1,7 @@
-import { useState } from 'react'
-
 import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
-import { afterFocusScroll } from '@/lib/after-focus-scroll'
+import { useFocusVisibleOpen } from '@/hooks/useFocusVisibleOpen'
 import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
 
@@ -22,7 +20,11 @@ export type RepoLinkProps = Omit<
  * shows the counts' one, charts and all.
  */
 export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
-  const [countsOpen, setCountsOpen] = useState(false)
+  const {
+    open: countsOpen,
+    setOpen: setCountsOpen,
+    focusProps,
+  } = useFocusVisibleOpen()
   return (
     <Link
       // Its name is its counts in full, then "repo", which needs the project
@@ -34,17 +36,7 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
       className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
-      onFocus={(event) => {
-        const link = event.currentTarget
-        // Radix closes a tooltip whose trigger scrolls, as Tab scrolls a link
-        // below the fold into view, so it opens once that scroll is done.
-        afterFocusScroll(link, () =>
-          // A click focuses the link too, which opens no tooltip, the same as
-          // Radix's own triggers: only focus the browser would ring does.
-          setCountsOpen(link.matches(':focus-visible'))
-        )
-      }}
-      onBlur={() => setCountsOpen(false)}
+      {...focusProps}
       data-testid="project-repo-link">
       <ProjectCounts
         {...countsProps}

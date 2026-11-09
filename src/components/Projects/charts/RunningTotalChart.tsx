@@ -1,31 +1,16 @@
-import { useId, useRef, useState } from 'react'
-import { uniq } from 'es-toolkit'
+import { useId, useRef } from 'react'
+import { clamp, uniq } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
-import { useZoomPanGestures } from '@/hooks/useZoomPanGestures'
 import { cn } from '@/lib/cn'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import type { Release } from '~/counts'
 import { addDays, DAY_MS, getDaysBetween } from '~/dates'
+import { usePlotInput } from './hooks/usePlotInput'
+import { getPlotScale, PLOT } from './lib/plot'
 import type { DaySpan } from './lib/spans'
 import { formatDay, formatLatestVersion, getRunningTotals } from './lib/weeks'
-
-// As wide as fits a 375px phone screen, with the tooltip's padding and margins.
-const WIDTH = 328
-const HEIGHT = 84
-// Keeps the 2px line and the 8px hover dot inside the box at either end.
-const INSET = 5
-// The strip along the top the caption sits in, which the line stays below,
-// tall enough that the total beside the line's end clears the caption too.
-const CAPTION_HEIGHT = 30
-// Where the highest total is drawn.
-const PLOT_TOP = CAPTION_HEIGHT + INSET
-// Room on the right for the total, written beside the line's end, as short as
-// the glyphs write it, like "70.3K".
-const TOTAL_WIDTH = 46
-// Where the last day is drawn.
-const PLOT_RIGHT = WIDTH - TOTAL_WIDTH
 
 /** What a chart counts, which picks its color, the same on every chart. */
 export type ChartTone = 'COMMITS' | 'DOWNLOADS'
@@ -104,15 +89,66 @@ export type RunningTotalChartViewProps = Pick<
   'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 >
 
+type PeriodMarkerProps = Pick<RunningTotalChartProps, 'tone'> & {
+  /** Where the period's last day falls across the plot */
+  x: number
+  /** Where its running total falls up the plot */
+  y: number
+}
+
+/** The hovered period's line down the plot, with a dot where it meets the line. */
+const PeriodMarker = ({ x, y, tone }: PeriodMarkerProps) => (
+  <>
+    <line
+      x1={x}
+      x2={x}
+      y1={PLOT.CAPTION_HEIGHT}
+      y2={PLOT.BASELINE}
+      className="stroke-ink-muted/50"
+    />
+    <circle
+      cx={x}
+      cy={y}
+      r={4}
+      strokeWidth={2}
+      // A ring in the tooltip's own color, so the dot stands off the line.
+      className={cn(TONE_CLASSES[tone].DOT, 'stroke-surface-raised')}
+      data-testid="running-total-chart-dot"
+    />
+  </>
+)
+
+type ChartReadoutProps = Pick<RunningTotalChartProps, 'icon'> & {
+  /** Whether it reads out the summary, rather than what's under the pointer */
+  isSummary: boolean
+  children: React.ReactNode
+}
+
+/** The caption in the chart's top-left corner, behind the count's glyph. */
+const ChartReadout = ({ icon, isSummary, children }: ChartReadoutProps) => (
+  <p
+    className={cn(
+      'flex items-center gap-1.5 whitespace-nowrap',
+      // Held in the top-left corner, over the strip the line leaves
+      // clear, and letting the pointer through to the plot beneath.
+      'pointer-events-none absolute top-0 left-0',
+      READOUT_CLASSES[isSummary ? 'SUMMARY' : 'PERIOD']
+    )}
+    data-testid="running-total-chart-readout">
+    {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
+    {children}
+  </p>
+)
+
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
  * the total, written beside it.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
- * summary, or the total through the period under the pointer, like its week. A release gets
- * a grey line on its day, which names its latest version while hovered. Drawn
- * for sighted pointer users only: pair it with the counts in words for
- * everyone else.
+ * summary, or the total through the period under the pointer, like its week.
+ * A release gets a grey line on its day, which names its latest version while
+ * hovered. Drawn for sighted pointer users only: pair it with the counts in
+ * words for everyone else.
  */
 export const RunningTotalChart = ({
   firstDay,
@@ -129,14 +165,9 @@ export const RunningTotalChart = ({
   releases = [],
   'data-testid': testId,
 }: RunningTotalChartProps) => {
-  // Where the pointer is across the plot, rather than the period under it,
-  // so a zoom or pan that slides the line beneath a still pointer reads out
-  // what it's over now.
-  const [pointerX, setPointerX] = useState<number>()
   const plotRef = useRef<SVGSVGElement>(null)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
-  const lastIndex = periodEnds.length - 1
   const days = daily.map((_, index) => addDays(firstDay, index))
   // It counts two days or more, so has a last.
   const lastDay = days.at(-1) ?? firstDay
@@ -146,25 +177,16 @@ export const RunningTotalChart = ({
   const periodTotals = periodEnds.map(
     (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
   )
-  const { start, end } = span ?? { start: firstDay, end: lastDay }
-  // Compared as times, not strings: a zoomed-in span's ends are ISO times,
-  // which sort after the plain ISO date of the same day.
-  const startTime = Date.parse(start)
-  const endTime = Date.parse(end)
-  // A span of one day still has width to draw across.
-  const spanTime = endTime - startTime || DAY_MS
-  /** Where a day falls across the plot. */
-  const toX = (day: string) =>
-    INSET + ((Date.parse(day) - startTime) / spanTime) * (PLOT_RIGHT - INSET)
-  // From zero to the total, zoomed in or not, so a height always means the
-  // same count. A total of zero stays on the baseline rather than dividing
-  // by zero.
-  const toY = (count: number) =>
-    HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
+  const shownSpan = span ?? { start: firstDay, end: lastDay }
+  const { startTime, endTime, msPerPx, toX, toY, getTimeAtX } = getPlotScale(
+    shownSpan,
+    total
+  )
   const lastX = toX(lastDay)
   // The line starts on the first day, at what was counted before it, or at a
   // span's later start, at what was counted by then.
-  const lineStart = Date.parse(firstDay) < startTime ? start : firstDay
+  const lineStart =
+    Date.parse(firstDay) < startTime ? shownSpan.start : firstDay
   const lineStartTime = Date.parse(lineStart)
   const startX = toX(lineStart)
   const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
@@ -174,21 +196,21 @@ export const RunningTotalChart = ({
     .slice(firstShown)
     .map(([count, day]) => `L${toX(day)},${toY(count)}`)
     .join('')}`
+  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
+  const getShownTimeAtX = (x: number) =>
+    clamp(getTimeAtX(x), lineStartTime, endTime)
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => Date.parse(day) >= startTime && Date.parse(day) <= endTime
   )
-  /** How far across the plot a pointer at `clientX` is. */
-  const toPlotX = (clientX: number) =>
-    clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
-  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
-  const getTimeAtX = (x: number) =>
-    Math.min(
-      Math.max(
-        startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
-        lineStartTime
-      ),
-      endTime
-    )
+  // Where the pointer is across the plot, rather than the period under it,
+  // so a zoom or pan that slides the line beneath a still pointer reads out
+  // what it's over now.
+  const { pointerX, pointerProps } = usePlotInput(plotRef, {
+    getTimeAtX: getShownTimeAtX,
+    valuePerPx: msPerPx,
+    onZoom,
+    onPan,
+  })
   // The release line within a few pixels of the pointer, which it snaps to
   // over a period.
   const activeRelease =
@@ -202,12 +224,12 @@ export const RunningTotalChart = ({
     if (pointerX === undefined || activeRelease) {
       return undefined
     }
-    const time = getTimeAtX(pointerX)
+    const time = getShownTimeAtX(pointerX)
     // The first period ending on or after that day, or the last past them all.
     const index = periodEnds.findIndex(
       (periodEnd) => Date.parse(periodEnd) + DAY_MS > time
     )
-    const period = index === -1 ? lastIndex : index
+    const period = index === -1 ? periodEnds.length - 1 : index
     // A zoomed-in span can end partway through a week, whose end, where its
     // dot would sit, is out of view, so the period before it reads out instead.
     return Date.parse(periodEnds[period]) > endTime
@@ -215,19 +237,6 @@ export const RunningTotalChart = ({
       : period
   }
   const activePeriod = getActivePeriod()
-  const activeX =
-    activePeriod === undefined ? undefined : toX(periodEnds[activePeriod])
-  // How much time one pixel across the plot covers.
-  const msPerPx = spanTime / (PLOT_RIGHT - INSET)
-  const pinchingRef = useZoomPanGestures(plotRef, {
-    getValueAt: (clientX) => getTimeAtX(toPlotX(clientX)),
-    valuePerPx: msPerPx,
-    onZoom,
-    onPan,
-  })
-  /** Reads out the release line or period under the pointer, so it never has to land on either. */
-  const selectPeriod = (event: React.PointerEvent<SVGSVGElement>) =>
-    setPointerX(toPlotX(event.clientX))
   /** What the caption says: the hovered release, or period, or else the summary. */
   const getReadout = () => {
     if (activeRelease) {
@@ -246,9 +255,9 @@ export const RunningTotalChart = ({
       <svg
         ref={plotRef}
         aria-hidden
-        width={WIDTH}
-        height={HEIGHT}
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        width={PLOT.WIDTH}
+        height={PLOT.HEIGHT}
+        viewBox={`0 0 ${PLOT.WIDTH} ${PLOT.HEIGHT}`}
         className={cn(
           'overflow-visible',
           // A finger dragged across it moves through the periods, not the page.
@@ -256,31 +265,19 @@ export const RunningTotalChart = ({
           // A mouse drags a zoomed-in chart along.
           PLOT_CURSOR_CLASSES[zoomed && onPan ? 'PANNABLE' : 'FIXED']
         )}
-        // A tap picks a period too, which a finger may not move to first.
-        onPointerDown={selectPeriod}
-        onPointerMove={(event) => {
-          if (!pinchingRef.current) {
-            selectPeriod(event)
-          }
-        }}
-        // A finger always leaves once lifted, so its period stays read out.
-        onPointerLeave={(event) => {
-          if (event.pointerType !== 'touch') {
-            setPointerX(undefined)
-          }
-        }}
+        {...pointerProps}
         data-testid="running-total-chart-plot">
         <defs>
           {/* Crops a zoomed-in line at the plot's edges. */}
           <clipPath id={clipId}>
-            <rect width={PLOT_RIGHT + INSET} height={HEIGHT} />
+            <rect width={PLOT.RIGHT + PLOT.INSET} height={PLOT.HEIGHT} />
           </clipPath>
         </defs>
         <line
-          x1={INSET}
-          x2={PLOT_RIGHT}
-          y1={HEIGHT - INSET}
-          y2={HEIGHT - INSET}
+          x1={PLOT.INSET}
+          x2={PLOT.RIGHT}
+          y1={PLOT.BASELINE}
+          y2={PLOT.BASELINE}
           className="stroke-ink-muted/30"
         />
         {releaseDays.map((day) => (
@@ -288,8 +285,8 @@ export const RunningTotalChart = ({
             key={day}
             x1={toX(day)}
             x2={toX(day)}
-            y1={CAPTION_HEIGHT}
-            y2={HEIGHT - INSET}
+            y1={PLOT.CAPTION_HEIGHT}
+            y2={PLOT.BASELINE}
             className={
               RELEASE_LINE_CLASSES[day === activeRelease ? 'ACTIVE' : 'IDLE']
             }
@@ -297,7 +294,7 @@ export const RunningTotalChart = ({
           />
         ))}
         <path
-          d={`${line}L${lastX},${HEIGHT - INSET}L${startX},${HEIGHT - INSET}Z`}
+          d={`${line}L${lastX},${PLOT.BASELINE}L${startX},${PLOT.BASELINE}Z`}
           clipPath={`url(#${clipId})`}
           className={TONE_CLASSES[tone].AREA}
         />
@@ -323,45 +320,21 @@ export const RunningTotalChart = ({
             {formatCompactCount(total)}
           </text>
         )}
-        {activePeriod !== undefined && activeX !== undefined && (
-          <>
-            <line
-              x1={activeX}
-              x2={activeX}
-              y1={CAPTION_HEIGHT}
-              y2={HEIGHT - INSET}
-              className="stroke-ink-muted/50"
-            />
-            <circle
-              cx={activeX}
-              cy={toY(periodTotals[activePeriod])}
-              r={4}
-              strokeWidth={2}
-              // A ring in the tooltip's own color, so the dot stands off the line.
-              className={cn(TONE_CLASSES[tone].DOT, 'stroke-surface-raised')}
-              data-testid="running-total-chart-dot"
-            />
-          </>
+        {activePeriod !== undefined && (
+          <PeriodMarker
+            x={toX(periodEnds[activePeriod])}
+            y={toY(periodTotals[activePeriod])}
+            tone={tone}
+          />
         )}
         {/* The hover target: the whole box, not just the thin line. */}
-        <rect width={WIDTH} height={HEIGHT} fill="transparent" />
+        <rect width={PLOT.WIDTH} height={PLOT.HEIGHT} fill="transparent" />
       </svg>
-      <p
-        className={cn(
-          'flex items-center gap-1.5 whitespace-nowrap',
-          // Held in the top-left corner, over the strip the line leaves
-          // clear, and letting the pointer through to the plot beneath.
-          'pointer-events-none absolute top-0 left-0',
-          READOUT_CLASSES[
-            activePeriod === undefined && activeRelease === undefined
-              ? 'SUMMARY'
-              : 'PERIOD'
-          ]
-        )}
-        data-testid="running-total-chart-readout">
-        {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
+      <ChartReadout
+        icon={icon}
+        isSummary={activePeriod === undefined && activeRelease === undefined}>
         {getReadout()}
-      </p>
+      </ChartReadout>
     </div>
   )
 }

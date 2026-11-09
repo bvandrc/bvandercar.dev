@@ -65,6 +65,19 @@ export type SectionProps = SectionPropsCommon & {
   glyph: GlyphName
 }
 
+type SectionIconProps = Pick<SectionProps, 'glyph'> & {
+  /** Sizes it, in place of the 1.25em it takes in a section's heading. */
+  className?: string
+}
+
+/** A section heading's glyph, in the site's orange. */
+export const SectionIcon = ({ glyph, className }: SectionIconProps) => (
+  <Icon
+    name={glyph}
+    className={cn('size-[1.25em] shrink-0 text-orange-400', className)}
+  />
+)
+
 /** A top-level page section: an h2 with an interface glyph in the site's orange. */
 export const Section = ({ glyph, className, ...props }: SectionProps) => (
   <TitledSection
@@ -77,9 +90,7 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
       "before:h-0.5 before:w-14 before:rounded-full before:bg-orange-700 before:content-['']",
       "after:h-0.5 after:w-14 after:rounded-full after:bg-orange-700 after:content-['']"
     )}
-    icon={
-      <Icon name={glyph} className="size-[1.25em] shrink-0 text-orange-400" />
-    }
+    icon={<SectionIcon glyph={glyph} />}
     className={cn('flex flex-col gap-5', className)}
     {...props}
   />

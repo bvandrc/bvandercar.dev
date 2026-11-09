@@ -30,6 +30,7 @@ export const ProjectCard = ({
   const nameId = useId()
   const cardRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
+  const typeIcon = TYPE_ICONS[project.type]
   const [previewOpen, setPreviewOpen] = useState(false)
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -70,11 +71,11 @@ export const ProjectCard = ({
             </Link>
           </Tooltip>
         </h4>
-        <Tooltip content={TYPE_ICONS[project.type].title}>
+        <Tooltip content={typeIcon.title}>
           <BrandIcon
-            slug={TYPE_ICONS[project.type].slug}
+            slug={typeIcon.slug}
             color={THEME_COLORS.INK_MUTED}
-            alt={TYPE_ICONS[project.type].title}
+            alt={typeIcon.title}
             size={14}
             className="size-3.5"
           />
