@@ -37,18 +37,7 @@ runs:
         path: src/generated/*.ts
         key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**') }}-${{ steps.today.outputs.date }}
 
-    # PyPI's daily download counts from earlier runs, so the build queries
-    # BigQuery for just the days since. Each run saves its own copy, and the
-    # next restores the newest. Nothing queries BigQuery when the fetched data
-    # is reused.
-    - name: Cache PyPI downloads
-      if: inputs.bigquery-credentials != '' && steps.data.outputs.cache-hit != 'true'
-      uses: actions/cache@v6
-      with:
-        path: .cache
-        key: pypi-downloads-${{ github.run_id }}-${{ github.run_attempt }}
-        restore-keys: pypi-downloads-
-
+    # Nothing queries BigQuery when the fetched data is reused.
     - name: Authenticate to Google Cloud
       if: inputs.bigquery-credentials != '' && steps.data.outputs.cache-hit != 'true'
       uses: google-github-actions/auth@v3

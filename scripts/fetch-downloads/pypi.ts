@@ -2,23 +2,28 @@
  * PyPI's side of `pnpm fetch:downloads`: a package's first upload day, and its
  * downloads per day, from Google BigQuery's public PyPI dataset.
  *
- * Its first days and daily counts are kept in CACHE_DIR between runs, so a
- * run queries only the days since the last.
+ * Its first days and daily counts are published with the site, which the next
+ * run reads them back from, so a run queries only the days since the last
+ * deploy.
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
 
+import { SITE_URL } from '../../site.config.ts'
 import { DAY_MS } from '../shared/constants.ts'
 import { earlierDay, isoDate, laterDay, listDays } from '../shared/dates.ts'
+import { getErrorMessage } from '../shared/errors.ts'
+import { fetchJson } from '../shared/http.ts'
 import { reportSkipped } from '../shared/skipped.ts'
 import type { DailyDownloads, RegistryHistory } from './common.ts'
 
-// Gitignored; CI's deploy and preview builds carry it between runs in the
-// Actions cache.
-const CACHE_DIR = '.cache'
-const PYPI_CACHE_FILE = `${CACHE_DIR}/pypi-downloads.json`
-const FIRST_DAYS_FILE = `${CACHE_DIR}/pypi-first-days.json`
+// Copied into the built site, gitignored. The site never loads them; only the
+// next build does, from the live site, where they last as long as the deploy,
+// unlike an Actions cache, which GitHub drops after a week unused.
+const PUBLISHED_DIR = 'public/data'
+const DAILY_FILE = 'pypi-downloads.json'
+const FIRST_DAYS_FILE = 'pypi-first-days.json'
 // The latest cached days a run queries again, since the dataset can still be
 // filling them in.
 const PYPI_REFRESH_DAYS = 3
@@ -45,11 +50,14 @@ type DailyCache = Record<string, Record<string, number> | undefined>
 /** Each package's first upload day, by package. */
 type FirstDaysCache = Record<string, string | undefined>
 
-/** What a run before this one kept in `file`, or nothing. */
-const readCache = async <T extends object>(file: string): Promise<T> => {
+/** What the live site published as `file`, or nothing where it has none or can't be reached. */
+const readPublished = async <T extends object>(file: string): Promise<T> => {
   try {
-    return JSON.parse(await readFile(file, 'utf8')) as T
-  } catch {
+    return await fetchJson<T>(`${SITE_URL}data/${file}`)
+  } catch (error) {
+    console.log(
+      `PyPI downloads: starting without the live site's ${file}: ${getErrorMessage(error)}`
+    )
     return {} as T
   }
 }
@@ -201,10 +209,10 @@ const fetchPypiDailyDownloads = async (
   )
 }
 
-/** Keeps `cache` in `file` for the next run, even after a query that failed partway, so it picks up where this one left off. */
-const writeCache = async (file: string, cache: object) => {
-  await mkdir(CACHE_DIR, { recursive: true })
-  await writeFile(file, JSON.stringify(cache))
+/** Writes `data` as `file`, to publish with the site for the next run, even after a query that failed partway, so it picks up where this one left off. */
+const writePublished = async (file: string, data: object) => {
+  await mkdir(PUBLISHED_DIR, { recursive: true })
+  await writeFile(`${PUBLISHED_DIR}/${file}`, JSON.stringify(data))
 }
 
 /**
@@ -228,8 +236,8 @@ export const fetchPypiHistory = async (
     return history
   }
   try {
-    const firstDaysCache = await readCache<FirstDaysCache>(FIRST_DAYS_FILE)
-    const cache = await readCache<DailyCache>(PYPI_CACHE_FILE)
+    const firstDaysCache = await readPublished<FirstDaysCache>(FIRST_DAYS_FILE)
+    const cache = await readPublished<DailyCache>(DAILY_FILE)
     try {
       const firstDays = await getFirstDays(packages, firstDaysCache)
       for (const pkg of packages) {
@@ -242,8 +250,8 @@ export const fetchPypiHistory = async (
         history.push({ pkg, days: days[index] })
       })
     } finally {
-      await writeCache(FIRST_DAYS_FILE, firstDaysCache)
-      await writeCache(PYPI_CACHE_FILE, cache)
+      await writePublished(FIRST_DAYS_FILE, firstDaysCache)
+      await writePublished(DAILY_FILE, cache)
     }
   } catch (error) {
     reportSkipped('PyPI downloads', error)
