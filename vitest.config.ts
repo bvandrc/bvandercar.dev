@@ -9,7 +9,7 @@ export default defineConfig({
     // The tsconfig path aliases, which vite.config.ts resolves for the build.
     alias: {
       '@': resolve(import.meta.dirname, 'src'),
-      '~/test-support': resolve(import.meta.dirname, 'shared/test-support'),
+      '~': resolve(import.meta.dirname, 'shared'),
     },
   },
   test: {
@@ -20,7 +20,11 @@ export default defineConfig({
     globals: true,
     watch: false,
     root: '.',
-    include: ['./src/**/*.{test,spec}.*', './__tests__/*.{test,spec}.*'],
+    include: [
+      './src/**/*.{test,spec}.*',
+      './shared/**/*.{test,spec}.*',
+      './__tests__/*.{test,spec}.*',
+    ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/playwright/**'],
   },
 })

@@ -1,6 +1,6 @@
 import { clamp, sum } from 'es-toolkit'
 
-const DAY_MS = 24 * 60 * 60 * 1000
+import { addDays, DAY_MS, getDaysBetween } from '~/dates'
 
 // The dates are calendar days, so they're read in UTC, where they start.
 const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -16,26 +16,10 @@ const DAY_FORMAT = new Intl.DateTimeFormat('en-US', {
 })
 
 /** An ISO date as its month: `'2026-03-02'` → `'Mar 2026'`. */
-export const formatMonth = (isoDate: string) =>
-  MONTH_FORMAT.format(Date.parse(isoDate))
+export const formatMonth = (day: string) => MONTH_FORMAT.format(Date.parse(day))
 
 /** An ISO date in full: `'2026-03-02'` → `'Mar 2, 2026'`. */
-export const formatDay = (isoDate: string) =>
-  DAY_FORMAT.format(Date.parse(isoDate))
-
-/** The ISO date `days` after `isoDate`, or before it for a negative count. */
-export const addDays = (isoDate: string, days: number) =>
-  new Date(Date.parse(isoDate) + days * DAY_MS).toISOString().slice(0, 10)
-
-/** How many days `isoDate` is after `from`, or before it for a negative count. */
-export const getDaysBetween = (from: string, isoDate: string) =>
-  Math.round((Date.parse(isoDate) - Date.parse(from)) / DAY_MS)
-
-/** Every ISO date from `first` through `last`, oldest first. */
-export const listDays = (first: string, last: string) =>
-  Array.from({ length: getDaysBetween(first, last) + 1 }, (_, index) =>
-    addDays(first, index)
-  )
+export const formatDay = (day: string) => DAY_FORMAT.format(Date.parse(day))
 
 /** A week of daily counts: the ISO dates it starts and ends on, and what it counted. */
 export type Week = { start: string; end: string; count: number }

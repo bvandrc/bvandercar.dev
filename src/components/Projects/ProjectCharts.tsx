@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
-import type { Registry } from '@/generated/package-download-totals'
 import type { DownloadHistory } from '@/generated/package-downloads'
 import type { CommitHistory } from '@/generated/repo-activity'
+import type { Registry } from '~/counts'
 import { ActivityChart, type ActivityChartProps } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
 import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'

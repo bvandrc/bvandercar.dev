@@ -1,12 +1,6 @@
 import type { CommitHistory } from '@/generated/repo-activity'
-import {
-  addDays,
-  formatDay,
-  formatMonth,
-  getPeakWeek,
-  listDays,
-  sumWeeks,
-} from './weeks'
+import { addDays, listDays } from '~/dates'
+import { formatDay, formatMonth, getPeakWeek, sumWeeks } from './weeks'
 
 /** The ISO date each of the history's weeks ends on, oldest first: a Sunday, but for the one under way, which ends on its last day. */
 export const getActivityWeekEnds = ({ firstDay, lastDay }: CommitHistory) =>

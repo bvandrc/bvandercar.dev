@@ -4,6 +4,7 @@ import {
   usePressToggle,
 } from '@bvandrc/react-toolkit'
 import { isNotNil } from 'es-toolkit'
+import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
@@ -13,6 +14,7 @@ import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import { type CountsField, PACKAGE_FIELDS } from '~/counts'
 import type { ProjectPackage } from './lib/project-charts'
 
 /** Loads the charts' code, and the histories they chart, which the module system keeps once loaded. */
@@ -33,21 +35,17 @@ const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
 
-export type ProjectCountsProps = Pick<
-  Project,
-  'repo' | 'npmPackage' | 'pypiPackage'
->
+export type ProjectCountsProps = Pick<Project, CountsField>
 
 /** The registry the project publishes a package to, and its name there, if any. */
-const getPackage = ({
-  npmPackage,
-  pypiPackage,
-}: Omit<ProjectCountsProps, 'repo'>): ProjectPackage | undefined => {
-  if (npmPackage) {
-    return { registry: 'npm', name: npmPackage }
-  }
-  if (pypiPackage) {
-    return { registry: 'pypi', name: pypiPackage }
+const getPackage = (
+  packages: Omit<ProjectCountsProps, 'repo'>
+): ProjectPackage | undefined => {
+  for (const [registry, field] of objectEntries(PACKAGE_FIELDS)) {
+    const name = packages[field]
+    if (name) {
+      return { registry, name }
+    }
   }
   return undefined
 }

@@ -1,13 +1,7 @@
-import type { Registry } from '@/generated/package-download-totals'
 import type { DownloadHistory } from '@/generated/package-downloads'
-import {
-  formatDay,
-  formatMonth,
-  getDaysBetween,
-  getPeakWeek,
-  listDays,
-  sumWeeks,
-} from './weeks'
+import type { Registry } from '~/counts'
+import { getDaysBetween, listDays } from '~/dates'
+import { formatDay, formatMonth, getPeakWeek, sumWeeks } from './weeks'
 
 /** Each registry's name, as written in a sentence. */
 export const REGISTRY_NAMES = {

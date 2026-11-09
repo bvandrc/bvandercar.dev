@@ -1,6 +1,6 @@
-import { type DaySpan, listDays } from './weeks'
+import { DAY_MS, listDays } from '~/dates'
+import type { DaySpan } from './weeks'
 
-const DAY_MS = 24 * 60 * 60 * 1000
 // A chart spanning fewer days than this reads out day by day rather than week
 // by week, where weeks would be too few to point at.
 const DAILY_SPAN_DAYS = 50

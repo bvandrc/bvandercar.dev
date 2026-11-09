@@ -1,11 +1,12 @@
 import { isNotNil, sum } from 'es-toolkit'
 
-import type { Registry } from '@/generated/package-download-totals'
 import {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
 } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
+import type { Registry } from '~/counts'
+import { DAY_MS } from '~/dates'
 import { describeWeeklyCommits, getDayReachingCommits } from './weekly-activity'
 import { describeWeeklyDownloads } from './weekly-downloads'
 
@@ -14,7 +15,7 @@ const UNPACKAGED_MIN_COMMITS = 20
 // How many commits a repo with no package has made before its chart starts.
 const UNPACKAGED_START_COMMITS = 15
 // The shortest stretch of dates the charts are drawn over: two weeks.
-const MIN_CHART_MS = 14 * 24 * 60 * 60 * 1000
+const MIN_CHART_MS = 14 * DAY_MS
 
 /** A package a project publishes: the registry, and its name there. */
 export type ProjectPackage = { registry: Registry; name: string }

@@ -1,12 +1,10 @@
+import { addDays, DAY_MS } from '~/dates'
 import {
-  addDays,
   formatDay,
   formatLatestVersion,
   formatMonth,
-  getDaysBetween,
   getPeakWeek,
   getWheelZoomFactor,
-  listDays,
   panSpan,
   sumWeeks,
   type Week,
@@ -22,31 +20,6 @@ describe('formatMonth', () => {
 describe('formatDay', () => {
   it('writes an ISO date in full', () => {
     expect(formatDay('2026-03-01')).toBe('Mar 1, 2026')
-  })
-})
-
-describe('addDays', () => {
-  it('moves an ISO date forward or back, across month ends', () => {
-    expect(addDays('2026-02-26', 7)).toBe('2026-03-05')
-    expect(addDays('2026-03-05', -7)).toBe('2026-02-26')
-  })
-})
-
-describe('getDaysBetween', () => {
-  it('counts the days from one ISO date to another, across month ends', () => {
-    expect(getDaysBetween('2026-02-26', '2026-03-05')).toBe(7)
-    expect(getDaysBetween('2026-03-05', '2026-02-26')).toBe(-7)
-  })
-})
-
-describe('listDays', () => {
-  it('lists every day from the first through the last', () => {
-    expect(listDays('2026-02-27', '2026-03-02')).toEqual([
-      '2026-02-27',
-      '2026-02-28',
-      '2026-03-01',
-      '2026-03-02',
-    ])
   })
 })
 
@@ -109,7 +82,6 @@ describe('getWheelZoomFactor', () => {
 
 describe('zoomSpan', () => {
   const FULL = { start: '2025-04-11', end: '2026-04-11' }
-  const DAY_MS = 24 * 60 * 60 * 1000
   /** A span's width, in days. */
   const getDays = ({ start, end }: { start: string; end: string }) =>
     (Date.parse(end) - Date.parse(start)) / DAY_MS
@@ -158,7 +130,6 @@ describe('zoomSpan', () => {
 describe('panSpan', () => {
   const FULL = { start: '2026-01-01', end: '2026-04-11' }
   const ZOOMED = { start: '2026-02-01', end: '2026-03-01' }
-  const DAY_MS = 24 * 60 * 60 * 1000
 
   it('moves a zoomed-in span later or earlier, keeping its width', () => {
     expect(panSpan(ZOOMED, FULL, 7 * DAY_MS)).toEqual({
