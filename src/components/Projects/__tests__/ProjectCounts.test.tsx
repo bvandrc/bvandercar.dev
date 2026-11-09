@@ -275,6 +275,21 @@ describe('ProjectCounts', () => {
     expect(getReleaseXs()).toEqual(unzoomed)
   })
 
+  it('opens from outside its trigger, loading its charts, and reports closing', async () => {
+    // A fresh copy, since the charts, once loaded, are kept for later counts.
+    vi.resetModules()
+    const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
+    const user = userEvent.setup()
+    const changeOpen = vi.fn()
+    renderWithProviders(
+      <FreshCounts repo={REPO} open onOpenChange={changeOpen} />
+    )
+
+    expect(await screen.findByTestId(ACTIVITY_CHART)).toBeTruthy()
+    await user.keyboard('{Escape}')
+    expect(changeOpen).toHaveBeenLastCalledWith(false)
+  })
+
   describe('in a link', () => {
     /** Renders the counts in a link, and records whether each click on the page goes on to follow it. */
     const renderInLink = () => {

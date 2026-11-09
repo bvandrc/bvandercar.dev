@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { objectKeys } from 'ts-extras'
 
@@ -8,7 +8,6 @@ import { SELECTORS } from '~/test-support/selectors'
 import { RepoLink } from '../RepoLink'
 
 const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
-const { TOOLTIP } = SELECTORS
 
 // A repo with counts, for the link to hold.
 const REPO = objectKeys(REPO_COUNTS)[0]
@@ -30,14 +29,17 @@ describe('RepoLink', () => {
 
   // The test DOM matches :focus-visible on any focus, a click's too, so
   // playwright/e2e/repo-link.spec.ts checks that a click opens none.
-  it('shows the repo tooltip on keyboard focus', async () => {
+  it("shows the counts' tooltip on keyboard focus", async () => {
     const user = userEvent.setup()
     const link = renderLink()
 
     await user.tab()
     expect(document.activeElement).toBe(link)
-    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(
-      'GitHub Repository'
+    // The open tooltip is the one describing the counts, not "repo".
+    await waitFor(() =>
+      expect(
+        within(link).getByTestId(COUNTS).getAttribute('aria-describedby')
+      ).toBe(screen.getByRole('tooltip').id)
     )
   })
 })

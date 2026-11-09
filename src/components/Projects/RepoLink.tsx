@@ -6,7 +6,10 @@ import { Tooltip } from '@/components/primitives/Tooltip'
 import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
 
-export type RepoLinkProps = ProjectCountsProps & {
+export type RepoLinkProps = Omit<
+  ProjectCountsProps,
+  'open' | 'onOpenChange'
+> & {
   /** The `id` of the project's name, which describes the link */
   nameId: string
 }
@@ -15,10 +18,10 @@ export type RepoLinkProps = ProjectCountsProps & {
  * A project's link to its GitHub repo: its counts, then "repo".
  *
  * Each part shows its own tooltip on hover, and keyboard focus on the link
- * shows the "repo" one.
+ * shows the counts' one, charts and all.
  */
 export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
-  const [repoTooltipOpen, setRepoTooltipOpen] = useState(false)
+  const [countsOpen, setCountsOpen] = useState(false)
   return (
     <Link
       // Its name is its counts in full, then "repo", which needs the project
@@ -30,18 +33,25 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
       className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
-      // A click focuses the link too, which opens no tooltip, the same as
-      // Radix's own triggers: only focus the browser would ring does.
-      onFocus={(event) =>
-        setRepoTooltipOpen(event.currentTarget.matches(':focus-visible'))
-      }
-      onBlur={() => setRepoTooltipOpen(false)}
+      onFocus={(event) => {
+        const link = event.currentTarget
+        // Radix closes a tooltip whose trigger scrolls, as Tab scrolls a link
+        // below the fold into view, so it opens a frame on, once that scroll
+        // has fired.
+        requestAnimationFrame(() =>
+          // A click focuses the link too, which opens no tooltip, the same as
+          // Radix's own triggers: only focus the browser would ring does.
+          setCountsOpen(link.matches(':focus-visible'))
+        )
+      }}
+      onBlur={() => setCountsOpen(false)}
       data-testid="project-repo-link">
-      <ProjectCounts {...countsProps} />
-      <Tooltip
-        content="GitHub Repository"
-        open={repoTooltipOpen}
-        onOpenChange={setRepoTooltipOpen}>
+      <ProjectCounts
+        {...countsProps}
+        open={countsOpen}
+        onOpenChange={setCountsOpen}
+      />
+      <Tooltip content="GitHub Repository">
         <span>
           repo{' '}
           <Icon
