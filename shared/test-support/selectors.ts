@@ -10,7 +10,6 @@ export const SELECTORS = {
     SELF: 'projects',
     CARD: 'project-card',
     REPO_LINK: 'project-repo-link',
-    REPO_LINK_LABEL: 'project-repo-link-label',
     COUNTS: 'project-counts',
   },
   SKILLS: {
