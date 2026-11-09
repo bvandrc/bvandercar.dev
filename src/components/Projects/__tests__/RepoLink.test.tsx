@@ -28,16 +28,13 @@ describe('RepoLink', () => {
     expect(within(link).getByTestId(COUNTS)).toBeDefined()
   })
 
-  it('shows the repo tooltip on keyboard focus, not on a click', async () => {
+  // The test DOM matches :focus-visible on any focus, a click's too, so
+  // playwright/e2e/repo-link.spec.ts checks that a click opens none.
+  it('shows the repo tooltip on keyboard focus', async () => {
     const user = userEvent.setup()
     const link = renderLink()
 
-    await user.click(link)
-    expect(document.activeElement).toBe(link)
-    expect(screen.queryByTestId(TOOLTIP)).toBeNull()
-
     await user.tab()
-    await user.tab({ shift: true })
     expect(document.activeElement).toBe(link)
     expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(
       'GitHub Repository'
