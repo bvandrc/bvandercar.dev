@@ -34,10 +34,6 @@ jobs:
     environment:
       name: preview
       url: ${{ steps.upload.outputs.url }}
-    env:
-      # Whether the secret is set, without putting the key itself in every step's env.
-      HAS_BIGQUERY_CREDENTIALS: ${{ secrets.BIGQUERY_CREDENTIALS != '' }}
-      REFRESH_DATA: ${{ contains(github.event.pull_request.labels.*.name, 'refresh-data') }}
 
     steps:
       - name: Checkout repo
@@ -46,50 +42,14 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Get today's date
-        id: today
-        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
-
-      # Today's data from a preview or deploy that fetched it with these same
-      # scripts, which a PR can restore from its own runs or from main's.
-      # Saved once the job passes, if there was none to restore.
-      - name: Cache fetched data
-        id: data
-        if: env.REFRESH_DATA != 'true'
-        uses: actions/cache@v6
+      - name: Build site
+        uses: ./.github/actions/build-site
         with:
-          path: src/generated/*.ts
-          key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ steps.today.outputs.date }}
-
-      # For PyPI's download counts, which the build queries from BigQuery.
-      # Without the secret, the build still passes and PyPI projects show none.
-      # PyPI's daily download counts from earlier runs, so the build queries
-      # BigQuery for just the days since. Each run saves its own copy, and
-      # the next restores the newest.
-      - name: Cache PyPI downloads
-        # Nothing queries BigQuery when the fetched data is reused.
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true' && steps.data.outputs.cache-hit != 'true'
-        uses: actions/cache@v6
-        with:
-          path: .cache
-          key: pypi-downloads-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: pypi-downloads-
-
-      - name: Authenticate to Google Cloud
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true' && steps.data.outputs.cache-hit != 'true'
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.BIGQUERY_CREDENTIALS }}
-
-      - name: Build project
-        run: pnpm build
-        env:
-          # For the repos' commit and PR counts. The workflow's own token reads public
-          # repos; PROJECT_REPOS_TOKEN, if set, reads every project repo,
-          # private ones too.
-          GITHUB_TOKEN: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
-          # Keeps the restored data rather than fetching it again.
-          REUSE_FETCHED_DATA: ${{ steps.data.outputs.cache-hit == 'true' }}
+          # The workflow's own token reads public repos; PROJECT_REPOS_TOKEN,
+          # if set, reads every project repo, private ones too.
+          github-token: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
+          bigquery-credentials: ${{ secrets.BIGQUERY_CREDENTIALS }}
+          reuse-fetched-data: ${{ !contains(github.event.pull_request.labels.*.name, 'refresh-data') }}
 
       - name: Upload preview version
         id: upload
