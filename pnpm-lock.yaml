@@ -178,9 +178,6 @@ importers:
       clsx:
         specifier: ^2
         version: 2.1.1
-      colord:
-        specifier: ^2
-        version: 2.10.0
       es-toolkit:
         specifier: ^1
         version: 1.53.0
@@ -266,6 +263,9 @@ importers:
       axe-core:
         specifier: ^4
         version: 4.14.0
+      colord:
+        specifier: ^2
+        version: 2.10.0
       happy-dom:
         specifier: ^21
         version: 21.0.4

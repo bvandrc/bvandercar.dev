@@ -19,4 +19,11 @@ declare module 'virtual:icons' {
 
   /** Glyphs keyed by name, for every name in `GLYPH_NAMES`. */
   export const UI_ICONS: Partial<Record<string, VirtualIcon>>
+
+  /**
+   * Each skill badge's logo color, as hex without the `#`, keyed by its slug.
+   *
+   * Its brand color where that shows on the chip, else the chip's ink.
+   */
+  export const SKILL_ICON_COLORS: Partial<Record<string, string>>
 }
