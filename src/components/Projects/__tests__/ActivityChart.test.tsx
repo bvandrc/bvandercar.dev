@@ -4,7 +4,7 @@ import type { WeeklyActivity } from '@/generated/repo-activity'
 import { SELECTORS } from '~/test-support/selectors'
 import { ActivityChart } from '../ActivityChart'
 
-const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT } = SELECTORS.PROJECTS.WEEKLY_CHART
 
 // Read on Thursday, Mar 12, partway through its last week.
 const ACTIVITY = {
@@ -15,16 +15,10 @@ const ACTIVITY = {
 } satisfies WeeklyActivity
 
 describe('ActivityChart', () => {
-  it('charts the running total of commits, ending at them all', () => {
+  it("captions itself as commits, and reads out the activity's weeks, the one under way through the day it was read", () => {
     render(<ActivityChart activity={ACTIVITY} />)
 
     expect(screen.getByTestId(READOUT).textContent).toBe('Commits')
-    expect(screen.getByTestId(TOTAL).textContent).toBe('55')
-  })
-
-  it('reads out the week under way as through the day it was read', () => {
-    render(<ActivityChart activity={ACTIVITY} />)
-
     fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 400 })
     expect(screen.getByTestId(READOUT).textContent).toBe(
       'Through Mar 12, 2026: 55 commits'

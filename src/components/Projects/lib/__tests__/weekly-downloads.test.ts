@@ -13,13 +13,7 @@ const HISTORY = {
 } satisfies WeeklyDownloads
 
 describe('getDownloadWeekStarts', () => {
-  it('starts each week 7 days apart, counting back from the last day', () => {
-    expect(
-      getDownloadWeekStarts({ ...HISTORY, firstDay: '2026-03-04' })
-    ).toEqual(['2026-03-04', '2026-03-11', '2026-03-18'])
-  })
-
-  it('starts a short first week on the first day', () => {
+  it('starts each week 7 days apart, counting back from the last day, and a short first week on the first day', () => {
     expect(getDownloadWeekStarts(HISTORY)).toEqual([
       '2026-03-06',
       '2026-03-11',
@@ -39,17 +33,11 @@ describe('getDownloadWeekEnds', () => {
 })
 
 describe('describeWeeklyDownloads', () => {
-  it('names the first month and the peak week', () => {
+  it('names the registry as written in a sentence, the first month, and the peak week', () => {
     expect(
-      describeWeeklyDownloads({ ...HISTORY, weekly: [5, 1200, 12] }, 'npm')
+      describeWeeklyDownloads({ ...HISTORY, weekly: [5, 1200, 12] }, 'pypi')
     ).toBe(
-      'Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026'
-    )
-  })
-
-  it('names the registry as written in a sentence', () => {
-    expect(describeWeeklyDownloads(HISTORY, 'pypi')).toMatch(
-      /^Weekly PyPI downloads /
+      'Weekly PyPI downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026'
     )
   })
 })

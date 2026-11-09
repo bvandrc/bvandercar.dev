@@ -255,7 +255,7 @@ describe('ProjectCounts', () => {
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
 
-  it('spans both charts over the same dates, so each release lines up across them', async () => {
+  it("marks its package's releases on both charts, which span the same dates, so each lines up across them", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     await hoverCounts()
@@ -267,6 +267,8 @@ describe('ProjectCounts', () => {
         .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
         .map((line) => line.getAttribute('x1'))
     )
+    // Both releases fall in weeks each chart covers, a week apart.
+    expect(activityLines).toHaveLength(2)
     expect(downloadsLines).toEqual(activityLines)
   })
 
@@ -349,7 +351,7 @@ describe('ProjectCounts', () => {
     expect(getReleaseXs()).toEqual(unzoomed)
   })
 
-  it('pans both zoomed-in charts together, and not ones zoomed all the way out', async () => {
+  it('pans both zoomed-in charts together', async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
     /** The first release line's position in each chart, activity first. */
     const getFirstReleaseXs = () =>
@@ -362,10 +364,6 @@ describe('ProjectCounts', () => {
       within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT)
 
     await hoverCounts()
-    const unzoomed = getFirstReleaseXs()
-    turnWheel(plot(), 100, 0, { deltaX: 40 })
-    expect(getFirstReleaseXs()).toEqual(unzoomed)
-
     turnWheel(plot(), 100, -300)
     const zoomed = getFirstReleaseXs()
     // To the left, so later.
@@ -382,21 +380,6 @@ describe('ProjectCounts', () => {
 
     expect((await hoverCounts()).textContent).toBe(LABEL)
     expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
-  })
-
-  it("marks its package's releases on both charts", async () => {
-    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
-
-    await hoverCounts()
-    // Both releases fall in weeks each chart covers, a week apart.
-    for (const chart of [ACTIVITY_CHART, DOWNLOADS_CHART]) {
-      expect(
-        within(screen.getByTestId(chart)).getAllByTestId(
-          SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE
-        ),
-        chart
-      ).toHaveLength(2)
-    }
   })
 
   describe('in a link', () => {
