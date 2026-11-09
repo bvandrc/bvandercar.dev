@@ -17,7 +17,10 @@ type ContentsLinkProps = {
 /** A chip linking to one section further down the page. */
 const ContentsLink = ({ title, icon }: ContentsLinkProps) => (
   <li>
-    <Badge asChild>
+    <Badge
+      asChild
+      // Glows orange on hover, like the skills.
+      className="hover-glow-12">
       <Link
         href={`#${sectionAnchor(title)}`}
         tone="muted"

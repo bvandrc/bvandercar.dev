@@ -14,8 +14,6 @@ export const Badge = ({ asChild = false, className, ...props }: BadgeProps) => {
     <Element
       className={cn(
         'inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm',
-        // Glows orange on hover, like the project cards.
-        'hover-glow-12',
         className
       )}
       {...props}
