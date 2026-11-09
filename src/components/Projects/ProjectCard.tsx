@@ -136,7 +136,12 @@ export const ProjectCard = ({
         </p>
       </div>
       <p
-        className={cn('text-sm text-ink-muted', alignment.BLURB)}
+        className={cn(
+          'text-sm text-ink-muted',
+          // Closer to the name than the card's gap, as the name's own words.
+          '-mt-1',
+          alignment.BLURB
+        )}
         data-testid="project-blurb">
         {/* Its counts are the ones its glyphs show. */}
         {fillBlurb(
