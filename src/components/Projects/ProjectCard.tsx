@@ -10,14 +10,22 @@ import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { fillBlurb, type Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
+import { formatCompactCount } from '@/lib/format-count'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
-import { getProjectCounts } from './lib/project-counts'
+import { getProjectCounts, type ProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
-// Names longer than this take a size smaller, so the counts still fit beside
-// them.
-const LONG_NAME_LENGTH = 20
+// A header longer than this, in characters, takes a smaller name, so its
+// counts still fit beside it. Each count counts its digits, and 2 for its icon.
+const LONG_HEADER_LENGTH = 33
+
+/** How long a header is, in characters: its name's, and its counts as shown. */
+const getHeaderLength = (name: string, counts: ProjectCounts['shown']) =>
+  counts.reduce(
+    (length, { count }) => length + formatCompactCount(count).length + 2,
+    name.length
+  )
 
 export type ProjectCardProps = {
   project: Project
@@ -39,6 +47,7 @@ export const ProjectCard = ({
   const cardRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const typeIcon = TYPE_ICONS[project.type]
+  const { counts, shown } = getProjectCounts(pick(project, COUNTS_FIELDS))
   const [previewOpen, setPreviewOpen] = useState(false)
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -77,9 +86,12 @@ export const ProjectCard = ({
             centered && 'md:col-start-2'
           )}>
           <h4
+            data-testid="project-name"
             className={cn(
               'font-semibold',
-              project.name.length > LONG_NAME_LENGTH ? 'text-base' : 'text-lg',
+              getHeaderLength(project.name, shown) > LONG_HEADER_LENGTH
+                ? 'text-base'
+                : 'text-lg',
               // On the 24px line the name had before, whatever its size, so the
               // card keeps its height. After the size, whose own line height
               // would otherwise win.
@@ -125,10 +137,7 @@ export const ProjectCard = ({
         )}
         data-testid="project-blurb">
         {/* Its counts are the ones its glyphs show. */}
-        {fillBlurb(
-          project.blurb,
-          getProjectCounts(pick(project, COUNTS_FIELDS)).counts
-        )}
+        {fillBlurb(project.blurb, counts)}
       </p>
       {project.embed ? (
         <LivePreview

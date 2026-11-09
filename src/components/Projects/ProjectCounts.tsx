@@ -6,7 +6,6 @@ import {
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip, type TooltipProps } from '@/components/primitives/Tooltip'
-import { getShownCountKinds } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
@@ -82,7 +81,7 @@ export const ProjectCounts = ({
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  const { counts, pkg, chartCount } = getProjectCounts({ repo, ...packages })
+  const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
   const mayChart = chartCount > 0
   // Charts that failed to load leave the counts in words.
   const { charts, prefetchCharts } = useLazyCharts(mayChart)
@@ -102,12 +101,6 @@ export const ProjectCounts = ({
       prefetchOnOpen()
     }
   }, [open])
-  // The profile README badge's counts, in its order and with its icons, and
-  // its PRs only where its rule shows them.
-  const shown = getShownCountKinds(counts).flatMap(({ key, icon, noun }) => {
-    const count = counts[key]
-    return count === undefined ? [] : [{ key, icon, noun, count }]
-  })
   if (shown.length === 0) {
     return null
   }
