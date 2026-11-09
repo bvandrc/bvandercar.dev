@@ -1,6 +1,7 @@
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { sectionAnchor } from '@/lib/section-anchor'
+import { Badge } from './primitives/Badge'
 import { Icon } from './primitives/Icon'
 import { Link } from './primitives/Link'
 import { List } from './primitives/List'
@@ -16,14 +17,15 @@ type ContentsLinkProps = {
 /** A chip linking to one section further down the page. */
 const ContentsLink = ({ title, icon }: ContentsLinkProps) => (
   <li>
-    <Link
-      href={`#${sectionAnchor(title)}`}
-      tone="muted"
-      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm"
-      data-testid="contents-link">
-      {icon}
-      {title}
-    </Link>
+    <Badge asChild>
+      <Link
+        href={`#${sectionAnchor(title)}`}
+        tone="muted"
+        data-testid="contents-link">
+        {icon}
+        {title}
+      </Link>
+    </Badge>
   </li>
 )
 

@@ -4,10 +4,10 @@ import a11yPlugin from 'colord/plugins/a11y'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
-import { cn } from '@/lib/cn'
 import { skillIconSlug } from '@/lib/icons'
 import { sectionAnchor } from '@/lib/section-anchor'
 import { THEME_COLORS } from '@/lib/theme-colors'
+import { Badge } from './primitives/Badge'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Section, SubSection } from './Section'
 
@@ -58,13 +58,10 @@ export const Skills = () => (
                 <dt className="shrink-0 text-sm text-ink-muted">{label}</dt>
                 <dd className="flex flex-wrap justify-center gap-2">
                   {row.lines.flat().map((skill) => (
-                    <span
+                    <Badge
                       key={skill.alt}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-sm',
-                        // Glows orange on hover, like the project cards.
-                        'hover-glow-12'
-                      )}>
+                      // Glows orange on hover, like the project cards.
+                      className="hover-glow-12">
                       <BrandIcon
                         slug={skillIconSlug(skill)}
                         color={skillIconColor(skill)}
@@ -72,7 +69,7 @@ export const Skills = () => (
                         className="size-3.5"
                       />
                       {skill.alt}
-                    </span>
+                    </Badge>
                   ))}
                 </dd>
               </div>
