@@ -1,4 +1,4 @@
-import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { WeeklyActivity } from '~/counts'
 import { addDays, formatDay, formatMonth, getPeakWeek } from './weeks'
 
 /** The ISO date each of the activity's weeks starts on, oldest first. */

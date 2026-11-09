@@ -108,22 +108,7 @@ export const PACKAGE_DOWNLOAD_TOTALS: Record<
 await writeGenerated(
   HISTORY_FILE,
   'fetch:downloads',
-  `import type { Registry } from '~/counts'
-
-export type WeeklyDownloads = {
-  /** ISO date of the first day counted, the package's first publish */
-  firstDay: string
-  /** ISO date of the last day counted, the end of the last week */
-  lastDay: string
-  /** Downloads in each 7-day week ending on \`lastDay\`, oldest first; the first can be shorter */
-  weekly: number[]
-}
-
-export type Release = {
-  version: string
-  /** ISO date it was published */
-  day: string
-}
+  `import type { Registry, Release, WeeklyDownloads } from '~/counts'
 
 /** Each package's weekly downloads since its first publish, by registry, then package name. */
 export const PACKAGE_DOWNLOADS: Record<

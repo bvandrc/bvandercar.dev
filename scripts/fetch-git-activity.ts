@@ -143,11 +143,10 @@ if (token === undefined) {
 await writeGenerated(
   TOTALS_FILE,
   'fetch:git-activity',
-  `/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
-export const REPO_ACTIVITY_TOTALS: Record<
-  string,
-  { commits: number; prs: number } | undefined
-> = {
+  `import type { ActivityTotals } from '~/counts'
+
+/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
+export const REPO_ACTIVITY_TOTALS: Record<string, ActivityTotals | undefined> = {
 ${entries.join('\n')}
 }
 `
@@ -155,16 +154,7 @@ ${entries.join('\n')}
 await writeGenerated(
   HISTORY_FILE,
   'fetch:git-activity',
-  `export type WeeklyActivity = {
-  /** ISO date of the Monday the first week starts on */
-  firstWeek: string
-  /** ISO date the history was read, which ends the last week, the one under way */
-  lastDay: string
-  /** Commits on the default branch in each week, oldest first; they sum to the repo's total */
-  commits: number[]
-  /** Pull requests opened in each of the same weeks */
-  prs: number[]
-}
+  `import type { WeeklyActivity } from '~/counts'
 
 /** Each project repo's commits and pull requests per week, keyed by repo name. */
 export const REPO_ACTIVITY: Record<string, WeeklyActivity | undefined> = {

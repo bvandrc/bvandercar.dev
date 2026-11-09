@@ -2,10 +2,10 @@ import { useRef, useState } from 'react'
 import { uniq } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
-import type { Release } from '@/generated/package-downloads'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
+import type { Release } from '~/counts'
 import { DAY_MS } from '~/dates'
 import { type DaySpan, formatDay, formatLatestVersion } from './lib/weeks'
 

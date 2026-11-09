@@ -11,6 +11,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
 
+import type { Release } from '../../shared/counts.ts'
 import {
   DAY_MS,
   earlierDay,
@@ -22,12 +23,7 @@ import { SITE_URL } from '../../site.config.ts'
 import { getErrorMessage } from '../shared/errors.ts'
 import { fetchJson } from '../shared/http.ts'
 import { reportSkipped } from '../shared/skipped.ts'
-import {
-  byDay,
-  type DailyDownloads,
-  type RegistryHistory,
-  type Release,
-} from './common.ts'
+import { byDay, type DailyDownloads, type RegistryHistory } from './common.ts'
 
 // Copied into the built site, gitignored. The site never loads them; only the
 // next build does, from the live site, where they last as long as the deploy,
