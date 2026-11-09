@@ -17,42 +17,28 @@ import { RepoLink } from './RepoLink'
 
 type NameLength = 'SHORT' | 'LONG'
 
-// Names longer than this take a size smaller from lg, where the counts sit
-// beside them, so the counts still fit there.
+// Names longer than this take a size smaller, so the counts still fit beside
+// them.
 const LONG_NAME_LENGTH = 20
 
 const NAME_SIZE_CLASSES = {
   SHORT: 'text-lg',
-  LONG: 'text-lg lg:text-base',
+  LONG: 'text-base',
 } satisfies Record<NameLength, string>
 
 type Alignment = 'START' | 'CENTER'
 
 type AlignedPart = 'HEADER' | 'NAME' | 'COUNTS' | 'BLURB'
 
-// Below where a card has the room, its counts go on their own line, under its
-// name. A paired card has it from lg, wider than md where the pairs start; a
-// centered one spans its group's width, so it has it from md, and centers its
-// name and blurb there, with its counts on the right.
+// A centered card spans its group's width, so from md, where other groups'
+// cards pair up, it centers its name and blurb, with its counts on the right.
+// Below md, it lines up like the rest.
 const ALIGNMENT_CLASSES = {
-  START: {
-    HEADER:
-      'lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-x-4',
-    NAME: '',
-    // Grows from nothing, so it stays beside the name while its counts fit,
-    // with "repo" wrapping below them, and only then drops below. Its 20px
-    // height, 2px down, centers the counts' 16px line on the name's 24px one;
-    // with "repo" wrapped below, the pair outgrows it and starts 2px down.
-    COUNTS:
-      'lg:mt-0.5 lg:min-h-5 lg:grow lg:basis-0 lg:items-center lg:justify-end',
-    BLURB: 'text-left',
-  },
+  START: { HEADER: '', NAME: '', COUNTS: '', BLURB: 'text-left' },
   CENTER: {
-    HEADER: 'md:grid md:grid-cols-[1fr_auto_1fr] md:items-start md:gap-x-4',
+    HEADER: 'md:grid md:grid-cols-[1fr_auto_1fr]',
     NAME: 'md:col-start-2',
-    // Centers the counts on the name's line, as a paired card's do.
-    COUNTS:
-      'md:col-start-3 md:mt-0.5 md:min-h-5 md:items-center md:justify-end',
+    COUNTS: 'md:col-start-3',
     BLURB: 'text-left md:text-center',
   },
 } satisfies Record<Alignment, Record<AlignedPart, string>>
@@ -102,7 +88,11 @@ export const ProjectCard = ({
         'hover-glow-24'
       )}
       data-testid="project-card">
-      <div className={cn('flex flex-col gap-y-1', alignment.HEADER)}>
+      <div
+        className={cn(
+          'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
+          alignment.HEADER
+        )}>
         <div className={cn('flex shrink-0 items-center gap-2', alignment.NAME)}>
           <h4
             className={cn(
@@ -131,7 +121,18 @@ export const ProjectCard = ({
             />
           </Tooltip>
         </div>
-        <p className={cn('flex text-xs', alignment.COUNTS)}>
+        <p
+          className={cn(
+            'flex text-xs',
+            // Grows from nothing, so it stays beside the name while its counts
+            // fit, with "repo" wrapping below them, and only then drops below.
+            'grow basis-0 justify-end',
+            // Its 20px height, 2px down, centers the counts' 16px line on the
+            // name's 24px one; with "repo" wrapped below, the pair outgrows it
+            // and starts 2px down.
+            'mt-0.5 min-h-5 items-center',
+            alignment.COUNTS
+          )}>
           <RepoLink {...pick(project, COUNTS_FIELDS)} nameId={nameId} />
         </p>
       </div>
