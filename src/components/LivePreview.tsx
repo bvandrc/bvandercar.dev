@@ -104,7 +104,14 @@ export const LivePreview = ({
           }
         }}>
         {/* Portrait on a narrow screen, where a phone layout fits better. */}
-        <div className="aspect-[9/16] max-h-[85dvh] w-full overflow-hidden rounded-md border border-border bg-black md:aspect-video">
+        <div
+          className={cn(
+            'aspect-[9/16] w-full overflow-hidden rounded-md border border-border bg-black md:aspect-video',
+            // Capped by the small viewport height, which holds still as a
+            // phone's address bar hides and shows on scroll, where `dvh`
+            // would resize the frame, and re-lay out the page in it, mid-scroll.
+            'max-h-[85svh]'
+          )}>
           <iframe
             src={src}
             title={`${title} live preview`}
