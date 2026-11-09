@@ -28,9 +28,6 @@ jobs:
     environment:
       name: production
       url: https://bvandercar.dev/
-    env:
-      # Whether the secret is set, without putting the key itself in every step's env.
-      HAS_BIGQUERY_CREDENTIALS: ${{ secrets.BIGQUERY_CREDENTIALS != '' }}
 
     steps:
       - name: Checkout repo
@@ -42,44 +39,15 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      # For the PyPI download charts, which the build queries from BigQuery.
-      # Without the secret, the build still passes and PyPI projects show none.
-      # PyPI's daily download counts from earlier runs, so the build queries
-      # BigQuery for just the days since. Each run saves its own copy, and
-      # the next restores the newest.
-      - name: Cache PyPI downloads
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
-        uses: actions/cache@v6
+      # Always fetched fresh here, then saved for that day's previews to
+      # reuse.
+      - name: Build site
+        uses: ./.github/actions/build-site
         with:
-          path: .cache
-          key: pypi-downloads-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: pypi-downloads-
-
-      - name: Authenticate to Google Cloud
-        if: env.HAS_BIGQUERY_CREDENTIALS == 'true'
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.BIGQUERY_CREDENTIALS }}
-
-      - name: Build project
-        run: pnpm build
-        env:
-          # For the activity charts. The workflow's own token reads public
-          # repos; PROJECT_REPOS_TOKEN, if set, reads every project repo,
-          # private ones too.
-          GITHUB_TOKEN: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
-
-      - name: Get today's date
-        id: today
-        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
-
-      # Always fetched fresh here, then saved for preview builds to reuse that
-      # day; see preview.yml. A second deploy the same day keeps the first's.
-      - name: Save fetched data
-        uses: actions/cache/save@v6
-        with:
-          path: src/generated/*.ts
-          key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ steps.today.outputs.date }}
+          # The workflow's own token reads public repos; PROJECT_REPOS_TOKEN,
+          # if set, reads every project repo, private ones too.
+          github-token: ${{ secrets.PROJECT_REPOS_TOKEN || github.token }}
+          bigquery-credentials: ${{ secrets.BIGQUERY_CREDENTIALS }}
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
