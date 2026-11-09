@@ -44,5 +44,6 @@ Conventions live outside this file, synced from https://github.com/bvandrc/bvand
 ## Repo conventions
 
 - **Package manager**: pnpm. `npm install` writes a competing `package-lock.json` that CI ignores.
+- **PR descriptions**: Open every PR description with a link to its preview, `https://pr-<number>-bvandercar-dev.bvandrc.workers.dev`. The `pr-<number>` alias `preview.yml` uploads under keeps that URL fixed across pushes, so it's known before the preview builds: once the PR is created and has its number, edit the link into its body.
 - **package.json**: Linted in CI by `bvandrc/lint-package-json`, which enforces top-level key order, alphabetical `dependencies` and `devDependencies`, and exact-semver `version`. Adding a field in the wrong place, or a dependency out of order, fails the lint job.
 - **Convention files**: `conventions/` is synced from https://github.com/bvandrc/bvandrc-conventions and overwritten on every sync. Edit a rule upstream, never in that directory.
