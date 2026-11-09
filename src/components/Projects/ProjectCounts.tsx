@@ -15,16 +15,17 @@ import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { type CountsField, PACKAGE_FIELDS } from '~/counts'
-import type { ProjectPackage } from './lib/project-charts'
+import type { ProjectPackage } from './charts/lib/project-charts'
 
 /** Loads the charts' code, and the histories they chart, which the module system keeps once loaded. */
 const loadCharts = () =>
-  Promise.all([import('./ProjectCharts'), import('./lib/project-charts')]).then(
-    ([{ ProjectCharts }, { getProjectCharts }]) => ({
-      ProjectCharts,
-      getProjectCharts,
-    })
-  )
+  Promise.all([
+    import('./charts/ProjectCharts'),
+    import('./charts/lib/project-charts'),
+  ]).then(([{ ProjectCharts }, { getProjectCharts }]) => ({
+    ProjectCharts,
+    getProjectCharts,
+  }))
 type Charts = Awaited<ReturnType<typeof loadCharts>>
 // Kept once loaded, so counts mounted later start with them.
 let loadedCharts: Charts | undefined

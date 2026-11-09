@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 
-import { getProjectCharts } from '@/components/Projects/lib/project-charts'
+import { getProjectCharts } from '@/components/Projects/charts/lib/project-charts'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SELECTORS } from '~/test-support/selectors'
 
