@@ -1,10 +1,9 @@
 /**
- * PyPI's side of `pnpm fetch:downloads`: a package's first upload day, from
- * PyPI's JSON API, which needs no credentials, and its downloads per day,
- * from Google BigQuery's public PyPI dataset, which does.
+ * PyPI's side of `pnpm fetch:downloads`: a package's first upload day, and its
+ * downloads per day, from Google BigQuery's public PyPI dataset.
  *
- * Its daily counts are kept in PYPI_CACHE_FILE between runs, so a run queries
- * only the days since the last.
+ * Its first days and daily counts are kept in CACHE_DIR between runs, so a
+ * run queries only the days since the last.
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -12,7 +11,6 @@ import { BigQuery } from '@google-cloud/bigquery'
 
 import { DAY_MS } from '../shared/constants.ts'
 import { earlierDay, isoDate, laterDay, listDays } from '../shared/dates.ts'
-import { fetchJson } from '../shared/http.ts'
 import { reportSkipped } from '../shared/skipped.ts'
 import type { DailyDownloads, RegistryHistory } from './common.ts'
 
@@ -20,6 +18,7 @@ import type { DailyDownloads, RegistryHistory } from './common.ts'
 // Actions cache.
 const CACHE_DIR = '.cache'
 const PYPI_CACHE_FILE = `${CACHE_DIR}/pypi-downloads.json`
+const FIRST_DAYS_FILE = `${CACHE_DIR}/pypi-first-days.json`
 // The latest cached days a run queries again, since the dataset can still be
 // filling them in.
 const PYPI_REFRESH_DAYS = 3
@@ -43,61 +42,103 @@ const hasGoogleCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS)
 /** Each package's downloads, by package, then ISO date. */
 type DailyCache = Record<string, Record<string, number> | undefined>
 
-/** The ISO date a PyPI package's first file was uploaded. */
-const fetchPypiFirstDay = async (pkg: string) => {
-  const { releases } = await fetchJson<{
-    releases: Record<string, { upload_time_iso_8601: string }[]>
-  }>(`https://pypi.org/pypi/${pkg}/json`)
-  return Object.values(releases)
-    .flat()
-    .map(({ upload_time_iso_8601 }) => upload_time_iso_8601.slice(0, 10))
-    .sort()[0]
-}
+/** Each package's first upload day, by package. */
+type FirstDaysCache = Record<string, string | undefined>
 
-/** The PyPI counts a run before this one kept, or none. */
-const readPypiCache = async (): Promise<DailyCache> => {
+/** What a run before this one kept in `file`, or nothing. */
+const readCache = async <T extends object>(file: string): Promise<T> => {
   try {
-    return JSON.parse(await readFile(PYPI_CACHE_FILE, 'utf8')) as DailyCache
+    return JSON.parse(await readFile(file, 'utf8')) as T
   } catch {
-    return {}
+    return {} as T
   }
 }
 
 /**
- * Each package's downloads on each day from `from` through `to`, by
- * `"<package> <day>"`, in one BigQuery query.
+ * The rows `query` returns, with `params`, from BigQuery.
  *
- * Logs what the query billed, so its cost shows in the build log.
+ * Logs what it billed, labelled `label`, so its cost shows in the build log.
  */
-const queryPypiDownloads = async (
-  packages: string[],
-  from: string,
-  to: string
+const runQuery = async <T>(
+  query: string,
+  params: Record<string, unknown>,
+  label: string
 ) => {
   // The credentials name the project the query is billed to.
   const [job] = await new BigQuery().createQueryJob({
-    // The table is partitioned by `timestamp` and clustered by project, so
-    // bounding both keeps the scan to these packages' days.
-    query: `
-      SELECT file.project AS project, FORMAT_DATE('%F', DATE(timestamp)) AS day, COUNT(*) AS downloads
-      FROM \`bigquery-public-data.pypi.file_downloads\`
-      WHERE file.project IN UNNEST(@packages)
-        AND timestamp >= TIMESTAMP(@from)
-        AND timestamp < TIMESTAMP_ADD(TIMESTAMP(@to), INTERVAL 1 DAY)
-      GROUP BY project, day`,
-    params: { packages, from, to },
+    query,
+    params,
     maximumBytesBilled: MAX_BYTES_BILLED,
   })
   const [rows] = await job.getQueryResults()
   const [metadata] = await job.getMetadata()
   const billed = Number(metadata.statistics?.query?.totalBytesBilled ?? 0)
   console.log(
-    `PyPI downloads: BigQuery billed ${(billed / 1000 ** 3).toFixed(2)} GB for ${from} to ${to}`
+    `PyPI downloads: BigQuery billed ${(billed / 1000 ** 3).toFixed(2)} GB for ${label}`
+  )
+  return rows as T[]
+}
+
+/**
+ * Each package's first upload day, by package, adding to `cache` any it
+ * lacks. One with no uploads is left out.
+ *
+ * Read from BigQuery's upload records rather than PyPI's JSON API, which
+ * drops a deleted release, so a package whose first releases were deleted
+ * still counts the downloads they had.
+ */
+const getFirstDays = async (packages: string[], cache: FirstDaysCache) => {
+  const missing = packages.filter((pkg) => cache[pkg] === undefined)
+  if (missing.length > 0) {
+    const rows = await runQuery<{ project: string; firstDay: string }>(
+      // A name is uploaded as written, like serato_tools, where downloads
+      // give it normalized, like serato-tools, so it's normalized to match.
+      `
+      SELECT LOWER(REGEXP_REPLACE(name, r'[-_.]+', '-')) AS project, FORMAT_DATE('%F', DATE(MIN(upload_time))) AS firstDay
+      FROM \`bigquery-public-data.pypi.distribution_metadata\`
+      WHERE LOWER(REGEXP_REPLACE(name, r'[-_.]+', '-')) IN UNNEST(@packages)
+      GROUP BY project`,
+      { packages: missing },
+      'first upload days'
+    )
+    for (const { project, firstDay } of rows) {
+      cache[project] = firstDay
+    }
+  }
+  return packages.flatMap((pkg) => {
+    const firstDay = cache[pkg]
+    return firstDay === undefined ? [] : [{ pkg, firstDay }]
+  })
+}
+
+/**
+ * Each package's downloads on each day from `from` through `to`, by
+ * `"<package> <day>"`, in one BigQuery query.
+ */
+const queryPypiDownloads = async (
+  packages: string[],
+  from: string,
+  to: string
+) => {
+  const rows = await runQuery<{
+    project: string
+    day: string
+    downloads: number
+  }>(
+    // The table is partitioned by `timestamp` and clustered by project, so
+    // bounding both keeps the scan to these packages' days.
+    `
+      SELECT file.project AS project, FORMAT_DATE('%F', DATE(timestamp)) AS day, COUNT(*) AS downloads
+      FROM \`bigquery-public-data.pypi.file_downloads\`
+      WHERE file.project IN UNNEST(@packages)
+        AND timestamp >= TIMESTAMP(@from)
+        AND timestamp < TIMESTAMP_ADD(TIMESTAMP(@to), INTERVAL 1 DAY)
+      GROUP BY project, day`,
+    { packages, from, to },
+    `${from} to ${to}`
   )
   return new Map(
-    (rows as { project: string; day: string; downloads: number }[]).map(
-      ({ project, day, downloads }) => [`${project} ${day}`, downloads]
-    )
+    rows.map(({ project, day, downloads }) => [`${project} ${day}`, downloads])
   )
 }
 
@@ -160,10 +201,10 @@ const fetchPypiDailyDownloads = async (
   )
 }
 
-/** Keeps `cache` for the next run, even after a query that failed partway, so it picks up where this one left off. */
-const writePypiCache = async (cache: DailyCache) => {
+/** Keeps `cache` in `file` for the next run, even after a query that failed partway, so it picks up where this one left off. */
+const writeCache = async (file: string, cache: object) => {
   await mkdir(CACHE_DIR, { recursive: true })
-  await writeFile(PYPI_CACHE_FILE, JSON.stringify(cache))
+  await writeFile(file, JSON.stringify(cache))
 }
 
 /**
@@ -179,7 +220,6 @@ export const fetchPypiHistory = async (
   if (packages.length === 0) {
     return history
   }
-  // Checked before the first days are read, which would go unused without it.
   if (!hasGoogleCredentials) {
     reportSkipped(
       "every PyPI package's downloads",
@@ -187,28 +227,23 @@ export const fetchPypiHistory = async (
     )
     return history
   }
-  const firstDays: { pkg: string; firstDay: string }[] = []
-  const results = await Promise.allSettled(packages.map(fetchPypiFirstDay))
-  results.forEach((result, index) => {
-    const pkg = packages[index]
-    if (result.status === 'rejected') {
-      reportSkipped(`PyPI downloads for ${pkg}`, result.reason)
-    } else {
-      firstDays.push({ pkg, firstDay: result.value })
-    }
-  })
-  if (firstDays.length === 0) {
-    return history
-  }
   try {
-    const cache = await readPypiCache()
+    const firstDaysCache = await readCache<FirstDaysCache>(FIRST_DAYS_FILE)
+    const cache = await readCache<DailyCache>(PYPI_CACHE_FILE)
     try {
+      const firstDays = await getFirstDays(packages, firstDaysCache)
+      for (const pkg of packages) {
+        if (firstDaysCache[pkg] === undefined) {
+          reportSkipped(`PyPI downloads for ${pkg}`, 'BigQuery has no uploads')
+        }
+      }
       const days = await fetchPypiDailyDownloads(firstDays, cache)
       firstDays.forEach(({ pkg }, index) => {
         history.push({ pkg, days: days[index] })
       })
     } finally {
-      await writePypiCache(cache)
+      await writeCache(FIRST_DAYS_FILE, firstDaysCache)
+      await writeCache(PYPI_CACHE_FILE, cache)
     }
   } catch (error) {
     reportSkipped('PyPI downloads', error)
