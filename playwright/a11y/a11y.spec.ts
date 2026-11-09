@@ -5,7 +5,8 @@ import { getChartedCounts } from '../support/charted-counts'
 import { mockFramedPages } from '../support/mock-framed-pages'
 import { checkA11y } from './accessibility'
 
-const { HEADER, PROJECTS, BEYOND_CODE, TOOLTIP, LIVE_PREVIEW } = SELECTORS
+const { HEADER, PROJECTS, BEYOND_CODE, FOOTER, TOOLTIP, LIVE_PREVIEW } =
+  SELECTORS
 
 test.describe('Accessibility', () => {
   test('Home page', async ({ page }) => {
@@ -14,6 +15,7 @@ test.describe('Accessibility', () => {
     await expect(page.getByTestId(HEADER.TITLE)).toBeVisible()
     await expect(page.getByTestId(PROJECTS.CARD).first()).toBeVisible()
     await expect(page.getByTestId(BEYOND_CODE)).toBeVisible()
+    await expect(page.getByTestId(FOOTER.SELF)).toBeVisible()
 
     await checkA11y(page)
   })

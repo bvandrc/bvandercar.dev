@@ -33,6 +33,11 @@ export const SELECTORS = {
     SELF: 'skills',
   },
   BEYOND_CODE: 'beyond-code',
+  FOOTER: {
+    SELF: 'footer',
+    SOURCE_LINK: 'footer-source-link',
+    BUILD_DATE: 'footer-build-date',
+  },
   LIVE_PREVIEW: {
     SELF: 'live-preview',
     TOGGLE: 'live-preview-toggle',

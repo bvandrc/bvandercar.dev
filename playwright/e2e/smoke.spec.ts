@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
 
-const { HEADER, PROJECTS, SKILLS, BEYOND_CODE } = SELECTORS
+const { HEADER, PROJECTS, SKILLS, BEYOND_CODE, FOOTER } = SELECTORS
 
 test('home page loads', async ({ page }) => {
   await page.goto('/')
@@ -13,6 +13,7 @@ test('home page loads', async ({ page }) => {
     PROJECTS.SELF,
     SKILLS.SELF,
     BEYOND_CODE,
+    FOOTER.SELF,
   ]) {
     await expect(page.getByTestId(testId), testId).toBeVisible()
   }

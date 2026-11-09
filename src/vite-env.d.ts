@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  /** The UTC day the site was built, as an ISO date: `'2026-03-02'`. */
+  readonly BUILD_DATE: string
+}
+
 /** The site's icons, from Iconify's sets, bundled by `scripts/icons-plugin.ts`. */
 declare module 'virtual:icons' {
   /**
