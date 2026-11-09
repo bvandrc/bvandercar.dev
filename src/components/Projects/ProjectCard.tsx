@@ -18,7 +18,7 @@ import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
 // on its line.
-const NAME_SIZES = ['text-lg', 'text-base', 'text-[15px]', 'text-sm']
+const NAME_SIZES = ['text-lg', 'text-base', 'text-[15px]']
 
 export type ProjectCardProps = {
   project: Project
