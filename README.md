@@ -62,6 +62,7 @@ scripts/
   fetch-profile.ts      Fetches the profile content (src/generated/profile/) and screenshots from bvandrc/bvandrc
   fetch-git-activity.ts Fetches each project repo's weekly commits and PRs (src/generated/repo-activity.ts) from GitHub
   fetch-downloads.ts    Fetches each package's weekly downloads (src/generated/package-downloads.ts) from npm and BigQuery
+  fetch-downloads/      Its npm and PyPI fetches
   shared/               Paths and helpers the fetch scripts share
 playwright/
   e2e/            e2e tests
