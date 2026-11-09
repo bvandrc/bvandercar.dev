@@ -69,6 +69,7 @@ playwright/
   a11y/           axe accessibility tests
   lighthouse/     google lighthouse tests
 shared/
+  counts.ts       The counts' project fields and package registries, which the app and the fetch scripts share
   test-support/   Test helpers either suite can import
     selectors.ts  The data-testid registry
 tsconfig.json     App TypeScript config

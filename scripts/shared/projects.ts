@@ -1,17 +1,16 @@
 import { isNotNil, uniq } from 'es-toolkit'
 import { objectEntries } from 'ts-extras'
 
+import type { CountsField, Registry } from '../../shared/counts.ts'
+import { PACKAGE_FIELDS } from '../../shared/counts.ts'
 import {
   PROJECTS,
   type Project,
 } from '../../src/generated/profile/content/projects.ts'
 import { REPO_COUNTS } from '../../src/generated/profile/repo-counts.ts'
 
-/** A project field naming what its counts are fetched for. */
-type CountsSource = 'repo' | 'npmPackage' | 'pypiPackage'
-
-/** A count the profile and this site's fetches both give. */
-type CountKey = 'commits' | 'prs' | 'downloads'
+/** A count the profile gives, which this site's fetches give too. */
+type CountKey = keyof NonNullable<(typeof REPO_COUNTS)[string]>
 
 const ALL_PROJECTS: Project[] = PROJECTS.flatMap(({ projects }) => projects)
 
@@ -21,14 +20,13 @@ const ALL_PROJECTS: Project[] = PROJECTS.flatMap(({ projects }) => projects)
  *
  * Read from the content `pnpm fetch:profile` copied, so run that first.
  */
-export const getProjectValues = (field: CountsSource) =>
+export const getProjectValues = (field: CountsField) =>
   uniq(ALL_PROJECTS.flatMap((project) => project[field] ?? [])).sort()
 
-/** The repo of the project published as `pkg` under `field`. */
-export const getPackageRepo = (
-  field: 'npmPackage' | 'pypiPackage',
-  pkg: string
-) => ALL_PROJECTS.find((project) => project[field] === pkg)?.repo
+/** The repo of the project that publishes `pkg` to `registry`. */
+export const getPackageRepo = (registry: Registry, pkg: string) =>
+  ALL_PROJECTS.find((project) => project[PACKAGE_FIELDS[registry]] === pkg)
+    ?.repo
 
 /**
  * Why `counts`, fetched for `repo`, can't be right: any of them fewer than the

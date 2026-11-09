@@ -2,6 +2,7 @@ import {
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
+import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
@@ -11,6 +12,7 @@ import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
+import { type CountsField, PACKAGE_FIELDS } from '~/counts'
 
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
 // hover, clicks through to the link the counts sit in.
@@ -18,27 +20,15 @@ const TOGGLE_OPTIONS = {
   pointerTypes: ['touch'],
 } satisfies UsePressToggleOptions
 
-/** The fields of a project its counts are read from. */
-export const COUNTS_FIELDS = [
-  'repo',
-  'npmPackage',
-  'pypiPackage',
-] as const satisfies (keyof Project)[]
-
-type CountsField = (typeof COUNTS_FIELDS)[number]
-
 export type ProjectCountsProps = Pick<Project, CountsField>
 
 /** The registry the project publishes a package to, and its name there, if any. */
-const getPackage = ({
-  npmPackage,
-  pypiPackage,
-}: Omit<ProjectCountsProps, 'repo'>) => {
-  if (npmPackage) {
-    return { registry: 'npm', name: npmPackage } as const
-  }
-  if (pypiPackage) {
-    return { registry: 'pypi', name: pypiPackage } as const
+const getPackage = (packages: Omit<ProjectCountsProps, 'repo'>) => {
+  for (const [registry, field] of objectEntries(PACKAGE_FIELDS)) {
+    const name = packages[field]
+    if (name) {
+      return { registry, name }
+    }
   }
   return undefined
 }

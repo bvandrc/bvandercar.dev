@@ -17,6 +17,7 @@
 
 import { sumBy } from 'es-toolkit'
 
+import { PACKAGE_FIELDS, type Registry } from '../shared/counts.ts'
 import type { RegistryHistory } from './fetch-downloads/common.ts'
 import { fetchNpmHistory } from './fetch-downloads/npm.ts'
 import { fetchPypiHistory } from './fetch-downloads/pypi.ts'
@@ -39,15 +40,14 @@ exitIfReusing('package downloads', [OUT_FILE])
  * Leaves out one with no days counted yet, and reports one whose total is
  * fewer than its profile count, which is older, so the fetch missed some.
  */
-const formatTotals = (
-  field: 'npmPackage' | 'pypiPackage',
-  history: RegistryHistory
-) =>
+const formatTotals = (registry: Registry, history: RegistryHistory) =>
   history
     .filter(({ days }) => days.length > 0)
     .flatMap(({ pkg, days }) => {
       const downloads = sumBy(days, (day) => day.downloads)
-      const shortfall = findShortfall(getPackageRepo(field, pkg), { downloads })
+      const shortfall = findShortfall(getPackageRepo(registry, pkg), {
+        downloads,
+      })
       if (shortfall) {
         reportSkipped(`downloads for ${pkg}`, shortfall)
         return []
@@ -55,22 +55,15 @@ const formatTotals = (
       return [`    '${pkg}': ${downloads},`]
     })
 
-const npmPackages = getProjectValues('npmPackage')
-const pypiPackages = getProjectValues('pypiPackage')
-const npmEntries = formatTotals(
-  'npmPackage',
-  await fetchNpmHistory(npmPackages)
-)
-const pypiEntries = formatTotals(
-  'pypiPackage',
-  await fetchPypiHistory(pypiPackages)
-)
+const npmPackages = getProjectValues(PACKAGE_FIELDS.npm)
+const pypiPackages = getProjectValues(PACKAGE_FIELDS.pypi)
+const npmEntries = formatTotals('npm', await fetchNpmHistory(npmPackages))
+const pypiEntries = formatTotals('pypi', await fetchPypiHistory(pypiPackages))
 
 await writeGenerated(
   OUT_FILE,
   'fetch:downloads',
-  `/** A package registry whose downloads are counted. */
-export type Registry = 'npm' | 'pypi'
+  `import type { Registry } from '~/counts'
 
 /** Each package's downloads in all, by registry, then package name. */
 export const PACKAGE_DOWNLOAD_TOTALS: Record<

@@ -10,7 +10,7 @@ import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import type { Project } from '@/generated/profile/content/projects'
 import { cn } from '@/utils'
-import { COUNTS_FIELDS } from './ProjectCounts'
+import { COUNTS_FIELDS } from '~/counts'
 import { RepoLink } from './RepoLink'
 
 // Matches the ink-muted theme token in src/styles/index.css.
