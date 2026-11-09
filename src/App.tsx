@@ -15,7 +15,7 @@ export const App = () => (
       className={cn(
         'mx-auto flex min-h-dvh max-w-4xl flex-col gap-6 px-5 pt-6 text-center',
         // The same space below the footer's links as between them and its rule.
-        'pb-4'
+        'pb-3'
       )}>
       <Header />
       <Contents />

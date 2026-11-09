@@ -11,7 +11,7 @@ export const Footer = () => {
   return (
     <footer
       className={cn(
-        'border-t border-border pt-4 text-xs text-ink-muted',
+        'border-t border-border pt-3 text-xs text-ink-muted',
         // One row where it fits, wrapping onto more on a narrow screen.
         'flex flex-wrap items-center justify-center gap-x-6 gap-y-2',
         // With the column's own gap, as far below the last section as the sections are apart.
