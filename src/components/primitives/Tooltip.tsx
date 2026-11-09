@@ -1,6 +1,6 @@
 import { Tooltip as RadixTooltip } from 'radix-ui'
 
-import { cn } from '@/utils'
+import { cn } from '@/lib/cn'
 
 /** Delay before a hovered trigger shows its tooltip, in ms; Radix's 700 feels sluggish. */
 const OPEN_DELAY = 150

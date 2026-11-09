@@ -1,7 +1,3 @@
-/**
- * @fileoverview Small shared helpers.
- */
-
 import { type ClassValue, clsx } from 'clsx'
 import { extendTailwindMerge, validators } from 'tailwind-merge'
 

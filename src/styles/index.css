@@ -14,11 +14,8 @@
   --color-ink-muted: #a9b8ce;
   --color-accent: #22d3ee;
   --color-accent-hover: #67e8f9;
-  --color-accent-ink: #042f35;
   /* A lavender-tinted grey for a quiet link, at 7.5:1 on the surface. */
   --color-link-subtle: #9da8da;
-  --color-tone-positive: #7ee0a8;
-  --color-tone-neutral: #c4b5fd;
   /* GitHub's dark-theme green for contributions, for the commits chart. */
   --color-commits: #238636;
 
@@ -70,6 +67,30 @@
 @utility shadow-glow-* {
   box-shadow: 0 0 calc(--value(number) * 1px)
     var(--tw-shadow-color, currentcolor);
+}
+
+/*
+ * An orange glow, `hover-glow-<blur-px>`, on hover or while something inside
+ * has keyboard focus, as the project cards and skill chips share.
+ */
+@utility hover-glow-* {
+  --hover-glow: 0 0 calc(--value(number) * 1px) var(--color-orange-500);
+  transition-property: box-shadow, border-color;
+  transition-timing-function: var(--default-transition-timing-function);
+  transition-duration: 200ms;
+
+  /* Only where a pointer can hover, as Tailwind's own `hover:` does. */
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--color-orange-400);
+      box-shadow: var(--hover-glow);
+    }
+  }
+
+  &:has(:focus-visible) {
+    border-color: var(--color-orange-400);
+    box-shadow: var(--hover-glow);
+  }
 }
 
 @layer base {

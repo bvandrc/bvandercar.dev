@@ -14,10 +14,10 @@ export const getDaysBetween = (from: string, day: string) =>
   Math.round((Date.parse(day) - Date.parse(from)) / DAY_MS)
 
 /** The earlier of two ISO dates, which sort as strings. */
-export const earlierDay = (a: string, b: string) => [a, b].sort()[0]
+export const earlierDay = (a: string, b: string) => (a < b ? a : b)
 
 /** The later of two ISO dates. */
-export const laterDay = (a: string, b: string) => [a, b].sort()[1]
+export const laterDay = (a: string, b: string) => (a > b ? a : b)
 
 /** Every ISO date from `first` through `last`, oldest first. */
 export const listDays = (first: string, last: string) => {
@@ -26,4 +26,18 @@ export const listDays = (first: string, last: string) => {
     days.push(isoDate(time))
   }
   return days
+}
+
+/**
+ * The days from `first` through `last` in stretches of `days` days, oldest
+ * first, as the ISO dates each runs from and to.
+ *
+ * The last stretch ends on `last`, so it can be short.
+ */
+export const listWindows = (first: string, last: string, days: number) => {
+  const windows: { from: string; to: string }[] = []
+  for (let from = first; from <= last; from = addDays(from, days)) {
+    windows.push({ from, to: earlierDay(addDays(from, days - 1), last) })
+  }
+  return windows
 }

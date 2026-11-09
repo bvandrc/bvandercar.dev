@@ -1,5 +1,6 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
 import type { UiIconName } from '@/lib/icons'
+import { GITHUB_OWNER, GITHUB_PROFILE_URL } from '~/github'
 import { Icon } from './primitives/Icon'
 import { Link, type LinkProps } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
@@ -53,10 +54,10 @@ export const Header = () => (
     </div>
     <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
       <HeaderSocialLink
-        href="https://github.com/bvandrc"
+        href={GITHUB_PROFILE_URL}
         tooltip="GitHub Profile"
         icon="simple-icons:github">
-        github.com/bvandrc
+        github.com/{GITHUB_OWNER}
       </HeaderSocialLink>
       <HeaderSocialLink
         href="https://www.linkedin.com/in/blake-vandercar"

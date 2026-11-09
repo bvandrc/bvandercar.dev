@@ -5,7 +5,7 @@
  */
 
 import type { Release } from '../../shared/counts.ts'
-import { DAY_MS, isoDate } from '../../shared/dates.ts'
+import { isoDate, listWindows } from '../../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
 import { reportSkipped } from '../shared/skipped.ts'
 import { byDay, type DailyDownloads, type RegistryHistory } from './common.ts'
@@ -23,12 +23,17 @@ const fetchNpmPackage = async (pkg: string) => {
     versions: Record<string, unknown>
   }>(`https://registry.npmjs.org/${encodeNpmName(pkg)}`)
   return {
-    firstDay: time.created.slice(0, 10),
+    firstDay: isoDate(Date.parse(time.created)),
     releases: Object.keys(versions)
       // A pre-release, like 2.0.0-beta.1, has a hyphen. One with no publish
       // time can't be placed, so it's left out rather than failing the rest.
       .filter((version) => !version.includes('-') && time[version])
-      .map((version): Release => ({ version, day: time[version].slice(0, 10) }))
+      .map(
+        (version): Release => ({
+          version,
+          day: isoDate(Date.parse(time[version])),
+        })
+      )
       .sort(byDay),
   }
 }
@@ -38,20 +43,14 @@ const fetchNpmDailyDownloads = async (pkg: string, firstDay: string) => {
   const name = encodeNpmName(pkg)
   // The range API answers 0 for a day it hasn't counted yet, which would
   // read as a drop, so the range stops at the last day it has.
-  const latest = await fetchJson<{ end: string }>(
+  const { end: lastDay } = await fetchJson<{ end: string }>(
     `https://api.npmjs.org/downloads/point/last-day/${name}`
   )
-  const lastDay = Date.parse(latest.end)
   const days: DailyDownloads[] = []
   // The API caps each query's range, so an older package takes several.
-  for (
-    let start = Date.parse(firstDay);
-    start <= lastDay;
-    start += NPM_WINDOW_DAYS * DAY_MS
-  ) {
-    const end = Math.min(start + (NPM_WINDOW_DAYS - 1) * DAY_MS, lastDay)
+  for (const { from, to } of listWindows(firstDay, lastDay, NPM_WINDOW_DAYS)) {
     const { downloads } = await fetchJson<{ downloads: DailyDownloads[] }>(
-      `https://api.npmjs.org/downloads/range/${isoDate(start)}:${isoDate(end)}/${name}`
+      `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
     )
     days.push(...downloads)
   }

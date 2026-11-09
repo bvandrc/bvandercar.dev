@@ -3,9 +3,8 @@ import { useRef, useState } from 'react'
 import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
+import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
-
-const repoUrl = (repo: string) => `https://github.com/bvandrc/${repo}`
 
 export type RepoLinkProps = ProjectCountsProps & {
   /** The `id` of the project's name, which describes the link */
@@ -27,7 +26,7 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       // beside it. A label naming the project too would no longer contain the
       // counts as shown, like "70.3K", which voice control users would say.
       aria-describedby={nameId}
-      href={repoUrl(countsProps.repo)}
+      href={getRepoUrl(countsProps.repo)}
       newTab
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
