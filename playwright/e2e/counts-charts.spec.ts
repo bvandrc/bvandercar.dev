@@ -46,3 +46,56 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
     /^Through .+: [\d,]+ downloads?$/
   )
 })
+
+test("the wheel zooms both of a project's charts around the pointer, without scrolling the page", async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  await getChartedCounts(page).hover()
+  const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
+  const totals = tooltip.getByTestId(WEEKLY_CHART.TOTAL)
+  await expect(totals).toHaveCount(2)
+  const scrollY = await page.evaluate(() => window.scrollY)
+
+  await hoverPlot(page, tooltip.getByTestId(ACTIVITY_CHART))
+  await page.mouse.wheel(0, -600)
+  // Zoomed in around the middle, short of the lines' ends and their totals.
+  await expect(totals).toHaveCount(0)
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY)
+
+  await page.mouse.wheel(0, 2000)
+  await expect(totals).toHaveCount(2)
+})
+
+test('a mouse drags a zoomed-in chart along its timeline', async ({ page }) => {
+  await page.goto('/')
+
+  await getChartedCounts(page).hover()
+  const activity = page
+    .getByTestId(SELECTORS.TOOLTIP)
+    .getByTestId(ACTIVITY_CHART)
+  const plot = activity.getByTestId(WEEKLY_CHART.PLOT)
+  const readout = activity.getByTestId(WEEKLY_CHART.READOUT)
+  await hoverPlot(page, activity)
+  await page.mouse.wheel(0, -600)
+  const box = await plot.boundingBox()
+  if (!box) {
+    throw new Error('The chart has no box')
+  }
+  /** Hovers just inside the plot's left edge and reads out the week there. */
+  const readLeftEdge = async () => {
+    await page.mouse.move(box.x + 8, box.y + box.height / 2)
+    return readout.textContent()
+  }
+
+  const before = await readLeftEdge()
+  // Dragged right, so it shows earlier weeks.
+  await page.mouse.down()
+  await page.mouse.move(box.x + 160, box.y + box.height / 2, { steps: 10 })
+  await page.mouse.up()
+  const after = await readLeftEdge()
+  expect(
+    Date.parse(after?.replace(/^Through (.+): .*$/, '$1') ?? '')
+  ).toBeLessThan(Date.parse(before?.replace(/^Through (.+): .*$/, '$1') ?? ''))
+})

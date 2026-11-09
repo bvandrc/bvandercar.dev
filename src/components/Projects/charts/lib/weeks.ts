@@ -1,0 +1,112 @@
+import { clamp } from 'es-toolkit'
+
+import { DAY_MS } from '~/dates'
+
+// The dates are calendar days, so they're read in UTC, where they start.
+const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+const DAY_FORMAT = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** An ISO date as its month: `'2026-03-02'` → `'Mar 2026'`. */
+export const formatMonth = (day: string) => MONTH_FORMAT.format(Date.parse(day))
+
+/** An ISO date in full: `'2026-03-02'` → `'Mar 2, 2026'`. */
+export const formatDay = (day: string) => DAY_FORMAT.format(Date.parse(day))
+
+/** The busiest of weekly counts: its count, and the ISO date its week starts on. */
+export const getPeakWeek = (weekly: number[], weekStarts: string[]) => {
+  const count = Math.max(...weekly)
+  return { count, start: weekStarts[weekly.indexOf(count)] }
+}
+
+/**
+ * The latest of versions released together, as a label: `['1.0.0', '1.0.5',
+ * '1.0.1']` → `'v1.0.5'`, the one users should be on.
+ *
+ * Compared by their numbers, so 1.10.0 is later than 1.9.0.
+ */
+export const formatLatestVersion = (versions: string[]) =>
+  `v${versions.toSorted((a, b) => a.localeCompare(b, 'en', { numeric: true })).at(-1)}`
+
+/** The dates a chart runs from and to, as ISO dates or times. */
+export type DaySpan = { start: string; end: string }
+
+// The narrowest a zoom goes: four weeks, so there's still a line to draw, or
+// a quarter of a shorter chart's span.
+const MIN_ZOOM_MS = 28 * DAY_MS
+
+/**
+ * `span` zoomed around `anchor`, a time within it, its width scaled by
+ * `factor`: in for one under 1, out for one over.
+ *
+ * The anchor keeps its place across the chart. The result stays within
+ * `full`, and no narrower than four weeks, or a quarter of `full` if that's
+ * narrower. It's undefined once it's back out to `full`.
+ */
+export const zoomSpan = (
+  span: DaySpan,
+  full: DaySpan,
+  anchor: number,
+  factor: number
+) => {
+  const [start, end, fullStart, fullEnd] = [
+    span.start,
+    span.end,
+    full.start,
+    full.end,
+  ].map(Date.parse)
+  const fullWidth = fullEnd - fullStart
+  const width = clamp(
+    (end - start) * factor,
+    Math.min(MIN_ZOOM_MS, fullWidth / 4),
+    fullWidth
+  )
+  if (width >= fullWidth) {
+    return undefined
+  }
+  const nextStart = clamp(
+    anchor - (anchor - start) * (width / (end - start)),
+    fullStart,
+    fullEnd - width
+  )
+  // Kept to the millisecond, as ISO times, so small steps still move it.
+  return {
+    start: new Date(nextStart).toISOString(),
+    end: new Date(nextStart + width).toISOString(),
+  } satisfies DaySpan
+}
+
+/**
+ * A zoomed-in `span` moved `delta` milliseconds later, or earlier for a
+ * negative one, kept within `full`.
+ *
+ * Undefined for one that isn't zoomed in, which has nowhere to move.
+ */
+export const panSpan = (
+  span: DaySpan | undefined,
+  full: DaySpan,
+  delta: number
+) => {
+  if (!span) {
+    return undefined
+  }
+  const [start, end, fullStart, fullEnd] = [
+    span.start,
+    span.end,
+    full.start,
+    full.end,
+  ].map(Date.parse)
+  const nextStart = clamp(start + delta, fullStart, fullEnd - (end - start))
+  return {
+    start: new Date(nextStart).toISOString(),
+    end: new Date(nextStart + end - start).toISOString(),
+  } satisfies DaySpan
+}

@@ -24,13 +24,13 @@ import { DAY_MS } from '~/dates'
 import {
   describeWeeklyCommits,
   getWeekReachingCommits,
-} from './lib/weekly-activity'
-import { describeWeeklyDownloads } from './lib/weekly-downloads'
+} from './charts/lib/weekly-activity'
+import { describeWeeklyDownloads } from './charts/lib/weekly-downloads'
 // The type alone, which leaves the charts' code to the lazy import below.
-import type { ProjectChartsProps } from './ProjectCharts'
+import type { ProjectChartsProps } from './charts/ProjectCharts'
 
 /** Loads the charts' code, which the module system keeps once loaded. */
-const loadCharts = () => import('./ProjectCharts')
+const loadCharts = () => import('./charts/ProjectCharts')
 const ProjectCharts = lazy<React.ComponentType<ProjectChartsProps>>(() =>
   loadCharts().then(
     // React.lazy takes a default export, which the module doesn't have.
@@ -158,7 +158,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       end: chartedDownloads.history.lastDay,
     },
   ].filter(isNotNil)
-  const span = {
+  const fullSpan = {
     start: getSpanStart(),
     end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
   }
@@ -166,7 +166,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     Boolean(chartedActivity || chartedDownloads) &&
     // Too short a stretch, like a package released this week, has nothing
     // to chart yet.
-    Date.parse(span.end) - Date.parse(span.start) >= MIN_CHART_MS
+    Date.parse(fullSpan.end) - Date.parse(fullSpan.start) >= MIN_CHART_MS
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -212,7 +212,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
               activity={chartedActivity}
               downloads={chartedDownloads}
               releases={releases}
-              span={span}
+              span={fullSpan}
             />
           </Suspense>
         ) : (

@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@bvandrc/react-toolkit": "^2.4",
+    "@use-gesture/react": "^10",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
     "colord": "^2",

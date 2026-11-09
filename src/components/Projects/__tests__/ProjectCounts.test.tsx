@@ -5,6 +5,7 @@ import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-total
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
+import { turnWheel } from '@/test-helpers/wheel'
 import type {
   Registry,
   Release,
@@ -316,6 +317,60 @@ describe('ProjectCounts', () => {
       ).toBe(charted)
       unmount()
     }
+  })
+
+  it('zooms both charts together with the wheel, and back out once the tooltip closes', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+    /** Each chart's release lines' positions, activity first. */
+    const getReleaseXs = () =>
+      [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
+        within(screen.getByTestId(chart))
+          .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+          .map((line) => line.getAttribute('x1'))
+      )
+
+    await hoverCounts()
+    const unzoomed = getReleaseXs()
+    turnWheel(
+      within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT),
+      100,
+      -300
+    )
+    const zoomed = getReleaseXs()
+    expect(zoomed).not.toEqual(unzoomed)
+    // Still lined up across the two.
+    expect(zoomed[1]).toEqual(zoomed[0])
+
+    // Taps close it, then open it again.
+    const counts = screen.getByTestId(COUNTS)
+    await user.pointer({ keys: '[TouchA]', target: counts })
+    await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
+    await user.pointer({ keys: '[TouchA]', target: counts })
+    await screen.findByTestId(TOOLTIP)
+    expect(getReleaseXs()).toEqual(unzoomed)
+  })
+
+  it('pans both zoomed-in charts together', async () => {
+    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
+    /** The first release line's position in each chart, activity first. */
+    const getFirstReleaseXs = () =>
+      [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
+        within(screen.getByTestId(chart))
+          .queryAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)[0]
+          ?.getAttribute('x1')
+      )
+    const plot = () =>
+      within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT)
+
+    await hoverCounts()
+    turnWheel(plot(), 100, -300)
+    const zoomed = getFirstReleaseXs()
+    // To the left, so later.
+    turnWheel(plot(), 100, 0, { deltaX: -40 })
+    const panned = getFirstReleaseXs()
+    expect(panned).not.toEqual(zoomed)
+    expect(panned[1]).toEqual(panned[0])
   })
 
   it('charts nothing for a package first released under two weeks ago, however long its repo', async () => {
