@@ -1,8 +1,6 @@
-import { colord, extend } from 'colord'
-import a11yPlugin from 'colord/plugins/a11y'
+import { SKILL_ICON_COLORS } from 'virtual:icons'
 
 import { SECTIONS } from '@/generated/profile/content/sections'
-import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
 import { skillIconSlug } from '@/lib/icons'
 import { sectionAnchor } from '@/lib/section-anchor'
@@ -10,32 +8,6 @@ import { THEME_COLORS } from '@/lib/theme-colors'
 import { Badge } from './primitives/Badge'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Section, SubSection } from './Section'
-
-// Adds colord's WCAG contrast and luminance methods.
-extend([a11yPlugin])
-
-/** Below this WCAG contrast ratio against the chip, a brand color is too dark to see. */
-const MIN_ICON_CONTRAST = 2
-
-/**
- * A skill logo's brand color, from its shields.io badge.
- *
- * The badge's logo color where that's a real color, else its background,
- * since a white or black logo was only ever drawn on that. One too dark for
- * the chip uses the chip's ink.
- */
-const skillIconColor = ({ logoColor, path }: SkillBadge) => {
-  const logoHex = decodeURIComponent(logoColor).replace('#', '')
-  const badgeHex = decodeURIComponent(path).match(
-    /-#?([0-9a-f]{6})(?:\.svg)?$/i
-  )?.[1]
-  const brand = colord(`#${logoHex}`).isValid() ? logoHex : badgeHex
-  return brand &&
-    colord(`#${brand}`).contrast(`#${THEME_COLORS.SURFACE}`) >=
-      MIN_ICON_CONTRAST
-    ? brand
-    : THEME_COLORS.INK
-}
 
 export const Skills = () => (
   <Section
@@ -57,17 +29,20 @@ export const Skills = () => (
                 className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-3">
                 <dt className="shrink-0 text-sm text-ink-muted">{label}</dt>
                 <dd className="flex flex-wrap justify-center gap-2">
-                  {row.lines.flat().map((skill) => (
-                    <Badge key={skill.alt}>
-                      <BrandIcon
-                        slug={skillIconSlug(skill)}
-                        color={skillIconColor(skill)}
-                        size={14}
-                        className="size-3.5"
-                      />
-                      {skill.alt}
-                    </Badge>
-                  ))}
+                  {row.lines.flat().map((skill) => {
+                    const slug = skillIconSlug(skill)
+                    return (
+                      <Badge key={skill.alt}>
+                        <BrandIcon
+                          slug={slug}
+                          color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
+                          size={14}
+                          className="size-3.5"
+                        />
+                        {skill.alt}
+                      </Badge>
+                    )
+                  })}
                 </dd>
               </div>
             )
