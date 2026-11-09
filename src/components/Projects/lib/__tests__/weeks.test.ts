@@ -2,7 +2,6 @@ import { addDays, DAY_MS } from '~/dates'
 import {
   formatLatestVersion,
   getPeakWeek,
-  getWheelZoomFactor,
   panSpan,
   sumWeeks,
   type Week,
@@ -52,13 +51,6 @@ describe('formatLatestVersion', () => {
   it('names only the latest of several, by their numbers rather than their order', () => {
     // 1.10.0 sorts before 1.9.0 as text.
     expect(formatLatestVersion(['1.9.0', '1.10.0', '1.0.5'])).toBe('v1.10.0')
-  })
-})
-
-describe('getWheelZoomFactor', () => {
-  it('zooms in for a wheel turned up, and out by as much for one turned down', () => {
-    expect(getWheelZoomFactor(-100)).toBeLessThan(1)
-    expect(getWheelZoomFactor(-100) * getWheelZoomFactor(100)).toBeCloseTo(1)
   })
 })
 

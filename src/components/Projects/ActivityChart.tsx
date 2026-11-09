@@ -23,30 +23,22 @@ export type ActivityChartProps = Pick<
  */
 export const ActivityChart = ({
   activity,
-  releases,
-  span,
-  zoomed,
-  onZoom,
-  onPan,
+  ...chartProps
 }: ActivityChartProps) => (
   <RunningTotalChart
+    {...chartProps}
     firstDay={activity.firstDay}
     daily={activity.commits}
     periodEnds={getPeriodEnds(
       getActivityWeekEnds(activity),
       activity.firstDay,
       activity.lastDay,
-      span
+      chartProps.span
     )}
-    span={span}
-    zoomed={zoomed}
-    onZoom={onZoom}
-    onPan={onPan}
     noun="commit"
     tone="COMMITS"
     icon={COUNT_ICONS.commits}
     summary="Commits"
-    releases={releases}
     data-testid="activity-chart"
   />
 )

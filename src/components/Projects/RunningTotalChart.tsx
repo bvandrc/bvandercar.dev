@@ -1,19 +1,14 @@
 import { useId, useRef, useState } from 'react'
-import { useGesture } from '@use-gesture/react'
 import { uniq } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
+import { useZoomPanGestures } from '@/hooks/useZoomPanGestures'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import type { Release } from '~/counts'
 import { addDays, DAY_MS, getDaysBetween } from '~/dates'
-import {
-  type DaySpan,
-  formatDay,
-  formatLatestVersion,
-  getWheelZoomFactor,
-} from './lib/weeks'
+import { type DaySpan, formatDay, formatLatestVersion } from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
 const WIDTH = 328
@@ -131,8 +126,6 @@ export const RunningTotalChart = ({
   // The release day under the pointer, which it snaps to over a period.
   const [activeRelease, setActiveRelease] = useState<string>()
   const plotRef = useRef<SVGSVGElement>(null)
-  // Set while two fingers pinch, so neither picks a period as it moves.
-  const pinchingRef = useRef(false)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
   const lastIndex = periodEnds.length - 1
@@ -191,51 +184,12 @@ export const RunningTotalChart = ({
   }
   // How much time one pixel across the plot covers.
   const msPerPx = spanTime / (PLOT_RIGHT - INSET)
-  useGesture(
-    {
-      onWheel: ({ event, delta: [dx, dy] }) => {
-        // A trackpad's pinch arrives as a wheel with ctrl held, for onPinch.
-        if (!onZoom || event.ctrlKey) {
-          return
-        }
-        // Zooms or pans rather than scrolling the page beneath the tooltip.
-        event.preventDefault()
-        // A sideways scroll, like a trackpad's, pans.
-        if (Math.abs(dx) > Math.abs(dy)) {
-          onPan?.(dx * msPerPx)
-        } else {
-          onZoom(getTimeAt(event.clientX), getWheelZoomFactor(dy))
-        }
-      },
-      // A trackpad's pinch, in any browser, as well as two fingers'.
-      onPinch: ({ event, origin: [x], offset: [scale], first, last, memo }) => {
-        event.preventDefault()
-        pinchingRef.current = !last
-        // The scale and point between the fingers at the event before.
-        const previous: { scale: number; x: number } = first
-          ? { scale, x }
-          : memo
-        if (!first && onZoom) {
-          onZoom(getTimeAt(x), previous.scale / scale)
-          // Moving both fingers together pans, the way a drag does.
-          onPan?.((previous.x - x) * msPerPx)
-        }
-        return { scale, x }
-      },
-      // A mouse's drag pans; a finger's reads out the periods instead.
-      onDrag: ({ event, delta: [dx], pinching }) => {
-        if (
-          !pinching &&
-          event instanceof PointerEvent &&
-          event.pointerType === 'mouse'
-        ) {
-          onPan?.(-dx * msPerPx)
-        }
-      },
-    },
-    // Not passive, so it can stop the page from scrolling and zooming.
-    { target: plotRef, eventOptions: { passive: false } }
-  )
+  const pinchingRef = useZoomPanGestures(plotRef, {
+    getValueAt: getTimeAt,
+    valuePerPx: msPerPx,
+    onZoom,
+    onPan,
+  })
   /**
    * Reads out the release line within a few pixels of the pointer, or else
    * the period the pointer's day falls in, so it never has to land on either.
