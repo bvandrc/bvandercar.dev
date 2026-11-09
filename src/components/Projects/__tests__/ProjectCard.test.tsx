@@ -7,7 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB } = SELECTORS.PROJECTS
+const { CARD, BLURB, THUMBNAIL } = SELECTORS.PROJECTS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -81,5 +81,28 @@ describe('ProjectCard', () => {
 
     await user.click(card)
     expect(within(card).queryByTestId(LIVE_PREVIEW.FRAME)).toBeNull()
+  })
+
+  it("shows a live preview's screenshot as a thumbnail", () => {
+    const card = renderPreviewCard()
+
+    expect(within(card).getByTestId(THUMBNAIL).getAttribute('src')).toMatch(
+      /^\/project-screenshots\/.+\.png$/
+    )
+  })
+
+  it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {
+    const PROJECT = {
+      name: 'Pictured',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'A site that refuses framing.',
+      screenshot: './project-screenshots/pictured.png',
+    } satisfies Project
+    renderCard(PROJECT)
+
+    expect(screen.queryByTestId(THUMBNAIL)).toBeNull()
+    expect(screen.getByAltText('Pictured screenshot')).toBeDefined()
   })
 })

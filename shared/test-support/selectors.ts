@@ -14,6 +14,7 @@ export const SELECTORS = {
     SELF: 'projects',
     CARD: 'project-card',
     BLURB: 'project-blurb',
+    THUMBNAIL: 'project-thumbnail',
     REPO_LINK: 'project-repo-link',
     REPO_LABEL: 'project-repo-label',
     COUNTS: 'project-counts',

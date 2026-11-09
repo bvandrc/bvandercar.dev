@@ -46,6 +46,11 @@ export const ProjectCard = ({
   const nameRef = useRef<HTMLDivElement>(null)
   const nameStep = useShrinkToFit(headerRef, nameRef, NAME_SIZES.length)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const screenshotSrc =
+    project.screenshot &&
+    `${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`
+  // A live preview's card shows its screenshot small, beside the blurb.
+  const thumbnailSrc = project.embed ? screenshotSrc : undefined
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
     if (open) {
@@ -124,17 +129,41 @@ export const ProjectCard = ({
           <RepoLink {...countsFields} nameId={nameId} />
         </p>
       </div>
-      <p
+      <div
         className={cn(
-          'text-left text-sm text-ink-muted',
+          'flex items-center gap-4',
           // Closer to the name than the card's gap, as the name's own words.
-          '-mt-1',
-          centered && 'md:text-center'
+          '-mt-1'
+        )}>
+        <p
+          className={cn(
+            'min-w-0 flex-1 text-left text-sm text-ink-muted',
+            centered && 'md:text-center',
+            // Inset as far as the thumbnail and its gap take on the right, so
+            // a centered blurb stays centered under the name.
+            centered && thumbnailSrc && 'md:ml-34'
+          )}
+          data-testid="project-blurb">
+          {/* Its counts are the ones its glyphs show. */}
+          {fillBlurb(project.blurb, counts)}
+        </p>
+        {thumbnailSrc && (
+          // A glimpse of the site before its preview is opened, from md; a
+          // phone shows the toggle alone.
+          <img
+            src={thumbnailSrc}
+            alt={`${project.name} screenshot`}
+            loading="lazy"
+            className={cn(
+              'hidden w-30 shrink-0 rounded-sm border border-border md:block',
+              // The screenshots' 9:4, set ahead of the image so it holds its
+              // space while it loads.
+              'aspect-[9/4] object-cover object-top'
+            )}
+            data-testid="project-thumbnail"
+          />
         )}
-        data-testid="project-blurb">
-        {/* Its counts are the ones its glyphs show. */}
-        {fillBlurb(project.blurb, counts)}
-      </p>
+      </div>
       {project.embed ? (
         <LivePreview
           src={project.href}
@@ -151,9 +180,9 @@ export const ProjectCard = ({
           className="mt-auto"
         />
       ) : (
-        project.screenshot && (
+        screenshotSrc && (
           <img
-            src={`${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`}
+            src={screenshotSrc}
             alt={`${project.name} screenshot`}
             loading="lazy"
             className="mt-auto w-full rounded-md border border-border"
