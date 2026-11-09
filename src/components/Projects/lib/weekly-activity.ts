@@ -1,5 +1,6 @@
 import type { WeeklyActivity } from '~/counts'
-import { addDays, formatDay, formatMonth, getPeakWeek } from './weeks'
+import { addDays } from '~/dates'
+import { formatDay, formatMonth, getPeakWeek } from './weeks'
 
 /** The ISO date each of the activity's weeks starts on, oldest first. */
 export const getActivityWeekStarts = ({ firstWeek, commits }: WeeklyActivity) =>
@@ -29,7 +30,7 @@ export const getWeekReachingCommits = (
   for (const [index, commits] of activity.commits.entries()) {
     total += commits
     if (total >= count) {
-      return getActivityWeekStarts(activity)[index]
+      return addDays(activity.firstWeek, index * 7)
     }
   }
   return activity.firstWeek

@@ -78,19 +78,23 @@ const fetchActivity = async (repo: string) => {
     }>(`/repos/${OWNER}/${repo}/commits`),
     fetchAll<{ created_at: string }>(`/repos/${OWNER}/${repo}/pulls?state=all`),
   ])
-  const commitWeeks = commits.map(({ commit }) =>
-    // A commit can lack a committer, so its author dates it instead, and one
-    // with neither still counts, as this week's.
-    getWeekStart(
-      Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
-    )
-  )
-  const prWeeks = pulls.map(({ created_at }) =>
-    getWeekStart(Date.parse(created_at))
-  )
   const now = Date.now()
   // A running total never drops, so the week under way is charted too.
   const lastWeek = getWeekStart(now)
+  const commitWeeks = commits.map(({ commit }) =>
+    // A commit can lack a committer, so its author dates it instead, and one
+    // with neither still counts, as this week's. One dated ahead, by a skewed
+    // clock, counts as this week's too, so the weeks still sum to the total.
+    Math.min(
+      getWeekStart(
+        Date.parse(commit.committer?.date ?? commit.author?.date ?? Date())
+      ),
+      lastWeek
+    )
+  )
+  const prWeeks = pulls.map(({ created_at }) =>
+    Math.min(getWeekStart(Date.parse(created_at)), lastWeek)
+  )
   const firstWeek = Math.min(lastWeek, ...commitWeeks, ...prWeeks)
   const commitCounts = countBy(commitWeeks, String)
   const prCounts = countBy(prWeeks, String)

@@ -1,5 +1,6 @@
 import type { Registry, WeeklyDownloads } from '~/counts'
-import { addDays, formatDay, formatMonth, getPeakWeek } from './weeks'
+import { addDays } from '~/dates'
+import { formatDay, formatMonth, getPeakWeek } from './weeks'
 
 /** Each registry's name, as written in a sentence. */
 export const REGISTRY_NAMES = {

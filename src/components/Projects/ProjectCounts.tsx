@@ -52,6 +52,13 @@ const UNPACKAGED_START_COMMITS = 15
 // The shortest stretch of dates the charts are drawn over: two weeks.
 const MIN_CHART_MS = 14 * DAY_MS
 
+// Charts size the tooltip to themselves, with text to match, where the
+// counts in words are a line of text.
+const TOOLTIP_CLASSES = {
+  CHARTS: 'max-w-none p-3 text-sm',
+  WORDS: undefined,
+} as const
+
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
 // hover, clicks through to the link the counts sit in.
 const TOGGLE_OPTIONS = {
@@ -208,8 +215,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
         )
       }
       aria-label={description === label ? undefined : description}
-      // Sized to its charts, with text to match, rather than to a line of text.
-      className={hasCharts ? 'max-w-none p-3 text-sm' : undefined}>
+      className={TOOLTIP_CLASSES[hasCharts ? 'CHARTS' : 'WORDS']}>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
       <span

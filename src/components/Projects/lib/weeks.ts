@@ -1,6 +1,6 @@
 import { clamp } from 'es-toolkit'
 
-import { DAY_MS, isoDate } from '~/dates'
+import { DAY_MS } from '~/dates'
 
 // The dates are calendar days, so they're read in UTC, where they start.
 const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -20,10 +20,6 @@ export const formatMonth = (day: string) => MONTH_FORMAT.format(Date.parse(day))
 
 /** An ISO date in full: `'2026-03-02'` → `'Mar 2, 2026'`. */
 export const formatDay = (day: string) => DAY_FORMAT.format(Date.parse(day))
-
-/** The ISO date `days` after `day`, or before it for a negative count. */
-export const addDays = (day: string, days: number) =>
-  isoDate(Date.parse(day) + days * DAY_MS)
 
 /** The busiest of weekly counts: its count, and the ISO date its week starts on. */
 export const getPeakWeek = (weekly: number[], weekStarts: string[]) => {
