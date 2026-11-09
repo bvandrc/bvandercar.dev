@@ -2,10 +2,9 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { sectionAnchor } from '@/lib/section-anchor'
 import { Badge } from './primitives/Badge'
-import { Icon } from './primitives/Icon'
 import { Link } from './primitives/Link'
 import { List } from './primitives/List'
-import { SubSectionIcon } from './Section'
+import { SectionIcon, SubSectionIcon } from './Section'
 
 type ContentsLinkProps = {
   /** The title of the section it goes to, which also names its anchor. */
@@ -50,12 +49,7 @@ export const Contents = () => (
       ))}
       <ContentsLink
         title={SECTIONS.SKILLS.title}
-        icon={
-          <Icon
-            name={SECTIONS.SKILLS.glyph}
-            className="size-4 shrink-0 text-orange-400"
-          />
-        }
+        icon={<SectionIcon glyph={SECTIONS.SKILLS.glyph} className="size-4" />}
       />
     </List>
   </nav>

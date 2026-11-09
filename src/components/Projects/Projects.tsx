@@ -8,17 +8,18 @@ import { SECTIONS } from '@/generated/profile/content/sections'
 import { sectionAnchor } from '@/lib/section-anchor'
 import { ProjectCard } from './ProjectCard'
 
-type GridLayout = 'preview' | 'pairs'
+type GridLayout = 'PREVIEW' | 'PAIRS'
 
 // A group with a live preview takes the full width, so the page inside it has
 // room; the rest pair up from md.
 const GRID_CLASSES = {
-  preview: 'grid gap-4',
-  pairs: 'grid gap-4 md:grid-cols-2',
+  PREVIEW: 'grid gap-4',
+  PAIRS: 'grid gap-4 md:grid-cols-2',
 } satisfies Record<GridLayout, string>
 
-const gridLayout = ({ projects }: ProjectSection): GridLayout =>
-  projects.some(({ embed }) => embed) ? 'preview' : 'pairs'
+/** How a group's cards are laid out: full width where any has a live preview. */
+const getGridLayout = ({ projects }: ProjectSection): GridLayout =>
+  projects.some(({ embed }) => embed) ? 'PREVIEW' : 'PAIRS'
 
 export const Projects = () => {
   // Every preview toggle pulses on each page visit, until any one is opened.
@@ -38,7 +39,7 @@ export const Projects = () => {
           {group.intro && (
             <p className="font-semibold text-ink-muted">{group.intro}</p>
           )}
-          <List className={GRID_CLASSES[gridLayout(group)]}>
+          <List className={GRID_CLASSES[getGridLayout(group)]}>
             {group.projects.map((project) => (
               <li key={project.repo}>
                 <ProjectCard
