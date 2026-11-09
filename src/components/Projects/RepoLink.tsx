@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
@@ -19,7 +19,6 @@ export type RepoLinkProps = ProjectCountsProps & {
  */
 export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
   const [repoTooltipOpen, setRepoTooltipOpen] = useState(false)
-  const pointerDownRef = useRef(false)
   return (
     <Link
       // Its name is its counts in full, then "repo", which needs the project
@@ -31,16 +30,12 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
       className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
-      onPointerDown={() => {
-        pointerDownRef.current = true
-      }}
       // A click focuses the link too, which opens no tooltip, the same as
-      // Radix's own triggers.
-      onFocus={() => setRepoTooltipOpen(!pointerDownRef.current)}
-      onBlur={() => {
-        pointerDownRef.current = false
-        setRepoTooltipOpen(false)
-      }}
+      // Radix's own triggers: only focus the browser would ring does.
+      onFocus={(event) =>
+        setRepoTooltipOpen(event.currentTarget.matches(':focus-visible'))
+      }
+      onBlur={() => setRepoTooltipOpen(false)}
       data-testid="project-repo-link">
       <ProjectCounts {...countsProps} />
       <Tooltip
