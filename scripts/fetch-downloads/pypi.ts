@@ -182,7 +182,7 @@ export const fetchPypiHistory = async (
   // Checked before the first days are read, which would go unused without it.
   if (!hasGoogleCredentials) {
     reportSkipped(
-      "Every PyPI package's downloads",
+      "every PyPI package's downloads",
       'GOOGLE_APPLICATION_CREDENTIALS is not set'
     )
     return history

@@ -16,7 +16,7 @@
 import { GENERATED_DIR } from './shared/constants.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
 import { fetchOk } from './shared/http.ts'
-import { readProjectValues } from './shared/projects.ts'
+import { findShortfall, getProjectValues } from './shared/projects.ts'
 import { reportSkipped } from './shared/skipped.ts'
 
 const OUT_FILE = `${GENERATED_DIR}/repo-activity-totals.ts`
@@ -56,19 +56,25 @@ const fetchActivity = async (repo: string) => {
 
 exitIfReusing('git activity', [OUT_FILE])
 
-const repos = await readProjectValues('repo')
+const repos = getProjectValues('repo')
 
 const entries: string[] = []
 if (token === undefined) {
-  reportSkipped("Every repo's commits and PRs", 'GITHUB_TOKEN is not set')
+  reportSkipped("every repo's commits and PRs", 'GITHUB_TOKEN is not set')
 } else {
   const results = await Promise.allSettled(repos.map(fetchActivity))
   results.forEach((result, index) => {
     const repo = repos[index]
     if (result.status === 'rejected') {
-      reportSkipped(`Commits and PRs for ${repo}`, result.reason)
+      reportSkipped(`commits and PRs for ${repo}`, result.reason)
+      return
+    }
+    const { commits, prs } = result.value
+    // Fewer than the profile's older count means the fetch missed some.
+    const shortfall = findShortfall(repo, { commits, prs })
+    if (shortfall) {
+      reportSkipped(`commits and PRs for ${repo}`, shortfall)
     } else {
-      const { commits, prs } = result.value
       entries.push(`  '${repo}': { commits: ${commits}, prs: ${prs} },`)
     }
   })

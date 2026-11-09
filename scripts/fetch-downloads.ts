@@ -22,25 +22,49 @@ import { fetchNpmHistory } from './fetch-downloads/npm.ts'
 import { fetchPypiHistory } from './fetch-downloads/pypi.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
-import { readProjectValues } from './shared/projects.ts'
+import {
+  findShortfall,
+  getPackageRepo,
+  getProjectValues,
+} from './shared/projects.ts'
+import { reportSkipped } from './shared/skipped.ts'
 
 const OUT_FILE = `${GENERATED_DIR}/package-download-totals.ts`
 
 exitIfReusing('package downloads', [OUT_FILE])
 
-/** The generated file's lines for one registry: each package's total, leaving out one with no days counted yet. */
-const formatTotals = (history: RegistryHistory) =>
+/**
+ * The generated file's lines for one registry: each package's total.
+ *
+ * Leaves out one with no days counted yet, and reports one whose total is
+ * fewer than its profile count, which is older, so the fetch missed some.
+ */
+const formatTotals = (
+  field: 'npmPackage' | 'pypiPackage',
+  history: RegistryHistory
+) =>
   history
     .filter(({ days }) => days.length > 0)
-    .map(
-      ({ pkg, days }) =>
-        `    '${pkg}': ${sumBy(days, ({ downloads }) => downloads)},`
-    )
+    .flatMap(({ pkg, days }) => {
+      const downloads = sumBy(days, (day) => day.downloads)
+      const shortfall = findShortfall(getPackageRepo(field, pkg), { downloads })
+      if (shortfall) {
+        reportSkipped(`downloads for ${pkg}`, shortfall)
+        return []
+      }
+      return [`    '${pkg}': ${downloads},`]
+    })
 
-const npmPackages = await readProjectValues('npmPackage')
-const pypiPackages = await readProjectValues('pypiPackage')
-const npmEntries = formatTotals(await fetchNpmHistory(npmPackages))
-const pypiEntries = formatTotals(await fetchPypiHistory(pypiPackages))
+const npmPackages = getProjectValues('npmPackage')
+const pypiPackages = getProjectValues('pypiPackage')
+const npmEntries = formatTotals(
+  'npmPackage',
+  await fetchNpmHistory(npmPackages)
+)
+const pypiEntries = formatTotals(
+  'pypiPackage',
+  await fetchPypiHistory(pypiPackages)
+)
 
 await writeGenerated(
   OUT_FILE,
