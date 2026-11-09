@@ -1,4 +1,8 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
+import {
+  type UsePressToggleOptions,
+  usePressToggle,
+} from '@bvandrc/react-toolkit'
 import { isNotNil } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
@@ -10,7 +14,6 @@ import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { ProjectPackage } from './lib/project-charts'
-import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
 
 /** Loads the charts' code, and the histories they chart, which the module system keeps once loaded. */
 const loadCharts = () =>
@@ -23,6 +26,12 @@ const loadCharts = () =>
 type Charts = Awaited<ReturnType<typeof loadCharts>>
 // Kept once loaded, so counts mounted later start with them.
 let loadedCharts: Charts | undefined
+
+// A tap stands in for the hover a touch screen lacks; a mouse, which can
+// hover, clicks through to the link the counts sit in.
+const TOGGLE_OPTIONS = {
+  pointerTypes: ['touch'],
+} satisfies UsePressToggleOptions
 
 export type ProjectCountsProps = Pick<
   Project,
@@ -56,14 +65,13 @@ const getPackage = ({
  * instead, rather than following a link the counts sit in.
  */
 export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
-  const [open, setOpen] = useState(false)
+  // Its pointerdown handler reads the state before Radix's own closes an open
+  // tooltip, and its click handler cancels the click, which also stops
+  // Radix's from closing it again.
+  const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
   // Null once they've failed to load, offline say, which leaves the counts
   // in words.
   const [charts, setCharts] = useState<Charts | null | undefined>(loadedCharts)
-  // Shared by both charts, so a release stays lined up across them as they zoom.
-  const [zoomedSpan, setZoomedSpan] = useState<DaySpan>()
-  // Read at pointerdown, before Radix's own handler closes an open tooltip.
-  const tapRef = useRef({ isTouch: false, wasOpen: false })
   const activityTotals = REPO_ACTIVITY_TOTALS[repo]
   const pkg = getPackage(packages)
   const downloadTotal = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
@@ -82,13 +90,11 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       )
     }
   }
-  /** Opens or closes the tooltip, loading the charts as it opens, and closing it zoomed back out. */
+  /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
   const changeOpen = (next: boolean) => {
-    setOpen(next)
+    setIsActive(next)
     if (next) {
       prefetchCharts()
-    } else {
-      setZoomedSpan(undefined)
     }
   }
   // This site's own fetches are fresher than the profile's weekly counts, and
@@ -108,18 +114,6 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     return null
   }
   const isLoading = mayChart && charts === undefined
-  const fullSpan = projectCharts?.span
-  // Each from the span before, so gestures landing in one frame build on
-  // each other rather than all starting from the same one.
-  /** Zooms both charts around a time under the pointer, scaling their width by `factor`. */
-  const zoom = (anchor: number, factor: number) =>
-    setZoomedSpan(
-      (previous) =>
-        fullSpan && zoomSpan(previous ?? fullSpan, fullSpan, anchor, factor)
-    )
-  /** Moves both zoomed-in charts `delta` milliseconds later. */
-  const pan = (delta: number) =>
-    setZoomedSpan((previous) => fullSpan && panSpan(previous, fullSpan, delta))
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
@@ -135,10 +129,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
           activity={projectCharts.activity}
           downloads={projectCharts.downloads}
           releases={projectCharts.releases}
-          span={zoomedSpan ?? projectCharts.span}
-          zoomed={zoomedSpan !== undefined}
-          onZoom={zoom}
-          onPan={pan}
+          span={projectCharts.span}
         />
       )
     }
@@ -160,7 +151,7 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   }
   return (
     <Tooltip
-      open={open}
+      open={isActive}
       onOpenChange={changeOpen}
       content={getContent()}
       aria-label={description}
@@ -170,27 +161,17 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
       }>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: a tap only stands in for the hover a touch screen lacks; keyboards focus the link around it. */}
       <span
         role="img"
         aria-label={label}
         className="inline-flex items-center gap-2.5"
+        {...triggerProps}
         // Starts loading the charts as the pointer arrives, ahead of the
         // tooltip's open delay, or with a tap.
         onPointerEnter={prefetchCharts}
         onPointerDown={(event) => {
           prefetchCharts()
-          tapRef.current = {
-            isTouch: event.pointerType === 'touch',
-            wasOpen: open,
-          }
-        }}
-        onClick={(event) => {
-          if (tapRef.current.isTouch) {
-            // Also stops Radix's own handler, which would close it again.
-            event.preventDefault()
-            changeOpen(!tapRef.current.wasOpen)
-          }
+          triggerProps.onPointerDown(event)
         }}
         data-testid="project-counts">
         {shown.map(({ key, icon, count }) => (
