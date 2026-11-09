@@ -187,7 +187,11 @@ export const ProjectCard = ({
                 'absolute inset-0 size-full rounded-md border border-border',
                 // Cropped to fit, keeping the page's top left corner, where its
                 // header and the start of its text are.
-                'object-cover object-left-top'
+                'object-cover object-left-top',
+                // A click on it opens the preview, as on the rest of the
+                // card's surface, so it looks clickable: a hand, and on hover
+                // a brighter image in a border of the card's orange glow.
+                'cursor-pointer transition hover:border-orange-500 hover:brightness-110'
               )}
               data-testid="project-thumbnail"
             />
