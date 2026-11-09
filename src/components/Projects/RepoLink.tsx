@@ -2,6 +2,7 @@ import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { useFocusVisibleOpen } from '@/hooks/useFocusVisibleOpen'
+import { cn } from '@/lib/cn'
 import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
 
@@ -35,8 +36,11 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       newTab
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
-      // As far from the counts as they are from each other, with room.
-      className="inline-flex flex-wrap items-center justify-end gap-x-2.5 gap-y-0.5"
+      className={cn(
+        'inline-flex flex-wrap items-center justify-end gap-y-0.5',
+        // As far from the counts as they are from each other, with room.
+        'gap-x-2.5'
+      )}
       {...focusProps}
       data-testid="project-repo-link">
       <ProjectCounts
@@ -46,7 +50,7 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       />
       <Tooltip content="GitHub Repository">
         {/* Keeps its icon on its line. */}
-        <span className="whitespace-nowrap">
+        <span className="whitespace-nowrap" data-testid="project-repo-label">
           repo{' '}
           <Icon
             name="external-link"

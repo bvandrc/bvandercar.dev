@@ -40,7 +40,8 @@ export const ProjectCard = ({
   const cardRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const typeIcon = TYPE_ICONS[project.type]
-  const { counts } = getProjectCounts(pick(project, COUNTS_FIELDS))
+  const countsFields = pick(project, COUNTS_FIELDS)
+  const { counts } = getProjectCounts(countsFields)
   const headerRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLDivElement>(null)
   const nameStep = useShrinkToFit(headerRef, nameRef, NAME_SIZES.length)
@@ -120,7 +121,7 @@ export const ProjectCard = ({
             'mt-0.5 min-h-5 items-center',
             centered && 'md:col-start-3'
           )}>
-          <RepoLink {...pick(project, COUNTS_FIELDS)} nameId={nameId} />
+          <RepoLink {...countsFields} nameId={nameId} />
         </p>
       </div>
       <p

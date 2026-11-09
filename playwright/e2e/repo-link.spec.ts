@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import { SELECTORS } from '~/test-support/selectors'
 import { getChartedRepoLink } from '../support/charted-counts'
 
-const { COUNTS, ACTIVITY_CHART } = SELECTORS.PROJECTS
+const { ACTIVITY_CHART, REPO_LABEL } = SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
 // Past the tooltips' 150ms open delay, so one that was opening has.
@@ -18,25 +18,19 @@ test("a click on a repo link opens no tooltip, where keyboard focus opens the co
   await link.evaluate((element) =>
     element.addEventListener('click', (event) => event.preventDefault())
   )
-  // In the gap between the counts and "repo", hovering neither, whose own
-  // tooltips would open on hover, and opening one closes the other. Beside
-  // the counts, or below them where "repo" wraps.
+  // Left of "repo", hovering neither it nor the counts, whose own tooltips
+  // would open on hover, and opening one closes the other: in the gap between
+  // them, or beside "repo" where it wraps below them, right-aligned.
   const linkBox = await link.boundingBox()
-  const countsBox = await link.getByTestId(COUNTS).boundingBox()
-  if (!linkBox || !countsBox) {
+  const repoBox = await link.getByTestId(REPO_LABEL).boundingBox()
+  if (!linkBox || !repoBox) {
     throw new Error('The repo link is not laid out')
   }
-  const isWrapped = linkBox.height > countsBox.height * 1.5
   await link.click({
-    position: isWrapped
-      ? {
-          x: countsBox.x + countsBox.width / 2 - linkBox.x,
-          y: countsBox.y + countsBox.height + 1 - linkBox.y,
-        }
-      : {
-          x: countsBox.x + countsBox.width + 6 - linkBox.x,
-          y: countsBox.y + countsBox.height / 2 - linkBox.y,
-        },
+    position: {
+      x: repoBox.x - 4 - linkBox.x,
+      y: repoBox.y + repoBox.height / 2 - linkBox.y,
+    },
   })
   await expect(link).toBeFocused()
   await page.waitForTimeout(TOOLTIP_SETTLE_MS)

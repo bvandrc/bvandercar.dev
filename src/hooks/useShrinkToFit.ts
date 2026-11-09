@@ -43,14 +43,24 @@ export const useShrinkToFit = (
     let width = line.offsetWidth
     const observer = new ResizeObserver(() => {
       // Only its width changes what fits; its height changes as it measures.
-      if (line.offsetWidth !== width) {
-        width = line.offsetWidth
-        setFit(UNMEASURED)
+      const newWidth = line.offsetWidth
+      if (newWidth === width) {
+        return
       }
+      // Narrower, no larger size fits that didn't before, so it steps on from
+      // where it is; wider, it starts again from the largest.
+      const isNarrower = newWidth < width
+      width = newWidth
+      setFit(({ step }) =>
+        isNarrower ? { step, isSettled: false } : UNMEASURED
+      )
     })
     observer.observe(line)
-    // A font that loads late changes how wide the text runs.
-    document.fonts?.ready.then(() => setFit(UNMEASURED))
+    // A font that loads late changes how wide the text runs; one already
+    // loaded was measured with.
+    if (document.fonts && document.fonts.status !== 'loaded') {
+      document.fonts.ready.then(() => setFit(UNMEASURED))
+    }
     return () => observer.disconnect()
   }, [lineRef])
   return fit.step

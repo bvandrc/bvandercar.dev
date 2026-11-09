@@ -73,7 +73,7 @@ describe('useShrinkToFit', () => {
     }
   })
 
-  it('measures again when the line widens, and not when only its height changes', () => {
+  it("measures again when the line's width changes, and not when only its height does", () => {
     const resize = mockResizeObserver()
     layout.wrapsAt = ['large', 'medium']
     render(<ShrinkingLine />)
@@ -88,5 +88,11 @@ describe('useShrinkToFit', () => {
     layout.width = 800
     resize()
     expect(getSize()).toBe('large')
+
+    // Narrower again, where the largest size wraps once more.
+    layout.width = 400
+    layout.wrapsAt = ['large']
+    resize()
+    expect(getSize()).toBe('medium')
   })
 })
