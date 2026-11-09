@@ -35,7 +35,8 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       newTab
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
-      className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
+      // As far from the counts as they are from each other.
+      className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1"
       {...focusProps}
       data-testid="project-repo-link">
       <ProjectCounts
