@@ -107,7 +107,7 @@ const fetchActivity = async (repo: string) => {
   }
 }
 
-exitIfReusing('repo activity', [OUT_FILE])
+exitIfReusing('git activity', [OUT_FILE])
 
 const repos = await readProjectValues('repo')
 
@@ -135,7 +135,7 @@ if (token === undefined) {
 
 await writeGenerated(
   OUT_FILE,
-  'fetch:activity',
+  'fetch:git-activity',
   `export type WeeklyActivity = {
   /** ISO date of the Monday the first week starts on */
   firstWeek: string
@@ -154,5 +154,5 @@ ${entries.join('\n')}
 `
 )
 console.log(
-  `repo activity: weekly history for ${entries.length} of ${repos.length} repos`
+  `git activity: weekly history for ${entries.length} of ${repos.length} repos`
 )
