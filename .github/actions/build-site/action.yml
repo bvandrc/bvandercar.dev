@@ -1,0 +1,69 @@
+name: Build site
+description: Build the site for deploying, with the data its fetches read from GitHub, npm, and BigQuery.
+
+inputs:
+  github-token:
+    description: Token the repos' commit and PR counts are read with; one granted the private project repos reads those too
+    required: true
+  bigquery-credentials:
+    description: Google Cloud service account key, as JSON, for PyPI's download counts; without it, the build still passes and PyPI projects show none
+    required: false
+    default: ''
+  reuse-fetched-data:
+    description: Whether to reuse the data a preview or deploy fetched the same UTC day, with the same scripts, rather than fetch it again; either way, data this fetches is saved for the next build to reuse
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+
+  steps:
+    - name: Get today's date
+      id: today
+      run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    # Today's data from a build that fetched it with these same scripts, which
+    # a PR can restore from its own runs or from main's.
+    - name: Restore fetched data
+      id: data
+      if: inputs.reuse-fetched-data == 'true'
+      uses: actions/cache/restore@v6
+      with:
+        path: src/generated/*.ts
+        key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ steps.today.outputs.date }}
+
+    # PyPI's daily download counts from earlier runs, so the build queries
+    # BigQuery for just the days since. Each run saves its own copy, and the
+    # next restores the newest. Nothing queries BigQuery when the fetched data
+    # is reused.
+    - name: Cache PyPI downloads
+      if: inputs.bigquery-credentials != '' && steps.data.outputs.cache-hit != 'true'
+      uses: actions/cache@v6
+      with:
+        path: .cache
+        key: pypi-downloads-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: pypi-downloads-
+
+    - name: Authenticate to Google Cloud
+      if: inputs.bigquery-credentials != '' && steps.data.outputs.cache-hit != 'true'
+      uses: google-github-actions/auth@v3
+      with:
+        credentials_json: ${{ inputs.bigquery-credentials }}
+
+    - name: Build
+      run: pnpm build
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        # Keeps the restored data rather than fetching it again.
+        REUSE_FETCHED_DATA: ${{ steps.data.outputs.cache-hit == 'true' }}
+
+    # For the next build to reuse. A key saved already today, by an earlier
+    # build, keeps that one's.
+    - name: Save fetched data
+      if: steps.data.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: src/generated/*.ts
+        key: fetched-data-${{ hashFiles('scripts/fetch-activity.ts', 'scripts/fetch-downloads.ts') }}-${{ steps.today.outputs.date }}
