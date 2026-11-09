@@ -1,4 +1,5 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
+import { cn } from '@/lib/cn'
 import type { UiIconName } from '@/lib/icons'
 import { GITHUB_OWNER, GITHUB_PROFILE_URL } from '~/github'
 import { Icon } from './primitives/Icon'
@@ -46,7 +47,13 @@ export const Header = () => (
       </h1>
     </div>
     <div
-      className="flex max-w-prose flex-col items-center gap-1 text-ink-muted"
+      className={cn(
+        'flex max-w-prose flex-col items-center gap-1 text-ink-muted',
+        // A size down on a phone, so the intro takes fewer lines.
+        'text-sm sm:text-base',
+        // Evens out a line that wraps, rather than leaving one word on its own.
+        'text-balance'
+      )}
       data-testid="header-tagline">
       {INTRO_LINES.map((line) => (
         <p key={line}>{line}</p>

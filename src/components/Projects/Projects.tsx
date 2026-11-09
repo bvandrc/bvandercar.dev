@@ -5,6 +5,7 @@ import { Section, SubSection } from '@/components/Section'
 import type { ProjectSection } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
+import { sectionAnchor } from '@/lib/section-anchor'
 import { ProjectCard } from './ProjectCard'
 
 type GridLayout = 'preview' | 'pairs'
@@ -30,6 +31,7 @@ export const Projects = () => {
       {PROJECTS.map((group) => (
         <SubSection
           key={group.title}
+          id={sectionAnchor(group.title)}
           // React Websites has its logo and no glyph; every other group, a glyph.
           icon={group.glyph ?? group.icon}
           title={group.title}>

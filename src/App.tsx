@@ -1,6 +1,7 @@
 import './styles/index.css'
 
 import { BeyondCode } from './components/BeyondCode'
+import { Contents } from './components/Contents'
 import { Header } from './components/Header'
 import { Projects } from './components/Projects'
 import { TooltipProvider } from './components/primitives/Tooltip'
@@ -16,6 +17,7 @@ export const App = () => (
         'pt-6'
       )}>
       <Header />
+      <Contents />
       <main className="flex flex-col gap-10" data-testid="main">
         <Projects />
         <Skills />

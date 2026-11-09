@@ -29,12 +29,17 @@ const TitledSection = ({
   titleClassName,
   icon,
   title,
+  className,
   children,
   ...props
 }: TitledSectionProps) => {
   const headingId = useId()
   return (
-    <section aria-labelledby={headingId} {...props}>
+    <section
+      aria-labelledby={headingId}
+      // Clear of the viewport's top edge when a link scrolls to it.
+      className={cn('scroll-mt-6', className)}
+      {...props}>
       <Heading
         id={headingId}
         className={cn(
@@ -85,14 +90,19 @@ export type SubSectionProps = SectionPropsCommon & {
   icon: GroupGlyph | SectionLogo
 }
 
+type SubSectionIconProps = Pick<SubSectionProps, 'icon'> & {
+  /** Sizes it, in place of the 1.25em it takes in a group's heading. */
+  className?: string
+}
+
 /** A group heading's glyph in its color, or its brand logo. */
-const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) =>
+export const SubSectionIcon = ({ icon, className }: SubSectionIconProps) =>
   'name' in icon ? (
     <Icon
       name={icon.name}
       // SVG's own `color` attribute, which the CSP allows where an inline style isn't.
       color={`#${icon.color}`}
-      className="size-[1.25em] shrink-0"
+      className={cn('size-[1.25em] shrink-0', className)}
     />
   ) : (
     <BrandIcon
@@ -100,7 +110,7 @@ const SubSectionIcon = ({ icon }: Pick<SubSectionProps, 'icon'>) =>
       color={icon.color}
       // 1.25 of the h3's em, at the 1.125rem of `text-lg`; the class keeps it there.
       size={23}
-      className="size-[1.25em]"
+      className={cn('size-[1.25em]', className)}
     />
   )
 

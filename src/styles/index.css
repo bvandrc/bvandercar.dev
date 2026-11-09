@@ -96,6 +96,8 @@
 @layer base {
   html {
     color-scheme: dark;
+    /* Glides to a section a contents link goes to; reduced motion jumps. */
+    scroll-behavior: smooth;
   }
 
   body {
