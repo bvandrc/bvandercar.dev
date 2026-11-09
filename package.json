@@ -87,6 +87,7 @@
     "happy-dom": "^21",
     "lighthouse": "^13",
     "lighthouse-audit-utils": "^1",
+    "octokit": "^5",
     "tailwindcss": "^4",
     "type-fest": "^5",
     "typescript": "^7",
