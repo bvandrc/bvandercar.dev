@@ -7,7 +7,7 @@ import { Tooltip } from './primitives/Tooltip'
 type SocialLinkProps = Pick<LinkProps, 'href' | 'tone'> & {
   /** The tooltip, naming the profile the link goes to. */
   tooltip: string
-  /** The site's logo, shown before the text in the link's own color. */
+  /** The site's logo, shown before the text at its size, in the link's own color. */
   icon: UiIconName
   children: React.ReactNode
 }
@@ -26,7 +26,7 @@ const SocialLink = ({
       tone={tone}
       newTab
       className="inline-flex items-center gap-2">
-      <Icon name={icon} className="size-4" />
+      <Icon name={icon} />
       {children}
     </Link>
   </Tooltip>
