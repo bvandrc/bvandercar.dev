@@ -87,7 +87,7 @@ describe('ProjectCard', () => {
     const user = userEvent.setup()
     const card = renderPreviewCard()
     expect(within(card).getByTestId(THUMBNAIL).getAttribute('src')).toMatch(
-      /^\/project-screenshots\/.+\.png$/
+      /^\/project-screenshots\/.+\.thumb\.webp$/
     )
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))

@@ -13,12 +13,17 @@ import { useShrinkToFit } from '@/hooks/useShrinkToFit'
 import { cn } from '@/lib/cn'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
+import { getThumbnailPath } from '~/screenshots'
 import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
 // on its line.
 const NAME_SIZES = ['text-lg', 'text-base', 'text-[15px]']
+
+/** Where the site serves a repo-relative path ('./project-screenshots/…') from public/. */
+const getPublicUrl = (path: string) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\.\//, '')}`
 
 export type ProjectCardProps = {
   project: Project
@@ -46,11 +51,12 @@ export const ProjectCard = ({
   const nameRef = useRef<HTMLDivElement>(null)
   const nameStep = useShrinkToFit(headerRef, nameRef, NAME_SIZES.length)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const screenshotSrc =
-    project.screenshot &&
-    `${import.meta.env.BASE_URL}${project.screenshot.replace(/^\.\//, '')}`
+  const screenshotSrc = project.screenshot && getPublicUrl(project.screenshot)
   // A live preview's card shows its screenshot beside its name and blurb.
-  const thumbnailSrc = project.embed ? screenshotSrc : undefined
+  const thumbnailSrc =
+    project.embed &&
+    project.screenshot &&
+    getPublicUrl(getThumbnailPath(project.screenshot))
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
     if (open) {
