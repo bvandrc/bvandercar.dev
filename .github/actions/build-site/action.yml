@@ -22,9 +22,11 @@ runs:
   using: composite
 
   steps:
-    - name: Get today's date
-      id: today
-      run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+    # Today's date, and a hash of every file the fetches run, so a build
+    # reuses only data fetched today, with these same scripts.
+    - name: Get the fetched data's cache key
+      id: key
+      run: echo "key=fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/*.ts', 'site.config.ts') }}-$(date -u +%F)" >> "$GITHUB_OUTPUT"
       shell: bash
 
     # Today's data from a build that fetched it with these same scripts, which
@@ -35,7 +37,7 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: src/generated/*.ts
-        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/counts.ts', 'shared/dates.ts') }}-${{ steps.today.outputs.date }}
+        key: ${{ steps.key.outputs.key }}
 
     # Nothing queries BigQuery when the fetched data is reused.
     - name: Authenticate to Google Cloud
@@ -60,4 +62,4 @@ runs:
       uses: actions/cache/save@v6
       with:
         path: src/generated/*.ts
-        key: fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/counts.ts', 'shared/dates.ts') }}-${{ steps.today.outputs.date }}
+        key: ${{ steps.key.outputs.key }}
