@@ -74,15 +74,16 @@ export const ProjectCard = ({
         'hover-glow-24'
       )}
       data-testid="project-card">
-      <div className="flex items-center gap-4">
+      <div className="flex grow gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-2.5">
           <div
             ref={headerRef}
             className={cn(
               'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
-              // A centered card spans its group's width, so from md, where other
-              // groups' cards pair up, it centers its name and blurb, with its
-              // counts on the right. Below md, it lines up like the rest.
+              // A centered card spans its group's width, so from md, where
+              // other groups' cards pair up, it centers its name and blurb,
+              // with its counts on the right. Below md, it lines up like the
+              // rest.
               centered && 'md:grid md:grid-cols-[1fr_auto_1fr]'
             )}>
             <div
@@ -95,9 +96,9 @@ export const ProjectCard = ({
                 className={cn(
                   'font-semibold',
                   NAME_SIZES[nameStep],
-                  // On the 24px line the name had before, whatever its size, so the
-                  // card keeps its height. After the size, whose own line height
-                  // would otherwise win.
+                  // On the 24px line the name had before, whatever its size, so
+                  // the card keeps its height. After the size, whose own line
+                  // height would otherwise win.
                   'leading-6'
                 )}>
                 <Tooltip content={project.href}>
@@ -119,12 +120,13 @@ export const ProjectCard = ({
             <p
               className={cn(
                 'flex text-xs',
-                // Grows from nothing, so it stays beside the name while its counts
-                // fit, with "repo" wrapping below them, and only then drops below.
+                // Grows from nothing, so it stays beside the name while its
+                // counts fit, with "repo" wrapping below them, and only then
+                // drops below.
                 'grow basis-0 justify-end',
-                // Its 20px height, 2px down, centers the counts' 16px line on the
-                // name's 24px one; with "repo" wrapped below, the pair outgrows it
-                // and starts 2px down.
+                // Its 20px height, 2px down, centers the counts' 16px line on
+                // the name's 24px one; with "repo" wrapped below, the pair
+                // outgrows it and starts 2px down.
                 'mt-0.5 min-h-5 items-center',
                 centered && 'md:col-start-3'
               )}>
@@ -134,7 +136,8 @@ export const ProjectCard = ({
           <p
             className={cn(
               'text-left text-sm text-ink-muted',
-              // Closer to the name than the card's gap, as the name's own words.
+              // Closer to the name than the card's gap, as the name's own
+              // words.
               '-mt-1',
               centered && 'md:text-center'
             )}
@@ -142,49 +145,55 @@ export const ProjectCard = ({
             {/* Its counts are the ones its glyphs show. */}
             {fillBlurb(project.blurb, counts)}
           </p>
+          {project.embed ? (
+            <LivePreview
+              src={project.href}
+              title={project.name}
+              scale={project.embed.scale}
+              // Every card's toggle reads the same, so name the project it's
+              // for.
+              aria-describedby={nameId}
+              pulse={pulsePreview}
+              // Opening centers the whole card on screen, not just the
+              // preview. A phone's screen is too short for both, so it
+              // centers the preview.
+              scrollTargetRef={isMobile ? undefined : cardRef}
+              open={previewOpen}
+              onOpenChange={changePreviewOpen}
+              className="mt-auto"
+            />
+          ) : (
+            screenshotSrc && (
+              <img
+                src={screenshotSrc}
+                alt={`${project.name} screenshot`}
+                loading="lazy"
+                className="mt-auto w-full rounded-md border border-border"
+              />
+            )
+          )}
         </div>
         {thumbnailSrc && !previewOpen && (
           // What the site looks like, until its live preview takes over. From
           // md: a phone shows the toggle alone.
-          <img
-            src={thumbnailSrc}
-            alt={`${project.name} screenshot`}
-            loading="lazy"
-            className={cn(
-              'hidden shrink-0 rounded-md border border-border md:block',
-              // One size for every card, its screenshot cropped to fit from
-              // the top, so they line up down the group.
-              'h-27 w-60 object-cover object-top'
-            )}
-            data-testid="project-thumbnail"
-          />
+          <div className="relative hidden w-60 shrink-0 md:block">
+            {/* Out of the flow, so it fills the height the name, blurb, and
+                toggle give the card, rather than adding its own. */}
+            <img
+              src={thumbnailSrc}
+              alt={`${project.name} screenshot`}
+              loading="lazy"
+              className={cn(
+                'absolute inset-0 size-full rounded-md border border-border',
+                // Cropped to fit, keeping the page's top left corner, where its
+                // header and the start of its text are.
+                'object-cover object-left-top'
+              )}
+              data-testid="project-thumbnail"
+            />
+          </div>
         )}
       </div>
-      {project.embed ? (
-        <LivePreview
-          src={project.href}
-          title={project.name}
-          scale={project.embed.scale}
-          // Every card's toggle reads the same, so name the project it's for.
-          aria-describedby={nameId}
-          pulse={pulsePreview}
-          // Opening centers the whole card on screen, not just the preview. A
-          // phone's screen is too short for both, so it centers the preview.
-          scrollTargetRef={isMobile ? undefined : cardRef}
-          open={previewOpen}
-          onOpenChange={changePreviewOpen}
-          className="mt-auto"
-        />
-      ) : (
-        screenshotSrc && (
-          <img
-            src={screenshotSrc}
-            alt={`${project.name} screenshot`}
-            loading="lazy"
-            className="mt-auto w-full rounded-md border border-border"
-          />
-        )
-      )}
     </Card>
   )
 }
