@@ -121,9 +121,10 @@ export const WeeklyChart = ({
   releases = [],
   'data-testid': testId,
 }: WeeklyChartProps) => {
-  const [activeWeek, setActiveWeek] = useState<number>()
-  // The release day under the pointer, which it snaps to over a week.
-  const [activeRelease, setActiveRelease] = useState<string>()
+  // Where the pointer is across the plot, rather than the week under it, so
+  // a zoom or pan that slides the line beneath a still pointer reads out what
+  // it's over now.
+  const [pointerX, setPointerX] = useState<number>()
   const plotRef = useRef<SVGSVGElement>(null)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
@@ -161,49 +162,55 @@ export const WeeklyChart = ({
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => day >= start && day <= end
   )
-  const activeX =
-    activeWeek === undefined ? undefined : toX(weekEnds[activeWeek])
-  /** The time at a pointer's `clientX`, kept between where the line starts and the span's end, so it never falls on a week the chart leaves out. */
-  const getTimeAt = (clientX: number) => {
-    const x = clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
-    return Math.min(
+  /** How far across the plot a pointer at `clientX` is. */
+  const toPlotX = (clientX: number) =>
+    clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
+  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a week the chart leaves out. */
+  const getTimeAtX = (x: number) =>
+    Math.min(
       Math.max(
         startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
         Date.parse(lineStart)
       ),
       Date.parse(end)
     )
-  }
-  // How much time one pixel across the plot covers.
-  const msPerPx = spanTime / (PLOT_RIGHT - INSET)
-  const pinchingRef = useZoomPanGestures(plotRef, {
-    getValueAt: getTimeAt,
-    valuePerPx: msPerPx,
-    onZoom,
-    onPan,
-  })
-  /**
-   * Reads out the release line within a few pixels of the pointer, or else
-   * the week the pointer's day falls in, so it never has to land on either.
-   */
-  const selectWeek = (event: React.PointerEvent<SVGSVGElement>) => {
-    const x =
-      event.clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
-    const release = releaseDays.find(
-      (day) => Math.abs(toX(day) - x) <= RELEASE_SNAP_PX
-    )
-    setActiveRelease(release)
-    if (release) {
-      setActiveWeek(undefined)
-      return
+  // The release line within a few pixels of the pointer, which it snaps to
+  // over a week.
+  const activeRelease =
+    pointerX === undefined
+      ? undefined
+      : releaseDays.find(
+          (day) => Math.abs(toX(day) - pointerX) <= RELEASE_SNAP_PX
+        )
+  /** The week the pointer's day falls in, unless it's on a release line. */
+  const getActiveWeek = () => {
+    if (pointerX === undefined || activeRelease) {
+      return undefined
     }
-    const time = getTimeAt(event.clientX)
+    const time = getTimeAtX(pointerX)
     // The first week ending on or after that day, or the last past them all.
     const index = weekEnds.findIndex(
       (weekEnd) => Date.parse(weekEnd) + DAY_MS > time
     )
-    setActiveWeek(index === -1 ? lastIndex : index)
+    const week = index === -1 ? lastIndex : index
+    // A zoomed-in span can end partway through a week, whose end, where its
+    // dot would sit, is out of view, so the week before it reads out instead.
+    return weekEnds[week] > end ? Math.max(week - 1, firstShown) : week
   }
+  const activeWeek = getActiveWeek()
+  const activeX =
+    activeWeek === undefined ? undefined : toX(weekEnds[activeWeek])
+  // How much time one pixel across the plot covers.
+  const msPerPx = spanTime / (PLOT_RIGHT - INSET)
+  const pinchingRef = useZoomPanGestures(plotRef, {
+    getValueAt: (clientX) => getTimeAtX(toPlotX(clientX)),
+    valuePerPx: msPerPx,
+    onZoom,
+    onPan,
+  })
+  /** Reads out the release line or week under the pointer, so it never has to land on either. */
+  const selectWeek = (event: React.PointerEvent<SVGSVGElement>) =>
+    setPointerX(toPlotX(event.clientX))
   /** What the caption says: the hovered release, or week, or else the summary. */
   const getReadout = () => {
     if (activeRelease) {
@@ -242,8 +249,7 @@ export const WeeklyChart = ({
         // A finger always leaves once lifted, so its week stays read out.
         onPointerLeave={(event) => {
           if (event.pointerType !== 'touch') {
-            setActiveWeek(undefined)
-            setActiveRelease(undefined)
+            setPointerX(undefined)
           }
         }}
         data-testid="weekly-chart-plot">
