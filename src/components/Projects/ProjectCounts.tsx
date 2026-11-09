@@ -2,15 +2,14 @@ import {
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
-import { sum } from 'es-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
-import { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
+import { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { REPO_ACTIVITY } from '@/generated/repo-activity'
+import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
@@ -57,15 +56,14 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
-  const activity = REPO_ACTIVITY[repo]
   const pkg = getPackage(packages)
-  const history = pkg && PACKAGE_DOWNLOADS[pkg.registry][pkg.name]
+  const downloads = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
   // This site's own fetches are fresher than the profile's weekly counts, so
   // a count they have wins.
   const counts = {
     ...REPO_COUNTS[repo],
-    ...(activity && { commits: sum(activity.commits), prs: sum(activity.prs) }),
-    ...(history && { downloads: sum(history.weekly) }),
+    ...REPO_ACTIVITY_TOTALS[repo],
+    ...(downloads !== undefined && { downloads }),
   }
   // The profile README badge's counts, in its order and with its icons.
   const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {

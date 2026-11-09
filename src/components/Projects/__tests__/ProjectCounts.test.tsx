@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
+import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import type { WeeklyActivity } from '@/generated/repo-activity'
+import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
@@ -27,28 +27,17 @@ vi.mock('@/generated/profile/repo-counts', () => ({
   } satisfies typeof REPO_COUNTS,
 }))
 
-vi.mock('@/generated/repo-activity', () => ({
-  REPO_ACTIVITY: {
-    [FIXTURES.REPO]: {
-      firstWeek: '2026-02-23',
-      lastDay: '2026-03-12',
-      commits: [3, 40, 12],
-      prs: [1, 9, 4],
-    },
-  } satisfies Record<string, WeeklyActivity>,
+vi.mock('@/generated/repo-activity-totals', () => ({
+  REPO_ACTIVITY_TOTALS: {
+    [FIXTURES.REPO]: { commits: 55, prs: 14 },
+  } satisfies typeof REPO_ACTIVITY_TOTALS,
 }))
 
-vi.mock('@/generated/package-downloads', () => ({
-  PACKAGE_DOWNLOADS: {
-    npm: {
-      [FIXTURES.NPM_PACKAGE]: {
-        firstDay: '2026-03-04',
-        lastDay: '2026-03-24',
-        weekly: [5, 1200, 12],
-      },
-    },
+vi.mock('@/generated/package-download-totals', () => ({
+  PACKAGE_DOWNLOAD_TOTALS: {
+    npm: { [FIXTURES.NPM_PACKAGE]: 1217 },
     pypi: {},
-  } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
+  } satisfies typeof PACKAGE_DOWNLOAD_TOTALS,
 }))
 
 describe('ProjectCounts', () => {
