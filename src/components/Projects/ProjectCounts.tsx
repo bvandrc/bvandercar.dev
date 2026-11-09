@@ -3,7 +3,7 @@ import {
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
-import { isNotNil, sum } from 'es-toolkit'
+import { isNotNil } from 'es-toolkit'
 import { objectEntries } from 'ts-extras'
 
 import { Icon } from '@/components/primitives/Icon'
@@ -120,7 +120,8 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
     activity &&
     activity.commits.length > 1 &&
     // A small repo with no package has too little history to chart.
-    (pkg || sum(activity.commits) >= UNPACKAGED_MIN_COMMITS)
+    (pkg ||
+      (REPO_ACTIVITY_TOTALS[repo]?.commits ?? 0) >= UNPACKAGED_MIN_COMMITS)
       ? activity
       : undefined
   const chartedDownloads =
@@ -131,10 +132,14 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
   /** Where the charts start: past a slow start, so it doesn't squeeze the rest into their right edge. */
   const getSpanStart = () => {
-    // A package's first release, rather than the repo's first commit, which
-    // can be years before it.
-    if (releases?.[0]) {
-      return releases[0].day
+    // A package's first publish, rather than the repo's first commit, which
+    // can be years before it: its first release, or its first download where
+    // its first releases were deleted, which the registry no longer lists.
+    const firstPublish = [releases?.[0]?.day, history?.firstDay]
+      .filter(isNotNil)
+      .sort()[0]
+    if (firstPublish) {
+      return firstPublish
     }
     // A repo with no package skips its first few commits' trickle.
     if (!pkg && chartedActivity) {
