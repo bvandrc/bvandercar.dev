@@ -122,9 +122,10 @@ export const RunningTotalChart = ({
   releases = [],
   'data-testid': testId,
 }: RunningTotalChartProps) => {
-  const [activePeriod, setActivePeriod] = useState<number>()
-  // The release day under the pointer, which it snaps to over a period.
-  const [activeRelease, setActiveRelease] = useState<string>()
+  // Where the pointer is across the plot, rather than the period under it,
+  // so a zoom or pan that slides the line beneath a still pointer reads out
+  // what it's over now.
+  const [pointerX, setPointerX] = useState<number>()
   const plotRef = useRef<SVGSVGElement>(null)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
@@ -169,49 +170,55 @@ export const RunningTotalChart = ({
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => day >= start && day <= end
   )
-  const activeX =
-    activePeriod === undefined ? undefined : toX(periodEnds[activePeriod])
-  /** The time at a pointer's `clientX`, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
-  const getTimeAt = (clientX: number) => {
-    const x = clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
-    return Math.min(
+  /** How far across the plot a pointer at `clientX` is. */
+  const toPlotX = (clientX: number) =>
+    clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
+  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
+  const getTimeAtX = (x: number) =>
+    Math.min(
       Math.max(
         startTime + ((x - INSET) / (PLOT_RIGHT - INSET)) * spanTime,
         Date.parse(lineStart)
       ),
       Date.parse(end)
     )
-  }
-  // How much time one pixel across the plot covers.
-  const msPerPx = spanTime / (PLOT_RIGHT - INSET)
-  const pinchingRef = useZoomPanGestures(plotRef, {
-    getValueAt: getTimeAt,
-    valuePerPx: msPerPx,
-    onZoom,
-    onPan,
-  })
-  /**
-   * Reads out the release line within a few pixels of the pointer, or else
-   * the period the pointer's day falls in, so it never has to land on either.
-   */
-  const selectPeriod = (event: React.PointerEvent<SVGSVGElement>) => {
-    const x =
-      event.clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
-    const release = releaseDays.find(
-      (day) => Math.abs(toX(day) - x) <= RELEASE_SNAP_PX
-    )
-    setActiveRelease(release)
-    if (release) {
-      setActivePeriod(undefined)
-      return
+  // The release line within a few pixels of the pointer, which it snaps to
+  // over a period.
+  const activeRelease =
+    pointerX === undefined
+      ? undefined
+      : releaseDays.find(
+          (day) => Math.abs(toX(day) - pointerX) <= RELEASE_SNAP_PX
+        )
+  /** The period the pointer's day falls in, unless it's on a release line. */
+  const getActivePeriod = () => {
+    if (pointerX === undefined || activeRelease) {
+      return undefined
     }
-    const time = getTimeAt(event.clientX)
+    const time = getTimeAtX(pointerX)
     // The first period ending on or after that day, or the last past them all.
     const index = periodEnds.findIndex(
       (periodEnd) => Date.parse(periodEnd) + DAY_MS > time
     )
-    setActivePeriod(index === -1 ? lastIndex : index)
+    const period = index === -1 ? lastIndex : index
+    // A zoomed-in span can end partway through a week, whose end, where its
+    // dot would sit, is out of view, so the period before it reads out instead.
+    return periodEnds[period] > end ? Math.max(period - 1, 0) : period
   }
+  const activePeriod = getActivePeriod()
+  const activeX =
+    activePeriod === undefined ? undefined : toX(periodEnds[activePeriod])
+  // How much time one pixel across the plot covers.
+  const msPerPx = spanTime / (PLOT_RIGHT - INSET)
+  const pinchingRef = useZoomPanGestures(plotRef, {
+    getValueAt: (clientX) => getTimeAtX(toPlotX(clientX)),
+    valuePerPx: msPerPx,
+    onZoom,
+    onPan,
+  })
+  /** Reads out the release line or period under the pointer, so it never has to land on either. */
+  const selectPeriod = (event: React.PointerEvent<SVGSVGElement>) =>
+    setPointerX(toPlotX(event.clientX))
   /** What the caption says: the hovered release, or period, or else the summary. */
   const getReadout = () => {
     if (activeRelease) {
@@ -250,8 +257,7 @@ export const RunningTotalChart = ({
         // A finger always leaves once lifted, so its period stays read out.
         onPointerLeave={(event) => {
           if (event.pointerType !== 'touch') {
-            setActivePeriod(undefined)
-            setActiveRelease(undefined)
+            setPointerX(undefined)
           }
         }}
         data-testid="running-total-chart-plot">

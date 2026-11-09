@@ -16,26 +16,28 @@ const DAILY = [
   1, 0, 1, 0, 1, 1, 1, 200, 100, 300, 100, 200, 200, 100, 2, 2, 2, 2, 2, 1, 1,
 ]
 
-/** Renders a chart of `DAILY`, reading out each week, summarized as "Commits". */
-const renderChart = (
-  props?: Pick<
-    RunningTotalChartProps,
-    'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
-  >
-) =>
-  render(
-    <RunningTotalChart
-      firstDay="2026-03-02"
-      daily={DAILY}
-      periodEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
-      noun="commit"
-      tone="COMMITS"
-      icon="git-commit"
-      summary="Commits"
-      data-testid="chart"
-      {...props}
-    />
-  )
+type ChartOptions = Pick<
+  RunningTotalChartProps,
+  'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
+>
+
+/** Builds a chart of `DAILY`, reading out each week, summarized as "Commits". */
+const buildChart = (props?: ChartOptions) => (
+  <RunningTotalChart
+    firstDay="2026-03-02"
+    daily={DAILY}
+    periodEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
+    noun="commit"
+    tone="COMMITS"
+    icon="git-commit"
+    summary="Commits"
+    data-testid="chart"
+    {...props}
+  />
+)
+
+/** Renders `buildChart`'s chart. */
+const renderChart = (props?: ChartOptions) => render(buildChart(props))
 
 /** Moves the pointer to `clientX` on the plot, which the test DOM lays out from x = 0. */
 const movePointer = (clientX: number) =>
@@ -102,6 +104,45 @@ describe('RunningTotalChart', () => {
       'Through Mar 15, 2026: 1,205 commits'
     )
     expect(screen.getByTestId(DOT).getAttribute('cy')).toBe(unzoomed)
+  })
+
+  it('reads out the week now under a still pointer once the chart pans beneath it', () => {
+    const { rerender } = renderChart({
+      span: { start: '2026-03-02', end: '2026-03-15' },
+      zoomed: true,
+    })
+    movePointer(5)
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 8, 2026: 5 commits'
+    )
+
+    // A sideways scroll pans a week later without the pointer moving.
+    rerender(
+      buildChart({
+        span: { start: '2026-03-09', end: '2026-03-22' },
+        zoomed: true,
+      })
+    )
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 15, 2026: 1,205 commits'
+    )
+    // Still on the plot, rather than slid off its left edge with Mar 8.
+    expect(Number(screen.getByTestId(DOT).getAttribute('cx'))).toBeGreaterThan(
+      0
+    )
+  })
+
+  it('reads out the last week ending in view where a zoomed-in span ends partway through one', () => {
+    renderChart({
+      span: { start: '2026-03-02', end: '2026-03-12' },
+      zoomed: true,
+    })
+
+    // Its right edge is Mar 12, whose week ends out of view on Mar 15.
+    movePointer(400)
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'Through Mar 8, 2026: 5 commits'
+    )
   })
 
   it('reads out a tapped week, and keeps it once the finger lifts', () => {
