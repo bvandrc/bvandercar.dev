@@ -4,6 +4,8 @@
  * downloads API. Neither needs credentials.
  */
 
+import { prerelease } from 'semver'
+
 import type { Release } from '../../shared/counts.ts'
 import { isoDate, listWindows } from '../../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
@@ -25,9 +27,9 @@ const fetchNpmPackage = async (pkg: string) => {
   return {
     firstDay: isoDate(Date.parse(time.created)),
     releases: Object.keys(versions)
-      // A pre-release, like 2.0.0-beta.1, has a hyphen. One with no publish
-      // time can't be placed, so it's left out rather than failing the rest.
-      .filter((version) => !version.includes('-') && time[version])
+      // A pre-release is one like 2.0.0-beta.1. One with no publish time
+      // can't be placed, so it's left out rather than failing the rest.
+      .filter((version) => prerelease(version) === null && time[version])
       .map(
         (version): Release => ({
           version,
