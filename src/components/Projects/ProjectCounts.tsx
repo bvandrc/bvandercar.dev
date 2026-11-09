@@ -6,7 +6,7 @@ import {
 
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip, type TooltipProps } from '@/components/primitives/Tooltip'
-import { COUNT_KINDS } from '@/generated/profile/content/counts'
+import { getShownCountKinds } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { CountsField } from '~/counts'
@@ -87,8 +87,9 @@ export const ProjectCounts = ({
       prefetchOnOpen()
     }
   }, [open])
-  // The profile README badge's counts, in its order and with its icons.
-  const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
+  // The profile README badge's counts, in its order and with its icons, and
+  // its PRs only where its rule shows them.
+  const shown = getShownCountKinds(counts).flatMap(({ key, icon, noun }) => {
     const count = counts[key]
     return count === undefined ? [] : [{ key, icon, noun, count }]
   })

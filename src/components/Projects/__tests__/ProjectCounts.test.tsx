@@ -23,6 +23,7 @@ const FIXTURES = vi.hoisted(() => ({
   REPO: 'some-repo',
   NEW_REPO: 'new-repo',
   OTHER_REPO: 'other-repo',
+  REVIEWED_REPO: 'reviewed-repo',
   NPM_PACKAGE: 'some-package',
   NEW_NPM_PACKAGE: 'new-package',
   PYPI_PACKAGE: 'some-python-package',
@@ -35,15 +36,17 @@ const {
   REPO,
   NEW_REPO,
   OTHER_REPO,
+  REVIEWED_REPO,
   NPM_PACKAGE,
   NEW_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
 const { PLOT, READOUT, TOTAL, RELEASE } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
-// The repo's counts in full: its commits and PRs from this site's fetch, and
-// its downloads from the profile's, with no package to fetch them for.
-const LABEL = '55 commits, 14 PRs, 3,120 downloads'
+// The repo's counts in full: its commits from this site's fetch, too few PRs
+// to show, and its downloads from the profile's, with no package to fetch
+// them for.
+const LABEL = '55 commits, 3,120 downloads'
 
 vi.mock('@/generated/profile/repo-counts', () => ({
   // Older than this site's fetches, which differ from them as they would.
@@ -51,6 +54,8 @@ vi.mock('@/generated/profile/repo-counts', () => ({
     [FIXTURES.REPO]: { commits: 25, prs: 31, downloads: 3120 },
     [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
     [FIXTURES.OTHER_REPO]: { commits: 7, prs: 3 },
+    // Many PRs, and most of its commits, so they show beside them.
+    [FIXTURES.REVIEWED_REPO]: { commits: 667, prs: 587 },
   } satisfies typeof REPO_COUNTS,
 }))
 
@@ -140,15 +145,23 @@ describe('ProjectCounts', () => {
     renderWithProviders(<ProjectCounts repo={REPO} />)
     const counts = screen.getByTestId(COUNTS)
 
-    expect(counts.textContent).toBe('55143.1K')
+    expect(counts.textContent).toBe('553.1K')
     expect(counts.getAttribute('aria-label')).toBe(LABEL)
+  })
+
+  it('shows its PRs beside its commits where their rule does', () => {
+    renderWithProviders(<ProjectCounts repo={REVIEWED_REPO} />)
+
+    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
+      '667 commits, 587 PRs'
+    )
   })
 
   it("counts with this site's own fetches where it has them, so each chart ends at the count shown for it", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '55 commits, 14 PRs, 1,217 downloads'
+      '55 commits, 1,217 downloads'
     )
     await hoverCounts()
     const CASES = [
@@ -177,12 +190,10 @@ describe('ProjectCounts', () => {
     renderWithProviders(<FreshCounts repo={OTHER_REPO} />)
 
     expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '7 commits, 3 PRs'
+      '7 commits'
     )
     await userEvent.setup().hover(screen.getByTestId(COUNTS))
-    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(
-      '7 commits, 3 PRs'
-    )
+    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe('7 commits')
     expect(loadCharts).not.toHaveBeenCalled()
   })
 
@@ -206,7 +217,7 @@ describe('ProjectCounts', () => {
     const tooltip = await hoverCounts()
     expect(tooltip.contains(screen.getByTestId(DOWNLOADS_CHART))).toBe(true)
     expect(getTooltipSentences()).toEqual([
-      '55 commits, 14 PRs, 1,217 downloads',
+      '55 commits, 1,217 downloads',
       expect.stringMatching(/^Weekly commits /),
       expect.stringMatching(/^Weekly npm downloads /),
     ])
@@ -231,7 +242,7 @@ describe('ProjectCounts', () => {
 
     const tooltip = await hoverCounts()
     // Its downloads come from this site's fetch, though too few days to chart.
-    expect(tooltip.textContent).toBe('2 commits, 1 PR, 30 downloads')
+    expect(tooltip.textContent).toBe('2 commits, 30 downloads')
     expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
