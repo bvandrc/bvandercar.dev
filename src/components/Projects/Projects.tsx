@@ -44,6 +44,7 @@ export const Projects = () => {
               <li key={project.repo}>
                 <ProjectCard
                   project={project}
+                  centered={getGridLayout(group) === 'PREVIEW'}
                   pulsePreview={!previewOpened}
                   onPreviewOpen={() => setPreviewOpened(true)}
                 />

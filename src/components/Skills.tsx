@@ -58,10 +58,7 @@ export const Skills = () => (
                 <dt className="shrink-0 text-sm text-ink-muted">{label}</dt>
                 <dd className="flex flex-wrap justify-center gap-2">
                   {row.lines.flat().map((skill) => (
-                    <Badge
-                      key={skill.alt}
-                      // Glows orange on hover, like the project cards.
-                      className="hover-glow-12">
+                    <Badge key={skill.alt}>
                       <BrandIcon
                         slug={skillIconSlug(skill)}
                         color={skillIconColor(skill)}

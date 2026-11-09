@@ -71,7 +71,7 @@
 
 /*
  * An orange glow, `hover-glow-<blur-px>`, on hover or while something inside
- * has keyboard focus, as the project cards and skill chips share.
+ * has keyboard focus, as the project cards and contents links share.
  */
 @utility hover-glow-* {
   --hover-glow: 0 0 calc(--value(number) * 1px) var(--color-orange-500);

@@ -35,8 +35,8 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       newTab
       // Quieter than the project's name link above it, until hovered.
       tone="subtle"
-      // As far from the counts as they are from each other.
-      className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1"
+      // As far from the counts as they are from each other, with room.
+      className="inline-flex flex-wrap items-center justify-end gap-x-2.5 gap-y-0.5"
       {...focusProps}
       data-testid="project-repo-link">
       <ProjectCounts
@@ -45,7 +45,8 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
         onOpenChange={setCountsOpen}
       />
       <Tooltip content="GitHub Repository">
-        <span>
+        {/* Keeps its icon on its line. */}
+        <span className="whitespace-nowrap">
           repo{' '}
           <Icon
             name="external-link"
