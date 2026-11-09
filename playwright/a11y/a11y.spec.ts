@@ -21,7 +21,8 @@ test.describe('Accessibility', () => {
   test('Open tooltip', async ({ page }) => {
     await page.goto('/')
 
-    // Keyboard focus opens it too, which is how the mobile project gets one.
+    // Keyboard focus opens the counts' one too, which is how the mobile
+    // project gets one.
     await page.getByTestId(PROJECTS.REPO_LINK).first().focus()
     await expect(page.getByTestId(TOOLTIP)).toBeVisible()
 
