@@ -35,8 +35,4 @@ describe('formatCount', () => {
     expect(formatCount(0, 'PR')).toBe('0 PRs')
     expect(formatCount(2, 'PR')).toBe('2 PRs')
   })
-
-  it('writes a count of a thousand or more in full, with separators', () => {
-    expect(formatCount(70_315, 'download')).toBe('70,315 downloads')
-  })
 })

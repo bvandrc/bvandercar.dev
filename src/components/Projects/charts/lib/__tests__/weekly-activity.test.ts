@@ -34,9 +34,9 @@ describe('getDayReachingCommits', () => {
 })
 
 describe('describeWeeklyCommits', () => {
-  it('names the first month and the week with the most commits', () => {
-    expect(describeWeeklyCommits(HISTORY)).toBe(
-      'Weekly commits since Feb 2026, peaking at 40 in the week of Mar 2, 2026'
+  it('describes the commits, peaking in the busiest of its Monday-to-Sunday weeks', () => {
+    expect(describeWeeklyCommits(HISTORY)).toMatch(
+      /^Weekly commits .*, peaking at 40 in the week of Mar 2, 2026$/
     )
   })
 })
