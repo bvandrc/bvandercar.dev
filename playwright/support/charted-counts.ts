@@ -15,7 +15,7 @@ const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
  * `GITHUB_TOKEN` or couldn't reach npm. Only npm's downloads count, since
  * CI's test builds have no credentials for PyPI's.
  */
-export const getChartedRepoLink = (page: Page) => {
+const getChartedRepoLink = (page: Page) => {
   const project = PROJECTS.flatMap(({ projects }) => projects).find(
     ({ repo, npmPackage }) =>
       (REPO_ACTIVITY[repo]?.commits.length ?? 0) > 1 &&
