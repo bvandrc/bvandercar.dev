@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { isPlainObject } from 'es-toolkit'
 
 import { GENERATED_DIR } from './constants.ts'
 
@@ -18,15 +19,48 @@ export const exitIfReusing = (label: string, files: string[]) => {
   }
 }
 
-/** Writes `body` to `file`, under a header naming the `pnpm` script that writes it. */
+/** A constant a generated file exports. */
+export type GeneratedConst = {
+  name: string
+  /** Its doc comment */
+  doc: string
+  /** Its TypeScript type, whose names the file's imports give */
+  type: string
+  value: unknown
+}
+
+/** `value` as a TypeScript literal: an object a key to a line, and anything else, like a day-by-day array, on one. */
+const toLiteral = (value: unknown, indent = ''): string => {
+  if (!isPlainObject(value)) {
+    return JSON.stringify(value)
+  }
+  const inner = `${indent}  `
+  const entries = Object.entries(value).map(
+    ([key, entry]) =>
+      `${inner}${JSON.stringify(key)}: ${toLiteral(entry, inner)},`
+  )
+  return entries.length > 0 ? `{\n${entries.join('\n')}\n${indent}}` : '{}'
+}
+
+/**
+ * Writes `file`: a header naming the `pnpm` script that writes it, `imports`,
+ * then each of `consts`, exported with its doc comment and type.
+ */
 export const writeGenerated = async (
   file: string,
   script: string,
-  body: string
+  imports: string,
+  consts: GeneratedConst[]
 ) => {
   await mkdir(GENERATED_DIR, { recursive: true })
+  const body = consts
+    .map(
+      ({ name, doc, type, value }) =>
+        `/** ${doc} */\nexport const ${name}: ${type} = ${toLiteral(value)}\n`
+    )
+    .join('\n')
   await writeFile(
     file,
-    `// GENERATED FILE — do not edit directly. Run \`pnpm ${script}\`.\n\n${body}`
+    `// GENERATED FILE — do not edit directly. Run \`pnpm ${script}\`.\n\n${imports}\n\n${body}`
   )
 }

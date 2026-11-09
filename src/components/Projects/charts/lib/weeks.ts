@@ -1,6 +1,7 @@
-import { clamp, sum } from 'es-toolkit'
+import { sum } from 'es-toolkit'
 
-import { addDays, DAY_MS, getDaysBetween } from '~/dates'
+import { formatNumber } from '@/lib/format-count'
+import { addDays, getDaysBetween } from '~/dates'
 
 // The dates are calendar days, so they're read in UTC, where they start.
 const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -51,6 +52,25 @@ export const sumWeeks = (
 export const getPeakWeek = (weeks: Week[]) =>
   weeks.reduce((peak, week) => (week.count > peak.count ? week : peak))
 
+/** Weekly counts in a sentence, like "Weekly commits since Mar 2025, peaking at 40 in the week of Mar 2, 2026", for `what` counted since `firstDay`. */
+export const describeWeekly = (
+  what: string,
+  firstDay: string,
+  weeks: Week[]
+) => {
+  const peak = getPeakWeek(weeks)
+  return `Weekly ${what} since ${formatMonth(firstDay)}, peaking at ${formatNumber(peak.count)} in the week of ${formatDay(peak.start)}`
+}
+
+/** Daily counts as a running total, through each day: `[1, 0, 2]` → `[1, 1, 3]`. */
+export const getRunningTotals = (daily: number[]) => {
+  let total = 0
+  return daily.map((count) => {
+    total += count
+    return total
+  })
+}
+
 /**
  * The latest of versions released together, as a label: `['1.0.0', '1.0.5',
  * '1.0.1']` → `'v1.0.5'`, the one users should be on.
@@ -59,78 +79,3 @@ export const getPeakWeek = (weeks: Week[]) =>
  */
 export const formatLatestVersion = (versions: string[]) =>
   `v${versions.toSorted((a, b) => a.localeCompare(b, 'en', { numeric: true })).at(-1)}`
-
-/** The dates a chart runs from and to, as ISO dates or times. */
-export type DaySpan = { start: string; end: string }
-
-// The narrowest a zoom goes: four weeks, so there's still a line to draw, or
-// a quarter of a shorter chart's span.
-const MIN_ZOOM_MS = 28 * DAY_MS
-
-/**
- * `span` zoomed around `anchor`, a time within it, its width scaled by
- * `factor`: in for one under 1, out for one over.
- *
- * The anchor keeps its place across the chart. The result stays within
- * `full`, and no narrower than four weeks, or a quarter of `full` if that's
- * narrower. It's undefined once it's back out to `full`.
- */
-export const zoomSpan = (
-  span: DaySpan,
-  full: DaySpan,
-  anchor: number,
-  factor: number
-) => {
-  const [start, end, fullStart, fullEnd] = [
-    span.start,
-    span.end,
-    full.start,
-    full.end,
-  ].map(Date.parse)
-  const fullWidth = fullEnd - fullStart
-  const width = clamp(
-    (end - start) * factor,
-    Math.min(MIN_ZOOM_MS, fullWidth / 4),
-    fullWidth
-  )
-  if (width >= fullWidth) {
-    return undefined
-  }
-  const nextStart = clamp(
-    anchor - (anchor - start) * (width / (end - start)),
-    fullStart,
-    fullEnd - width
-  )
-  // Kept to the millisecond, as ISO times, so small steps still move it.
-  return {
-    start: new Date(nextStart).toISOString(),
-    end: new Date(nextStart + width).toISOString(),
-  } satisfies DaySpan
-}
-
-/**
- * A zoomed-in `span` moved `delta` milliseconds later, or earlier for a
- * negative one, kept within `full`.
- *
- * Undefined for one that isn't zoomed in, which has nowhere to move.
- */
-export const panSpan = (
-  span: DaySpan | undefined,
-  full: DaySpan,
-  delta: number
-) => {
-  if (!span) {
-    return undefined
-  }
-  const [start, end, fullStart, fullEnd] = [
-    span.start,
-    span.end,
-    full.start,
-    full.end,
-  ].map(Date.parse)
-  const nextStart = clamp(start + delta, fullStart, fullEnd - (end - start))
-  return {
-    start: new Date(nextStart).toISOString(),
-    end: new Date(nextStart + end - start).toISOString(),
-  } satisfies DaySpan
-}

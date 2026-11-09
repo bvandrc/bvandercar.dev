@@ -4,13 +4,10 @@ import { getPeriodEnds } from './lib/periods'
 import { getActivityWeekEnds } from './lib/weekly-activity'
 import {
   RunningTotalChart,
-  type RunningTotalChartProps,
+  type RunningTotalChartViewProps,
 } from './RunningTotalChart'
 
-export type ActivityChartProps = Pick<
-  RunningTotalChartProps,
-  'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
-> & {
+export type ActivityChartProps = RunningTotalChartViewProps & {
   activity: CommitHistory
 }
 
@@ -31,8 +28,7 @@ export const ActivityChart = ({
     daily={activity.commits}
     periodEnds={getPeriodEnds(
       getActivityWeekEnds(activity),
-      activity.firstDay,
-      activity.lastDay,
+      activity,
       chartProps.span
     )}
     noun="commit"

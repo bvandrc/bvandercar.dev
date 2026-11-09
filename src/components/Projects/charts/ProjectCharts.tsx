@@ -1,11 +1,15 @@
 import { useState } from 'react'
 
 import type { CommitHistory, DownloadHistory, Registry } from '~/counts'
-import { ActivityChart, type ActivityChartProps } from './ActivityChart'
+import { ActivityChart } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
-import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
+import { type DaySpan, panSpan, zoomSpan } from './lib/spans'
+import type { RunningTotalChartViewProps } from './RunningTotalChart'
 
-export type ProjectChartsProps = Pick<ActivityChartProps, 'releases'> & {
+export type ProjectChartsProps = Pick<
+  RunningTotalChartViewProps,
+  'releases'
+> & {
   /** The dates both charts span, zoomed all the way out */
   span: DaySpan
   activity?: CommitHistory
@@ -45,7 +49,7 @@ export const ProjectCharts = ({
     zoomed: zoomedSpan !== undefined,
     onZoom: zoom,
     onPan: pan,
-  }
+  } satisfies RunningTotalChartViewProps
   return (
     <div className="flex flex-col gap-3">
       {activity && <ActivityChart activity={activity} {...shared} />}

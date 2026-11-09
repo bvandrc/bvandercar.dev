@@ -18,6 +18,7 @@
 
 import { countBy } from 'es-toolkit'
 
+import type { ActivityTotals, CommitHistory } from '../shared/counts.ts'
 import { earlierDay, isoDate, listDays } from '../shared/dates.ts'
 import { GITHUB_OWNER } from '../shared/github.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
@@ -100,8 +101,8 @@ exitIfReusing('git activity', [TOTALS_FILE, HISTORY_FILE])
 
 const repos = getProjectValues('repo')
 
-const entries: string[] = []
-const historyEntries: string[] = []
+const totals: Record<string, ActivityTotals> = {}
+const histories: Record<string, CommitHistory> = {}
 if (token === undefined) {
   reportSkipped("every repo's commits and PRs", 'GITHUB_TOKEN is not set')
 } else {
@@ -118,10 +119,8 @@ if (token === undefined) {
     if (shortfall) {
       reportSkipped(`commits and PRs for ${repo}`, shortfall)
     } else {
-      entries.push(`  '${repo}': { commits: ${commits}, prs: ${prs} },`)
-      historyEntries.push(
-        `  '${repo}': { firstDay: '${history.firstDay}', lastDay: '${history.lastDay}', commits: [${history.commits.join(', ')}] },`
-      )
+      totals[repo] = { commits, prs }
+      histories[repo] = history
     }
   })
 }
@@ -129,25 +128,29 @@ if (token === undefined) {
 await writeGenerated(
   TOTALS_FILE,
   'fetch:git-activity',
-  `import type { ActivityTotals } from '~/counts'
-
-/** Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name. */
-export const REPO_ACTIVITY_TOTALS: Record<string, ActivityTotals | undefined> = {
-${entries.join('\n')}
-}
-`
+  "import type { ActivityTotals } from '~/counts'",
+  [
+    {
+      name: 'REPO_ACTIVITY_TOTALS',
+      doc: "Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name.",
+      type: 'Record<string, ActivityTotals | undefined>',
+      value: totals,
+    },
+  ]
 )
 await writeGenerated(
   HISTORY_FILE,
   'fetch:git-activity',
-  `import type { CommitHistory } from '~/counts'
-
-/** Each project repo's commits per day, keyed by repo name. */
-export const REPO_ACTIVITY: Record<string, CommitHistory | undefined> = {
-${historyEntries.join('\n')}
-}
-`
+  "import type { CommitHistory } from '~/counts'",
+  [
+    {
+      name: 'REPO_ACTIVITY',
+      doc: "Each project repo's commits per day, keyed by repo name.",
+      type: 'Record<string, CommitHistory | undefined>',
+      value: histories,
+    },
+  ]
 )
 console.log(
-  `git activity: totals and daily history for ${entries.length} of ${repos.length} repos`
+  `git activity: totals and daily history for ${Object.keys(totals).length} of ${repos.length} repos`
 )
