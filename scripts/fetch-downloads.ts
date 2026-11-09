@@ -1,7 +1,6 @@
 /**
  * Fetches the weekly download history of each npm and PyPI package the profile
- * content names, whose total its project's counts' glyph shows, and its
- * release dates.
+ * content names, whose total its project's counts' glyph shows.
  *
  * Writes src/generated/package-downloads.ts, gitignored. Reads the package
  * names from the content `pnpm fetch:profile` copied, so run that first. Each
@@ -20,7 +19,6 @@ import { chunk, sumBy } from 'es-toolkit'
 import type {
   DailyDownloads,
   RegistryHistory,
-  Release,
 } from './fetch-downloads/common.ts'
 import { fetchNpmHistory } from './fetch-downloads/npm.ts'
 import { fetchPypiHistory } from './fetch-downloads/pypi.ts'
@@ -55,28 +53,14 @@ const formatEntry = (pkg: string, days: DailyDownloads[]) => {
 
 exitIfReusing('package downloads', [OUT_FILE])
 
-/** A line of the generated file listing one package's releases. */
-const formatReleases = (pkg: string, releases: Release[]) =>
-  `    '${pkg}': ${JSON.stringify(releases)},`
-
-/** The generated file's lines for one registry: each package's downloads, and each one's releases. */
-const formatHistory = (history: RegistryHistory) => ({
-  entries: history.downloads.flatMap(({ pkg, days }) => formatEntry(pkg, days)),
-  releaseEntries: history.releases.map(({ pkg, releases }) =>
-    formatReleases(pkg, releases)
-  ),
-})
+/** The generated file's lines for one registry, one per package with downloads. */
+const formatHistory = (history: RegistryHistory) =>
+  history.flatMap(({ pkg, days }) => formatEntry(pkg, days))
 
 const npmPackages = await readProjectValues('npmPackage')
 const pypiPackages = await readProjectValues('pypiPackage')
-const histories = {
-  npm: await fetchNpmHistory(npmPackages),
-  pypi: await fetchPypiHistory(pypiPackages),
-}
-const { entries: npmEntries, releaseEntries: npmReleaseEntries } =
-  formatHistory(histories.npm)
-const { entries: pypiEntries, releaseEntries: pypiReleaseEntries } =
-  formatHistory(histories.pypi)
+const npmEntries = formatHistory(await fetchNpmHistory(npmPackages))
+const pypiEntries = formatHistory(await fetchPypiHistory(pypiPackages))
 
 await writeGenerated(
   OUT_FILE,
@@ -93,12 +77,6 @@ export type WeeklyDownloads = {
   weekly: number[]
 }
 
-export type Release = {
-  version: string
-  /** ISO date it was published */
-  day: string
-}
-
 /** Each package's weekly downloads since its first publish, by registry, then package name. */
 export const PACKAGE_DOWNLOADS: Record<
   Registry,
@@ -109,19 +87,6 @@ ${npmEntries.join('\n')}
   },
   pypi: {
 ${pypiEntries.join('\n')}
-  },
-}
-
-/** Each package's releases, oldest first and leaving out pre-releases, by registry, then package name. */
-export const PACKAGE_RELEASES: Record<
-  Registry,
-  Record<string, Release[] | undefined>
-> = {
-  npm: {
-${npmReleaseEntries.join('\n')}
-  },
-  pypi: {
-${pypiReleaseEntries.join('\n')}
   },
 }
 `

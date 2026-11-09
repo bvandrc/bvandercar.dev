@@ -1,11 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import type {
-  Registry,
-  Release,
-  WeeklyDownloads,
-} from '@/generated/package-downloads'
+import type { Registry, WeeklyDownloads } from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { WeeklyActivity } from '@/generated/repo-activity'
 import { renderWithProviders } from '@/test-helpers/render'
@@ -53,10 +49,6 @@ vi.mock('@/generated/package-downloads', () => ({
     },
     pypi: {},
   } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
-  PACKAGE_RELEASES: { npm: {}, pypi: {} } satisfies Record<
-    Registry,
-    Record<string, Release[]>
-  >,
 }))
 
 describe('ProjectCounts', () => {

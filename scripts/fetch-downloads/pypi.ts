@@ -1,7 +1,7 @@
 /**
- * PyPI's side of `pnpm fetch:downloads`: a package's releases, from PyPI's
- * JSON API, which needs no credentials, and its downloads per day, from
- * Google BigQuery's public PyPI dataset, which does.
+ * PyPI's side of `pnpm fetch:downloads`: a package's first upload day, from
+ * PyPI's JSON API, which needs no credentials, and its downloads per day,
+ * from Google BigQuery's public PyPI dataset, which does.
  *
  * Its daily counts are kept in PYPI_CACHE_FILE between runs, so a run queries
  * only the days since the last.
@@ -14,10 +14,8 @@ import { DAY_MS } from '../shared/constants.ts'
 import { earlierDay, isoDate, laterDay, listDays } from '../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
 import {
-  byDay,
   type DailyDownloads,
   type RegistryHistory,
-  type Release,
   warnSkipped,
 } from './common.ts'
 
@@ -48,30 +46,15 @@ const hasGoogleCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS)
 /** Each package's downloads, by package, then ISO date. */
 type DailyCache = Record<string, Record<string, number> | undefined>
 
-/** A PyPI package's first upload day, and its releases, oldest first, leaving out pre-releases. */
-const fetchPypiPackage = async (pkg: string) => {
+/** The ISO date a PyPI package's first file was uploaded. */
+const fetchPypiFirstDay = async (pkg: string) => {
   const { releases } = await fetchJson<{
     releases: Record<string, { upload_time_iso_8601: string }[]>
   }>(`https://pypi.org/pypi/${pkg}/json`)
-  /** The day a release's first file was uploaded. */
-  const getUploadDay = (files: { upload_time_iso_8601: string }[]) =>
-    files
-      .map(({ upload_time_iso_8601 }) => upload_time_iso_8601.slice(0, 10))
-      .sort()[0]
-  return {
-    firstDay: getUploadDay(Object.values(releases).flat()),
-    releases: Object.entries(releases)
-      // A release with no files was deleted. A pre-release ends in a, b, rc,
-      // or dev and a number, like 2.0b1.
-      .filter(
-        ([version, files]) =>
-          files.length > 0 && !/(a|b|rc|dev)\d*$/i.test(version)
-      )
-      .map(
-        ([version, files]): Release => ({ version, day: getUploadDay(files) })
-      )
-      .sort(byDay),
-  }
+  return Object.values(releases)
+    .flat()
+    .map(({ upload_time_iso_8601 }) => upload_time_iso_8601.slice(0, 10))
+    .sort()[0]
 }
 
 /** The PyPI counts a run before this one kept, or none. */
@@ -187,34 +170,36 @@ const writePypiCache = async (cache: DailyCache) => {
 }
 
 /**
- * Each of the PyPI `packages`' releases, and its downloads per day since its
- * first upload, leaving out with a warning any that can't be read.
+ * Each of the PyPI `packages`' downloads per day since its first upload,
+ * leaving out with a warning any that can't be read.
  *
- * Releases need no credentials, so they're read even when downloads aren't:
- * without `GOOGLE_APPLICATION_CREDENTIALS`, no package has downloads.
+ * Without `GOOGLE_APPLICATION_CREDENTIALS`, it reads none.
  */
 export const fetchPypiHistory = async (
   packages: string[]
 ): Promise<RegistryHistory> => {
-  const history: RegistryHistory = { downloads: [], releases: [] }
-  const firstDays: { pkg: string; firstDay: string }[] = []
-  const results = await Promise.allSettled(packages.map(fetchPypiPackage))
-  results.forEach((result, index) => {
-    const pkg = packages[index]
-    if (result.status === 'rejected') {
-      warnSkipped(`PyPI releases for ${pkg}`, result.reason)
-    } else {
-      history.releases.push({ pkg, releases: result.value.releases })
-      firstDays.push({ pkg, firstDay: result.value.firstDay })
-    }
-  })
-  if (firstDays.length === 0) {
+  const history: RegistryHistory = []
+  if (packages.length === 0) {
     return history
   }
+  // Checked before the first days are read, which would go unused without it.
   if (!hasGoogleCredentials) {
     console.warn(
       "::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages' glyphs keep the profile's counts"
     )
+    return history
+  }
+  const firstDays: { pkg: string; firstDay: string }[] = []
+  const results = await Promise.allSettled(packages.map(fetchPypiFirstDay))
+  results.forEach((result, index) => {
+    const pkg = packages[index]
+    if (result.status === 'rejected') {
+      warnSkipped(`PyPI downloads for ${pkg}`, result.reason)
+    } else {
+      firstDays.push({ pkg, firstDay: result.value })
+    }
+  })
+  if (firstDays.length === 0) {
     return history
   }
   try {
@@ -222,7 +207,7 @@ export const fetchPypiHistory = async (
     try {
       const days = await fetchPypiDailyDownloads(firstDays, cache)
       firstDays.forEach(({ pkg }, index) => {
-        history.downloads.push({ pkg, days: days[index] })
+        history.push({ pkg, days: days[index] })
       })
     } finally {
       await writePypiCache(cache)
