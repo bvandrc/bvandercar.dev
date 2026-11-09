@@ -6,6 +6,7 @@ import type { SkillBadge } from '@/generated/profile/content/skills'
 import { SKILLS } from '@/generated/profile/content/skills'
 import { cn } from '@/lib/cn'
 import { skillIconSlug } from '@/lib/icons'
+import { sectionAnchor } from '@/lib/section-anchor'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Section, SubSection } from './Section'
@@ -40,6 +41,7 @@ export const Skills = () => (
   <Section
     glyph={SECTIONS.SKILLS.glyph}
     title={SECTIONS.SKILLS.title}
+    id={sectionAnchor(SECTIONS.SKILLS.title)}
     data-testid="skills">
     {SKILLS.map((group) => (
       <SubSection key={group.title} icon={group.glyph} title={group.title}>

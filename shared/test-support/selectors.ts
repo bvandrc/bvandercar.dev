@@ -5,6 +5,10 @@ export const SELECTORS = {
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
   },
+  CONTENTS: {
+    SELF: 'contents',
+    LINK: 'contents-link',
+  },
   MAIN: 'main',
   PROJECTS: {
     SELF: 'projects',
