@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
+import { afterFocusScroll } from '@/lib/after-focus-scroll'
 import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
 
@@ -36,9 +37,8 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       onFocus={(event) => {
         const link = event.currentTarget
         // Radix closes a tooltip whose trigger scrolls, as Tab scrolls a link
-        // below the fold into view, so it opens a frame on, once that scroll
-        // has fired.
-        requestAnimationFrame(() =>
+        // below the fold into view, so it opens once that scroll is done.
+        afterFocusScroll(link, () =>
           // A click focuses the link too, which opens no tooltip, the same as
           // Radix's own triggers: only focus the browser would ring does.
           setCountsOpen(link.matches(':focus-visible'))
