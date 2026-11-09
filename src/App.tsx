@@ -13,9 +13,9 @@ export const App = () => (
   <TooltipProvider>
     <div
       className={cn(
-        'mx-auto flex min-h-dvh max-w-4xl flex-col gap-6 px-5 pb-12 text-center',
-        // Half the bottom's space above the header, so it sits nearer the top.
-        'pt-6'
+        'mx-auto flex min-h-dvh max-w-4xl flex-col gap-6 px-5 text-center',
+        // The same space below the footer's links as between them and its rule.
+        'py-6'
       )}>
       <Header />
       <Contents />
