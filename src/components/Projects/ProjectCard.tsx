@@ -1,6 +1,5 @@
 import { useId, useRef, useState } from 'react'
 import { useIsMobile } from '@bvandrc/react-toolkit'
-import { cva } from 'class-variance-authority'
 import { pick } from 'es-toolkit'
 
 import { LivePreview } from '@/components/LivePreview'
@@ -19,46 +18,6 @@ import { RepoLink } from './RepoLink'
 // Names longer than this take a size smaller, so the counts still fit beside
 // them.
 const LONG_NAME_LENGTH = 20
-
-// Each part's `centered` variant: a centered card spans its group's width, so
-// from md, where other groups' cards pair up, it centers its name and blurb,
-// with its counts on the right. Below md, it lines up like the rest.
-
-const headerVariants = cva(
-  'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
-  {
-    variants: {
-      centered: { true: 'md:grid md:grid-cols-[1fr_auto_1fr]', false: '' },
-    },
-  }
-)
-
-const nameVariants = cva('flex shrink-0 items-center gap-2', {
-  variants: { centered: { true: 'md:col-start-2', false: '' } },
-})
-
-const countsVariants = cva(
-  [
-    'flex text-xs',
-    // Grows from nothing, so it stays beside the name while its counts fit,
-    // with "repo" wrapping below them, and only then drops below.
-    'grow basis-0 justify-end',
-    // Its 20px height, 2px down, centers the counts' 16px line on the name's
-    // 24px one; with "repo" wrapped below, the pair outgrows it and starts
-    // 2px down.
-    'mt-0.5 min-h-5 items-center',
-  ],
-  { variants: { centered: { true: 'md:col-start-3', false: '' } } }
-)
-
-const blurbVariants = cva(
-  [
-    'text-left text-sm text-ink-muted',
-    // Closer to the name than the card's gap, as the name's own words.
-    '-mt-1',
-  ],
-  { variants: { centered: { true: 'md:text-center', false: '' } } }
-)
 
 export type ProjectCardProps = {
   project: Project
@@ -104,8 +63,19 @@ export const ProjectCard = ({
         'hover-glow-24'
       )}
       data-testid="project-card">
-      <div className={headerVariants({ centered })}>
-        <div className={nameVariants({ centered })}>
+      <div
+        className={cn(
+          'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
+          // A centered card spans its group's width, so from md, where other
+          // groups' cards pair up, it centers its name and blurb, with its
+          // counts on the right. Below md, it lines up like the rest.
+          centered && 'md:grid md:grid-cols-[1fr_auto_1fr]'
+        )}>
+        <div
+          className={cn(
+            'flex shrink-0 items-center gap-2',
+            centered && 'md:col-start-2'
+          )}>
           <h4
             className={cn(
               'font-semibold',
@@ -131,11 +101,29 @@ export const ProjectCard = ({
             />
           </Tooltip>
         </div>
-        <p className={countsVariants({ centered })}>
+        <p
+          className={cn(
+            'flex text-xs',
+            // Grows from nothing, so it stays beside the name while its counts
+            // fit, with "repo" wrapping below them, and only then drops below.
+            'grow basis-0 justify-end',
+            // Its 20px height, 2px down, centers the counts' 16px line on the
+            // name's 24px one; with "repo" wrapped below, the pair outgrows it
+            // and starts 2px down.
+            'mt-0.5 min-h-5 items-center',
+            centered && 'md:col-start-3'
+          )}>
           <RepoLink {...pick(project, COUNTS_FIELDS)} nameId={nameId} />
         </p>
       </div>
-      <p className={blurbVariants({ centered })} data-testid="project-blurb">
+      <p
+        className={cn(
+          'text-left text-sm text-ink-muted',
+          // Closer to the name than the card's gap, as the name's own words.
+          '-mt-1',
+          centered && 'md:text-center'
+        )}
+        data-testid="project-blurb">
         {/* Its counts are the ones its glyphs show. */}
         {fillBlurb(
           project.blurb,
