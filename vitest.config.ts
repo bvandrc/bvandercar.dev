@@ -20,7 +20,11 @@ export default defineConfig({
     globals: true,
     watch: false,
     root: '.',
-    include: ['./src/**/*.{test,spec}.*', './__tests__/*.{test,spec}.*'],
+    include: [
+      './src/**/*.{test,spec}.*',
+      './shared/**/*.{test,spec}.*',
+      './__tests__/*.{test,spec}.*',
+    ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/playwright/**'],
   },
 })

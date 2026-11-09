@@ -1,6 +1,6 @@
-import { clamp } from 'es-toolkit'
+import { clamp, sum } from 'es-toolkit'
 
-import { DAY_MS } from '~/dates'
+import { addDays, DAY_MS, getDaysBetween } from '~/dates'
 
 // The dates are calendar days, so they're read in UTC, where they start.
 const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -21,11 +21,35 @@ export const formatMonth = (day: string) => MONTH_FORMAT.format(Date.parse(day))
 /** An ISO date in full: `'2026-03-02'` → `'Mar 2, 2026'`. */
 export const formatDay = (day: string) => DAY_FORMAT.format(Date.parse(day))
 
-/** The busiest of weekly counts: its count, and the ISO date its week starts on. */
-export const getPeakWeek = (weekly: number[], weekStarts: string[]) => {
-  const count = Math.max(...weekly)
-  return { count, start: weekStarts[weekly.indexOf(count)] }
-}
+/** A week of daily counts: the ISO dates it starts and ends on, and what it counted. */
+export type Week = { start: string; end: string; count: number }
+
+/**
+ * Daily counts from `firstDay` summed into weeks ending on each of
+ * `weekEnds`, oldest first.
+ *
+ * Each starts the day after the one before, and the first on `firstDay`, so
+ * it can be short.
+ */
+export const sumWeeks = (
+  firstDay: string,
+  daily: number[],
+  weekEnds: string[]
+): Week[] =>
+  weekEnds.map((end, index) => {
+    const start = index === 0 ? firstDay : addDays(weekEnds[index - 1], 1)
+    const count = sum(
+      daily.slice(
+        getDaysBetween(firstDay, start),
+        getDaysBetween(firstDay, end) + 1
+      )
+    )
+    return { start, end, count }
+  })
+
+/** The busiest of weeks, the earliest of any that tie. */
+export const getPeakWeek = (weeks: Week[]) =>
+  weeks.reduce((peak, week) => (week.count > peak.count ? week : peak))
 
 /**
  * The latest of versions released together, as a label: `['1.0.0', '1.0.5',

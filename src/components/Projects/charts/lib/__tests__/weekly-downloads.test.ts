@@ -1,42 +1,29 @@
-import type { WeeklyDownloads } from '~/counts'
-import {
-  describeWeeklyDownloads,
-  getDownloadWeekEnds,
-  getDownloadWeekStarts,
-} from '../weekly-downloads'
+import type { DownloadHistory } from '~/counts'
+import { describeWeeklyDownloads, getDownloadWeeks } from '../weekly-downloads'
 
-// Three weeks ending Mar 24, the first cut short by a publish on Mar 6.
+// 5, 1,200, then 12 downloads a week ending Mar 24, the first cut short by a
+// publish on Mar 6.
 const HISTORY = {
   firstDay: '2026-03-06',
   lastDay: '2026-03-24',
-  weekly: [5, 40, 12],
-} satisfies WeeklyDownloads
+  daily: [
+    1, 1, 1, 1, 1, 200, 300, 100, 200, 100, 200, 100, 2, 2, 2, 2, 2, 1, 1,
+  ],
+} satisfies DownloadHistory
 
-describe('getDownloadWeekStarts', () => {
-  it('starts each week 7 days apart, counting back from the last day, and a short first week on the first day', () => {
-    expect(getDownloadWeekStarts(HISTORY)).toEqual([
-      '2026-03-06',
-      '2026-03-11',
-      '2026-03-18',
-    ])
-  })
-})
-
-describe('getDownloadWeekEnds', () => {
-  it('ends each week 7 days apart, the last on the last day', () => {
-    expect(getDownloadWeekEnds(HISTORY)).toEqual([
-      '2026-03-10',
-      '2026-03-17',
-      '2026-03-24',
+describe('getDownloadWeeks', () => {
+  it('sums the days into weeks, the short first one starting on the first day', () => {
+    expect(getDownloadWeeks(HISTORY)).toEqual([
+      { start: '2026-03-06', end: '2026-03-10', count: 5 },
+      { start: '2026-03-11', end: '2026-03-17', count: 1200 },
+      { start: '2026-03-18', end: '2026-03-24', count: 12 },
     ])
   })
 })
 
 describe('describeWeeklyDownloads', () => {
   it('names the registry as written in a sentence, the first month, and the peak week', () => {
-    expect(
-      describeWeeklyDownloads({ ...HISTORY, weekly: [5, 1200, 12] }, 'pypi')
-    ).toBe(
+    expect(describeWeeklyDownloads(HISTORY, 'pypi')).toBe(
       'Weekly PyPI downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026'
     )
   })

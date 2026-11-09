@@ -2,16 +2,15 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
+import type {
+  PACKAGE_DOWNLOADS,
+  PACKAGE_RELEASES,
+} from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
+import type { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
 import { turnWheel } from '@/test-helpers/wheel'
-import type {
-  Registry,
-  Release,
-  WeeklyActivity,
-  WeeklyDownloads,
-} from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
@@ -24,23 +23,23 @@ const FIXTURES = vi.hoisted(() => ({
   REPO: 'some-repo',
   NEW_REPO: 'new-repo',
   OTHER_REPO: 'other-repo',
-  SMALL_REPO: 'small-repo',
   NPM_PACKAGE: 'some-package',
   NEW_NPM_PACKAGE: 'new-package',
-  FRESH_NPM_PACKAGE: 'fresh-package',
   PYPI_PACKAGE: 'some-python-package',
+  // Each day's downloads from Mar 4 to 24: 5, 1,200, then 12 a week.
+  DAILY_DOWNLOADS: [
+    1, 1, 1, 1, 1, 0, 0, 200, 300, 100, 200, 100, 200, 100, 2, 2, 2, 2, 2, 1, 1,
+  ],
 }))
 const {
   REPO,
   NEW_REPO,
   OTHER_REPO,
-  SMALL_REPO,
   NPM_PACKAGE,
   NEW_NPM_PACKAGE,
-  FRESH_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
-const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // The repo's counts in full: its commits and PRs from this site's fetch, and
 // its downloads from the profile's, with no package to fetch them for.
@@ -54,53 +53,42 @@ vi.mock('@/generated/profile/repo-counts', () => ({
     [FIXTURES.REPO]: { commits: 25, prs: 31, downloads: 3120 },
     [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
     [FIXTURES.OTHER_REPO]: { commits: 7, prs: 3 },
-    [FIXTURES.SMALL_REPO]: { commits: 12, prs: 2 },
   } satisfies typeof REPO_COUNTS,
 }))
 
-// The sums of the histories below, as the fetches write them.
 vi.mock('@/generated/repo-activity-totals', () => ({
   REPO_ACTIVITY_TOTALS: {
     [FIXTURES.REPO]: { commits: 55, prs: 14 },
     [FIXTURES.NEW_REPO]: { commits: 2, prs: 1 },
-    [FIXTURES.SMALL_REPO]: { commits: 12, prs: 2 },
   } satisfies typeof REPO_ACTIVITY_TOTALS,
-}))
-
-vi.mock('@/generated/package-download-totals', () => ({
-  PACKAGE_DOWNLOAD_TOTALS: {
-    npm: {
-      [FIXTURES.NPM_PACKAGE]: 1217,
-      [FIXTURES.NEW_NPM_PACKAGE]: 30,
-    },
-    pypi: { [FIXTURES.PYPI_PACKAGE]: 1240 },
-  } satisfies typeof PACKAGE_DOWNLOAD_TOTALS,
 }))
 
 vi.mock('@/generated/repo-activity', () => ({
   REPO_ACTIVITY: {
-    // Two quiet weeks at the end, so it spans the two weeks a chart needs
-    // from where it starts.
+    // 3, 40, then 12 commits a week from Monday, Feb 23, then two quiet
+    // weeks, so it spans the two weeks a chart needs from where it starts.
     [FIXTURES.REPO]: {
-      firstWeek: '2026-02-23',
+      firstDay: '2026-02-23',
       lastDay: '2026-03-26',
-      commits: [3, 40, 12, 0, 0],
-      prs: [1, 9, 4, 0, 0],
+      commits: [
+        1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ],
     },
+    // Too few days to chart.
     [FIXTURES.NEW_REPO]: {
-      firstWeek: '2026-03-16',
+      firstDay: '2026-03-16',
       lastDay: '2026-03-18',
-      commits: [2],
-      prs: [1],
+      commits: [1, 0, 1],
     },
-    // Two weeks to chart, but fewer than 20 commits.
-    [FIXTURES.SMALL_REPO]: {
-      firstWeek: '2026-03-02',
-      lastDay: '2026-03-12',
-      commits: [5, 7],
-      prs: [1, 1],
-    },
-  } satisfies Record<string, WeeklyActivity>,
+  } satisfies typeof REPO_ACTIVITY,
+}))
+
+vi.mock('@/generated/package-download-totals', () => ({
+  PACKAGE_DOWNLOAD_TOTALS: {
+    npm: { [FIXTURES.NPM_PACKAGE]: 1217, [FIXTURES.NEW_NPM_PACKAGE]: 30 },
+    pypi: { [FIXTURES.PYPI_PACKAGE]: 1217 },
+  } satisfies typeof PACKAGE_DOWNLOAD_TOTALS,
 }))
 
 vi.mock('@/generated/package-downloads', () => ({
@@ -109,37 +97,32 @@ vi.mock('@/generated/package-downloads', () => ({
       [FIXTURES.NPM_PACKAGE]: {
         firstDay: '2026-03-04',
         lastDay: '2026-03-24',
-        weekly: [5, 1200, 12],
+        daily: FIXTURES.DAILY_DOWNLOADS,
       },
+      // Too few days to chart.
       [FIXTURES.NEW_NPM_PACKAGE]: {
         firstDay: '2026-03-20',
         lastDay: '2026-03-24',
-        weekly: [30],
+        daily: [10, 5, 5, 5, 5],
       },
     },
     pypi: {
       [FIXTURES.PYPI_PACKAGE]: {
-        firstDay: '2025-04-11',
+        firstDay: '2026-03-04',
         lastDay: '2026-03-24',
-        weekly: [40, 900, 300],
+        daily: FIXTURES.DAILY_DOWNLOADS,
       },
     },
-  } satisfies Record<Registry, Record<string, WeeklyDownloads>>,
+  } satisfies typeof PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES: {
     npm: {
-      // First released six days before the repo's history ends.
-      [FIXTURES.FRESH_NPM_PACKAGE]: [{ version: '1.0.0', day: '2026-03-20' }],
       [FIXTURES.NPM_PACKAGE]: [
         { version: '1.0.0', day: '2026-03-04' },
         { version: '1.1.0', day: '2026-03-12' },
       ],
     },
-    pypi: {
-      // Its earlier releases were deleted, so the first listed comes long
-      // after its first download.
-      [FIXTURES.PYPI_PACKAGE]: [{ version: '1.1.1', day: '2026-03-12' }],
-    },
-  } satisfies Record<Registry, Record<string, Release[]>>,
+    pypi: {},
+  } satisfies typeof PACKAGE_RELEASES,
 }))
 
 /** Hovers the counts, and returns the tooltip once it opens and any charts in it have loaded. */
@@ -184,12 +167,27 @@ describe('ProjectCounts', () => {
     }
   })
 
-  it("keeps the profile's counts for a repo this site fetched nothing for", () => {
-    renderWithProviders(<ProjectCounts repo={OTHER_REPO} />)
+  it("keeps the profile's counts in words for a repo this site fetched nothing for, with no charts to load", async () => {
+    // A fresh copy, since the charts, once loaded, are kept for later counts,
+    // with their module watched for being loaded.
+    vi.resetModules()
+    const loadCharts = vi.fn()
+    vi.doMock('../lib/project-charts', (importOriginal) => {
+      loadCharts()
+      return importOriginal()
+    })
+    onTestFinished(() => vi.doUnmock('../lib/project-charts'))
+    const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
+    renderWithProviders(<FreshCounts repo={OTHER_REPO} />)
 
     expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
       '7 commits, 3 PRs'
     )
+    await userEvent.setup().hover(screen.getByTestId(COUNTS))
+    expect((await screen.findByTestId(TOOLTIP)).textContent).toBe(
+      '7 commits, 3 PRs'
+    )
+    expect(loadCharts).not.toHaveBeenCalled()
   })
 
   it("charts the repo's commits in the tooltip in place of the counts, and describes them in words", async () => {
@@ -229,33 +227,19 @@ describe('ProjectCounts', () => {
     ).toBe('PyPI downloads')
   })
 
-  it("starts both charts at the package's first download where it comes before its first listed release", async () => {
-    renderWithProviders(
-      <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
-    )
-
-    await hoverCounts()
-    const downloads = within(screen.getByTestId(DOWNLOADS_CHART))
-    fireEvent.pointerMove(downloads.getByTestId(PLOT), { clientX: 0 })
-    // Its first week, rather than the one the Mar 12 release falls in.
-    expect(downloads.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 10, 2026: 40 downloads'
-    )
-  })
-
-  it('charts nothing with a single week to show, leaving the counts alone', async () => {
+  it('leaves the counts in words where there is nothing to chart', async () => {
     renderWithProviders(
       <ProjectCounts repo={NEW_REPO} npmPackage={NEW_NPM_PACKAGE} />
     )
 
     const tooltip = await hoverCounts()
-    // Its downloads come from this site's fetch, though too few weeks to chart.
+    // Its downloads come from this site's fetch, though too few days to chart.
     expect(tooltip.textContent).toBe('2 commits, 1 PR, 30 downloads')
     expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
 
-  it("marks its package's releases on both charts, which span the same dates, so each lines up across them", async () => {
+  it('spans both charts over the same dates, so each release lines up across them', async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     await hoverCounts()
@@ -264,59 +248,23 @@ describe('ProjectCounts', () => {
       DOWNLOADS_CHART,
     ].map((chart) =>
       within(screen.getByTestId(chart))
-        .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+        .getAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)
         .map((line) => line.getAttribute('x1'))
     )
-    // Both releases fall in weeks each chart covers, a week apart.
     expect(activityLines).toHaveLength(2)
     expect(downloadsLines).toEqual(activityLines)
   })
 
-  it("starts both charts at the package's first release, rather than the repo's first commit", async () => {
+  it('starts both charts where getProjectCharts says, reading out each day across under 50', async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     await hoverCounts()
     const activity = within(screen.getByTestId(ACTIVITY_CHART))
     fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
-    // The first release, on Mar 4, falls in the repo's second week.
+    // The first release, Mar 4: 3 commits the first week, then 15 more by then.
     expect(activity.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 43 commits'
+      'Through Mar 4, 2026: 18 commits'
     )
-  })
-
-  it('starts a repo with no package where its commits reach 15', async () => {
-    renderWithProviders(<ProjectCounts repo={REPO} />)
-
-    await hoverCounts()
-    const activity = within(screen.getByTestId(ACTIVITY_CHART))
-    fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
-    // 3 commits the first week, then 43 by the end of the second.
-    expect(activity.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 43 commits'
-    )
-  })
-
-  it('charts a repo with fewer than 20 commits only if it publishes a package', async () => {
-    const CASES = [
-      [<ProjectCounts key="alone" repo={SMALL_REPO} />, false],
-      [
-        <ProjectCounts
-          key="published"
-          repo={SMALL_REPO}
-          npmPackage={NPM_PACKAGE}
-        />,
-        true,
-      ],
-    ] as const
-    for (const [counts, charted] of CASES) {
-      const { unmount } = renderWithProviders(counts)
-      await hoverCounts()
-      expect(
-        screen.queryByTestId(ACTIVITY_CHART) !== null,
-        `${counts.key}`
-      ).toBe(charted)
-      unmount()
-    }
   })
 
   it('zooms both charts together with the wheel, and back out once the tooltip closes', async () => {
@@ -326,7 +274,7 @@ describe('ProjectCounts', () => {
     const getReleaseXs = () =>
       [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
         within(screen.getByTestId(chart))
-          .getAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)
+          .getAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)
           .map((line) => line.getAttribute('x1'))
       )
 
@@ -357,7 +305,7 @@ describe('ProjectCounts', () => {
     const getFirstReleaseXs = () =>
       [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
         within(screen.getByTestId(chart))
-          .queryAllByTestId(SELECTORS.PROJECTS.WEEKLY_CHART.RELEASE)[0]
+          .queryAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)[0]
           ?.getAttribute('x1')
       )
     const plot = () =>
@@ -371,15 +319,6 @@ describe('ProjectCounts', () => {
     const panned = getFirstReleaseXs()
     expect(panned).not.toEqual(zoomed)
     expect(panned[1]).toEqual(panned[0])
-  })
-
-  it('charts nothing for a package first released under two weeks ago, however long its repo', async () => {
-    renderWithProviders(
-      <ProjectCounts repo={REPO} npmPackage={FRESH_NPM_PACKAGE} />
-    )
-
-    expect((await hoverCounts()).textContent).toBe(LABEL)
-    expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
   })
 
   describe('in a link', () => {

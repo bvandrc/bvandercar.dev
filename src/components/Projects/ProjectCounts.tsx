@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { useState } from 'react'
 import {
   type UsePressToggleOptions,
   usePressToggle,
@@ -9,48 +9,26 @@ import { objectEntries } from 'ts-extras'
 import { Icon } from '@/components/primitives/Icon'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
-import {
-  PACKAGE_DOWNLOADS,
-  PACKAGE_RELEASES,
-} from '@/generated/package-downloads'
 import { COUNT_KINDS } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
-import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { type CountsField, PACKAGE_FIELDS } from '~/counts'
-import { DAY_MS } from '~/dates'
-import {
-  describeWeeklyCommits,
-  getWeekReachingCommits,
-} from './charts/lib/weekly-activity'
-import { describeWeeklyDownloads } from './charts/lib/weekly-downloads'
-// The type alone, which leaves the charts' code to the lazy import below.
-import type { ProjectChartsProps } from './charts/ProjectCharts'
+import type { ProjectPackage } from './charts/lib/project-charts'
 
-/** Loads the charts' code, which the module system keeps once loaded. */
-const loadCharts = () => import('./charts/ProjectCharts')
-const ProjectCharts = lazy<React.ComponentType<ProjectChartsProps>>(() =>
-  loadCharts().then(
-    // React.lazy takes a default export, which the module doesn't have.
-    (module) => ({ default: module.ProjectCharts }),
-    // A chunk that fails to load, offline say, leaves the tooltip without
-    // charts rather than throwing in render.
-    () => ({ default: () => null })
-  )
-)
-/** Starts loading the charts ahead of their first render, which handles a failure itself. */
-const prefetchCharts = () => {
-  loadCharts().catch(() => undefined)
-}
-
-// How many commits a repo with no package needs before it gets a chart.
-const UNPACKAGED_MIN_COMMITS = 20
-// How many commits a repo with no package has made before its chart starts.
-const UNPACKAGED_START_COMMITS = 15
-// The shortest stretch of dates the charts are drawn over: two weeks.
-const MIN_CHART_MS = 14 * DAY_MS
+/** Loads the charts' code, and the histories they chart, which the module system keeps once loaded. */
+const loadCharts = () =>
+  Promise.all([
+    import('./charts/ProjectCharts'),
+    import('./charts/lib/project-charts'),
+  ]).then(([{ ProjectCharts }, { getProjectCharts }]) => ({
+    ProjectCharts,
+    getProjectCharts,
+  }))
+type Charts = Awaited<ReturnType<typeof loadCharts>>
+// Kept once loaded, so counts mounted later start with them.
+let loadedCharts: Charts | undefined
 
 // Charts size the tooltip to themselves, with text to match, where the
 // counts in words are a line of text.
@@ -68,7 +46,9 @@ const TOGGLE_OPTIONS = {
 export type ProjectCountsProps = Pick<Project, CountsField>
 
 /** The registry the project publishes a package to, and its name there, if any. */
-const getPackage = (packages: Omit<ProjectCountsProps, 'repo'>) => {
+const getPackage = (
+  packages: Omit<ProjectCountsProps, 'repo'>
+): ProjectPackage | undefined => {
   for (const [registry, field] of objectEntries(PACKAGE_FIELDS)) {
     const name = packages[field]
     if (name) {
@@ -83,9 +63,10 @@ const getPackage = (packages: Omit<ProjectCountsProps, 'repo'>) => {
  * on hover where there's nothing to chart, like "3,120 downloads".
  *
  * Renders nothing for a repo with no counts. The hover charts the repo's
- * commits, and an npm or PyPI package's downloads, as running totals, each
- * once it has more than a week of them, marking the package's releases on both,
- * in place of the counts in words.
+ * commits, and an npm or PyPI package's downloads, as running totals,
+ * marking the package's releases on both, in place of the counts in words,
+ * as `getProjectCharts` decides. The charts, and their data, load the first
+ * time the counts are hovered.
  * On a touch screen, which has no hover, a tap opens and closes the tooltip
  * instead, rather than following a link the counts sit in.
  */
@@ -94,18 +75,41 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
+  // Null once they've failed to load, offline say, which leaves the counts
+  // in words.
+  const [charts, setCharts] = useState<Charts | null | undefined>(loadedCharts)
+  const activityTotals = REPO_ACTIVITY_TOTALS[repo]
   const pkg = getPackage(packages)
-  const downloads = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
-  // Histories, for the charts, written for the same repos and packages as the
-  // totals, so each chart ends at the count shown for it.
-  const activity = REPO_ACTIVITY[repo]
-  const history = pkg && PACKAGE_DOWNLOADS[pkg.registry][pkg.name]
-  // This site's own fetches are fresher than the profile's weekly counts, so
-  // a count they have wins.
+  const downloadTotal = pkg && PACKAGE_DOWNLOAD_TOTALS[pkg.registry][pkg.name]
+  // Only what this site fetched a history for can be charted.
+  const mayChart = activityTotals !== undefined || downloadTotal !== undefined
+  const projectCharts = charts?.getProjectCharts(repo, pkg)
+  /** Starts loading the charts, if there may be any, ahead of the tooltip opening. */
+  const prefetchCharts = () => {
+    if (mayChart && charts === undefined) {
+      loadCharts().then(
+        (loaded) => {
+          loadedCharts = loaded
+          setCharts(loaded)
+        },
+        () => setCharts(null)
+      )
+    }
+  }
+  /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
+  const changeOpen = (next: boolean) => {
+    setIsActive(next)
+    if (next) {
+      prefetchCharts()
+    }
+  }
+  // This site's own fetches are fresher than the profile's weekly counts, and
+  // the charts are drawn from them, so a count they have wins, and each chart
+  // ends at the count shown for it.
   const counts = {
     ...REPO_COUNTS[repo],
-    ...REPO_ACTIVITY_TOTALS[repo],
-    ...(downloads !== undefined && { downloads }),
+    ...activityTotals,
+    ...(downloadTotal !== undefined && { downloads: downloadTotal }),
   }
   // The profile README badge's counts, in its order and with its icons.
   const shown = COUNT_KINDS.flatMap(({ key, icon, noun }) => {
@@ -115,112 +119,51 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
   if (shown.length === 0) {
     return null
   }
-  // A single week is a point, not a trend.
-  const chartedActivity =
-    activity &&
-    activity.commits.length > 1 &&
-    // A small repo with no package has too little history to chart.
-    (pkg ||
-      (REPO_ACTIVITY_TOTALS[repo]?.commits ?? 0) >= UNPACKAGED_MIN_COMMITS)
-      ? activity
-      : undefined
-  const chartedDownloads =
-    pkg && history && history.weekly.length > 1
-      ? { registry: pkg.registry, history }
-      : undefined
-  // Marked on both charts.
-  const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
-  /** Where the charts start: past a slow start, so it doesn't squeeze the rest into their right edge. */
-  const getSpanStart = () => {
-    // A package's first publish, rather than the repo's first commit, which
-    // can be years before it: its first release, or its first download where
-    // its first releases were deleted, which the registry no longer lists.
-    const firstPublish = [releases?.[0]?.day, history?.firstDay]
-      .filter(isNotNil)
-      .sort()[0]
-    if (firstPublish) {
-      return firstPublish
-    }
-    // A repo with no package skips its first few commits' trickle.
-    if (!pkg && chartedActivity) {
-      return getWeekReachingCommits(chartedActivity, UNPACKAGED_START_COMMITS)
-    }
-    return ownSpans.map(({ start }) => start).sort()[0]
-  }
-  // Both charts span the same dates, so a release lines up across them.
-  const ownSpans = [
-    chartedActivity && {
-      start: chartedActivity.firstWeek,
-      end: chartedActivity.lastDay,
-    },
-    chartedDownloads && {
-      start: chartedDownloads.history.firstDay,
-      end: chartedDownloads.history.lastDay,
-    },
-  ].filter(isNotNil)
-  const fullSpan = {
-    start: getSpanStart(),
-    end: ownSpans.map(({ end }) => end).sort()[ownSpans.length - 1],
-  }
-  const hasCharts =
-    Boolean(chartedActivity || chartedDownloads) &&
-    // Too short a stretch, like a package released this week, has nothing
-    // to chart yet.
-    Date.parse(fullSpan.end) - Date.parse(fullSpan.start) >= MIN_CHART_MS
+  const isLoading = mayChart && charts === undefined
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
   // The charts' history in words, for screen readers.
-  const description = [
-    label,
-    // Only for charts that show.
-    ...(hasCharts
-      ? [
-          chartedActivity && describeWeeklyCommits(chartedActivity),
-          chartedDownloads &&
-            describeWeeklyDownloads(
-              chartedDownloads.history,
-              chartedDownloads.registry
-            ),
-        ]
-      : []),
-  ]
-    .filter(isNotNil)
-    .join('. ')
+  const description = projectCharts
+    ? [label, ...projectCharts.descriptions].join('. ')
+    : undefined
+  /** The charts, a blank space their size while they load, or else the counts in words. */
+  const getContent = () => {
+    if (projectCharts && charts) {
+      return (
+        <charts.ProjectCharts
+          activity={projectCharts.activity}
+          downloads={projectCharts.downloads}
+          releases={projectCharts.releases}
+          span={projectCharts.span}
+        />
+      )
+    }
+    if (isLoading) {
+      // A blank chart's size for each that may show, so the tooltip jumps
+      // as little as it can once they load.
+      return (
+        <div
+          className="flex flex-col gap-3"
+          data-testid="project-charts-loading">
+          {[activityTotals, downloadTotal].filter(isNotNil).map((_, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
+            <div key={index} className="h-21 w-82" />
+          ))}
+        </div>
+      )
+    }
+    return label
+  }
   return (
     <Tooltip
       open={isActive}
-      onOpenChange={setIsActive}
-      content={
-        hasCharts ? (
-          <Suspense
-            fallback={
-              // A blank chart's size for each, so the tooltip doesn't jump
-              // once they load.
-              <div
-                className="flex flex-col gap-3"
-                data-testid="project-charts-loading">
-                {[chartedActivity, chartedDownloads]
-                  .filter(isNotNil)
-                  .map((_, index) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
-                    <div key={index} className="h-21 w-82" />
-                  ))}
-              </div>
-            }>
-            <ProjectCharts
-              activity={chartedActivity}
-              downloads={chartedDownloads}
-              releases={releases}
-              span={fullSpan}
-            />
-          </Suspense>
-        ) : (
-          label
-        )
-      }
-      aria-label={description === label ? undefined : description}
-      className={TOOLTIP_CLASSES[hasCharts ? 'CHARTS' : 'WORDS']}>
+      onOpenChange={changeOpen}
+      content={getContent()}
+      aria-label={description}
+      className={
+        TOOLTIP_CLASSES[projectCharts || isLoading ? 'CHARTS' : 'WORDS']
+      }>
       {/* An image, like the profile README's badge, so its name can be the
           full counts rather than the shortened ones it shows. */}
       <span
@@ -230,11 +173,9 @@ export const ProjectCounts = ({ repo, ...packages }: ProjectCountsProps) => {
         {...triggerProps}
         // Starts loading the charts as the pointer arrives, ahead of the
         // tooltip's open delay, or with a tap.
-        onPointerEnter={hasCharts ? prefetchCharts : undefined}
+        onPointerEnter={prefetchCharts}
         onPointerDown={(event) => {
-          if (hasCharts) {
-            prefetchCharts()
-          }
+          prefetchCharts()
           triggerProps.onPointerDown(event)
         }}
         data-testid="project-counts">

@@ -21,26 +21,24 @@ export const PACKAGE_FIELDS = {
 /** A repo's commits on its default branch, and its pull requests, in all. */
 export type ActivityTotals = { commits: number; prs: number }
 
-/** A repo's commits and pull requests per week. */
-export type WeeklyActivity = {
-  /** ISO date of the Monday the first week starts on */
-  firstWeek: string
-  /** ISO date the history was read, which ends the last week, the one under way */
+/** A repo's commits per day. */
+export type CommitHistory = {
+  /** ISO date of the repo's first commit or pull request */
+  firstDay: string
+  /** ISO date the history was read */
   lastDay: string
-  /** Commits on the default branch in each week, oldest first; they sum to the repo's total */
+  /** Commits on the default branch each day from `firstDay` through `lastDay`, oldest first; they sum to the repo's total */
   commits: number[]
-  /** Pull requests opened in each of the same weeks */
-  prs: number[]
 }
 
-/** A package's downloads per week since its first publish. */
-export type WeeklyDownloads = {
+/** A package's downloads per day since its first publish. */
+export type DownloadHistory = {
   /** ISO date of the first day counted, the package's first publish */
   firstDay: string
-  /** ISO date of the last day counted, the end of the last week */
+  /** ISO date of the last day counted */
   lastDay: string
-  /** Downloads in each 7-day week ending on `lastDay`, oldest first; the first can be shorter */
-  weekly: number[]
+  /** Downloads on each day from `firstDay` through `lastDay`, oldest first */
+  daily: number[]
 }
 
 /** A package's release: its version, and the ISO date it was published. */

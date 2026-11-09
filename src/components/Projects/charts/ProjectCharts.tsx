@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { Registry, WeeklyActivity, WeeklyDownloads } from '~/counts'
+import type { CommitHistory, DownloadHistory, Registry } from '~/counts'
 import { ActivityChart, type ActivityChartProps } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
 import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
@@ -8,8 +8,8 @@ import { type DaySpan, panSpan, zoomSpan } from './lib/weeks'
 export type ProjectChartsProps = Pick<ActivityChartProps, 'releases'> & {
   /** The dates both charts span, zoomed all the way out */
   span: DaySpan
-  activity?: WeeklyActivity
-  downloads?: { registry: Registry; history: WeeklyDownloads }
+  activity?: CommitHistory
+  downloads?: { registry: Registry; history: DownloadHistory }
 }
 
 /**
@@ -17,8 +17,9 @@ export type ProjectChartsProps = Pick<ActivityChartProps, 'releases'> & {
  * it has, sharing one span, zoom, and set of releases.
  *
  * Mounted with the tooltip it sits in, so each opening starts zoomed out.
- * Loaded on its own, the first time a project's counts are hovered, so the
- * charts' code, gestures included, stays out of the page's first load.
+ * Loaded on its own, with the histories it charts, the first time a
+ * project's counts are hovered, so neither the charts' code, gestures
+ * included, nor their data is in the page's first load.
  */
 export const ProjectCharts = ({
   activity,

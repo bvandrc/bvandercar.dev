@@ -21,8 +21,8 @@ Built on:
 | `pnpm icons` | Generate favicon.ico and the PNG icons into `public/` |
 | `pnpm fetch:content` | The three fetches below, which `dev`, `build`, `check`, and `test` run first |
 | `pnpm fetch:profile` | Fetch the profile content and screenshots from bvandrc/bvandrc |
-| `pnpm fetch:git-activity` | Fetch each project repo's commits and PRs, in all and per week, for its counts and chart; needs `GITHUB_TOKEN` |
-| `pnpm fetch:downloads` | Fetch each npm and PyPI package's downloads, in all and per week, and its releases, for its counts and chart; PyPI's need `GOOGLE_APPLICATION_CREDENTIALS` |
+| `pnpm fetch:git-activity` | Fetch each project repo's commits and PRs in all, and its commits per day, for its counts and chart; needs `GITHUB_TOKEN` |
+| `pnpm fetch:downloads` | Fetch each npm and PyPI package's downloads, in all and per day, and its releases, for its counts and chart; PyPI's need `GOOGLE_APPLICATION_CREDENTIALS` |
 | `pnpm check` | Format + lint + type check (app and Playwright) |
 | `pnpm test` | Vitest unit tests, once |
 | `pnpm test:watch` | Vitest in watch mode |

@@ -1,18 +1,46 @@
-import { DAY_MS } from '~/dates'
-import { formatLatestVersion, getPeakWeek, panSpan, zoomSpan } from '../weeks'
+import { addDays, DAY_MS } from '~/dates'
+import {
+  formatLatestVersion,
+  getPeakWeek,
+  panSpan,
+  sumWeeks,
+  type Week,
+  zoomSpan,
+} from '../weeks'
+
+describe('sumWeeks', () => {
+  it('sums daily counts into weeks ending on each week end, the first starting on the first day', () => {
+    expect(
+      sumWeeks(
+        '2026-03-04',
+        [1, 2, 3, 4, 5, 6, 7, 8],
+        ['2026-03-06', '2026-03-11']
+      )
+    ).toEqual([
+      { start: '2026-03-04', end: '2026-03-06', count: 6 },
+      { start: '2026-03-07', end: '2026-03-11', count: 30 },
+    ])
+  })
+})
 
 describe('getPeakWeek', () => {
-  const WEEK_STARTS = ['2026-03-02', '2026-03-09', '2026-03-16']
+  /** Weeks a week apart from Mar 2, with `counts` in order. */
+  const buildWeeks = (counts: number[]): Week[] =>
+    counts.map((count, index) => ({
+      start: addDays('2026-03-02', index * 7),
+      end: addDays('2026-03-02', index * 7 + 6),
+      count,
+    }))
 
-  it('finds the week with the highest count, and when it starts', () => {
-    expect(getPeakWeek([5, 40, 12], WEEK_STARTS)).toEqual({
+  it('finds the week with the highest count', () => {
+    expect(getPeakWeek(buildWeeks([5, 40, 12]))).toMatchObject({
       count: 40,
       start: '2026-03-09',
     })
   })
 
   it('takes the earliest of weeks that tie', () => {
-    expect(getPeakWeek([40, 40, 12], WEEK_STARTS)).toEqual({
+    expect(getPeakWeek(buildWeeks([40, 40, 12]))).toMatchObject({
       count: 40,
       start: '2026-03-02',
     })

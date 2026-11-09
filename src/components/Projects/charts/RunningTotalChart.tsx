@@ -7,7 +7,7 @@ import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { GlyphName } from '@/lib/icons'
 import { cn } from '@/utils'
 import type { Release } from '~/counts'
-import { DAY_MS } from '~/dates'
+import { addDays, DAY_MS, getDaysBetween } from '~/dates'
 import { type DaySpan, formatDay, formatLatestVersion } from './lib/weeks'
 
 // As wide as fits a 375px phone screen, with the tooltip's padding and margins.
@@ -58,33 +58,33 @@ const RELEASE_LINE_CLASSES = {
 // How near a release line the pointer snaps to it, in pixels.
 const RELEASE_SNAP_PX = 4
 
-// The readout's summary is quieter than a hovered week's total, which leads.
+// The readout's summary is quieter than a hovered period's total, which leads.
 const READOUT_CLASSES = {
   SUMMARY: 'text-ink-muted',
-  WEEK: 'text-ink',
+  PERIOD: 'text-ink',
 } as const
 
-export type WeeklyChartProps = {
-  /** The ISO date counting starts on, the first week's first day */
+export type RunningTotalChartProps = {
+  /** The ISO date counting starts on */
   firstDay: string
-  /** The ISO date each week ends on, oldest first; two or more */
-  weekEnds: string[]
+  /** Its count on each day from `firstDay` on, oldest first, which the line runs through; two or more */
+  daily: number[]
+  /** The ISO date each period it reads out ends on, like each week's last day, oldest first: each one of the days counted, the last being the last of them */
+  periodEnds: string[]
   /**
    * The ISO dates its width runs from and to, which charts shown together
    * share, so a date sits at the same place on each.
    *
-   * Defaults to its own weeks'. A start after the first day leaves out the
-   * weeks before it, and the line starts at the total counted by then.
+   * Defaults to its own days'. A start after the first day leaves out the
+   * days before it, and the line starts at the total counted by then.
    */
   span?: DaySpan
   /** What one of what it counts is called, like "commit" */
   noun: string
-  /** Its count in each week, one per entry of `weekEnds` */
-  weekly: number[]
   tone: ChartTone
   /** The glyph in front of the caption, the same as the count's own */
   icon?: GlyphName
-  /** What the readout says while no week is hovered */
+  /** What the readout says while no period is hovered */
   summary: string
   /** Whether `span` is zoomed in, which lets a mouse drag the chart along */
   zoomed?: boolean
@@ -98,20 +98,21 @@ export type WeeklyChartProps = {
 }
 
 /**
- * Weekly counts as a running total, on a small shaded line chart that ends
- * at the total, written beside it.
+ * Daily counts as a running total, on a small shaded line chart that ends at
+ * the total, written beside it.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
- * summary, or the total through the week under the pointer. A release gets a
- * grey line on its day, which names its latest version while hovered. Drawn for sighted pointer users only: pair
- * it with the counts in words for everyone else.
+ * summary, or the total through the period under the pointer, like its week. A release gets
+ * a grey line on its day, which names its latest version while hovered. Drawn
+ * for sighted pointer users only: pair it with the counts in words for
+ * everyone else.
  */
-export const WeeklyChart = ({
+export const RunningTotalChart = ({
   firstDay,
-  weekEnds,
+  daily,
+  periodEnds,
   span,
   noun,
-  weekly,
   tone,
   icon,
   summary,
@@ -120,23 +121,29 @@ export const WeeklyChart = ({
   onPan,
   releases = [],
   'data-testid': testId,
-}: WeeklyChartProps) => {
-  // Where the pointer is across the plot, rather than the week under it, so
-  // a zoom or pan that slides the line beneath a still pointer reads out what
-  // it's over now.
+}: RunningTotalChartProps) => {
+  // Where the pointer is across the plot, rather than the period under it,
+  // so a zoom or pan that slides the line beneath a still pointer reads out
+  // what it's over now.
   const [pointerX, setPointerX] = useState<number>()
   const plotRef = useRef<SVGSVGElement>(null)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
-  const lastIndex = weekEnds.length - 1
+  const lastIndex = periodEnds.length - 1
+  const days = daily.map((_, index) => addDays(firstDay, index))
+  // It counts two days or more, so has a last.
+  const lastDay = days.at(-1) ?? firstDay
   let runningTotal = 0
-  const totals = weekly.map((count) => {
+  const dayTotals = daily.map((count) => {
     runningTotal += count
     return runningTotal
   })
   // A running total only grows, so it peaks at the end.
-  const total = totals[lastIndex]
-  const { start, end } = span ?? { start: firstDay, end: weekEnds[lastIndex] }
+  const total = runningTotal
+  const periodTotals = periodEnds.map(
+    (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
+  )
+  const { start, end } = span ?? { start: firstDay, end: lastDay }
   // Compared as times, not strings: a zoomed-in span's ends are ISO times,
   // which sort after the plain ISO date of the same day.
   const startTime = Date.parse(start)
@@ -151,19 +158,18 @@ export const WeeklyChart = ({
   // by zero.
   const toY = (count: number) =>
     HEIGHT - INSET - (count / (total || 1)) * (HEIGHT - INSET - PLOT_TOP)
-  const lastX = toX(weekEnds[lastIndex])
-  // The line starts on the first day, at nothing counted yet, or at a span's
-  // later start, at what was counted by then.
+  const lastX = toX(lastDay)
+  // The line starts on the first day, at what was counted before it, or at a
+  // span's later start, at what was counted by then.
   const lineStart = Date.parse(firstDay) < startTime ? start : firstDay
   const lineStartTime = Date.parse(lineStart)
   const startX = toX(lineStart)
-  const firstShown = weekEnds.findIndex(
-    (weekEnd) => Date.parse(weekEnd) >= lineStartTime
-  )
-  const line = `M${startX},${toY(totals[firstShown - 1] ?? 0)}${totals
-    .map((count, index) => [count, weekEnds[index]] as const)
+  const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
+  // Through every day, whichever periods it reads out.
+  const line = `M${startX},${toY(dayTotals[firstShown - 1] ?? 0)}${dayTotals
+    .map((count, index) => [count, days[index]] as const)
     .slice(firstShown)
-    .map(([count, weekEnd]) => `L${toX(weekEnd)},${toY(count)}`)
+    .map(([count, day]) => `L${toX(day)},${toY(count)}`)
     .join('')}`
   const releaseDays = uniq(releases.map(({ day }) => day)).filter(
     (day) => Date.parse(day) >= startTime && Date.parse(day) <= endTime
@@ -171,7 +177,7 @@ export const WeeklyChart = ({
   /** How far across the plot a pointer at `clientX` is. */
   const toPlotX = (clientX: number) =>
     clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
-  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a week the chart leaves out. */
+  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
   const getTimeAtX = (x: number) =>
     Math.min(
       Math.max(
@@ -181,33 +187,33 @@ export const WeeklyChart = ({
       endTime
     )
   // The release line within a few pixels of the pointer, which it snaps to
-  // over a week.
+  // over a period.
   const activeRelease =
     pointerX === undefined
       ? undefined
       : releaseDays.find(
           (day) => Math.abs(toX(day) - pointerX) <= RELEASE_SNAP_PX
         )
-  /** The week the pointer's day falls in, unless it's on a release line. */
-  const getActiveWeek = () => {
+  /** The period the pointer's day falls in, unless it's on a release line. */
+  const getActivePeriod = () => {
     if (pointerX === undefined || activeRelease) {
       return undefined
     }
     const time = getTimeAtX(pointerX)
-    // The first week ending on or after that day, or the last past them all.
-    const index = weekEnds.findIndex(
-      (weekEnd) => Date.parse(weekEnd) + DAY_MS > time
+    // The first period ending on or after that day, or the last past them all.
+    const index = periodEnds.findIndex(
+      (periodEnd) => Date.parse(periodEnd) + DAY_MS > time
     )
-    const week = index === -1 ? lastIndex : index
+    const period = index === -1 ? lastIndex : index
     // A zoomed-in span can end partway through a week, whose end, where its
-    // dot would sit, is out of view, so the week before it reads out instead.
-    return Date.parse(weekEnds[week]) > endTime
-      ? Math.max(week - 1, firstShown)
-      : week
+    // dot would sit, is out of view, so the period before it reads out instead.
+    return Date.parse(periodEnds[period]) > endTime
+      ? Math.max(period - 1, 0)
+      : period
   }
-  const activeWeek = getActiveWeek()
+  const activePeriod = getActivePeriod()
   const activeX =
-    activeWeek === undefined ? undefined : toX(weekEnds[activeWeek])
+    activePeriod === undefined ? undefined : toX(periodEnds[activePeriod])
   // How much time one pixel across the plot covers.
   const msPerPx = spanTime / (PLOT_RIGHT - INSET)
   const pinchingRef = useZoomPanGestures(plotRef, {
@@ -216,10 +222,10 @@ export const WeeklyChart = ({
     onZoom,
     onPan,
   })
-  /** Reads out the release line or week under the pointer, so it never has to land on either. */
-  const selectWeek = (event: React.PointerEvent<SVGSVGElement>) =>
+  /** Reads out the release line or period under the pointer, so it never has to land on either. */
+  const selectPeriod = (event: React.PointerEvent<SVGSVGElement>) =>
     setPointerX(toPlotX(event.clientX))
-  /** What the caption says: the hovered release, or week, or else the summary. */
+  /** What the caption says: the hovered release, or period, or else the summary. */
   const getReadout = () => {
     if (activeRelease) {
       const versions = releases
@@ -227,8 +233,8 @@ export const WeeklyChart = ({
         .map(({ version }) => version)
       return `${formatLatestVersion(versions)} released ${formatDay(activeRelease)}`
     }
-    if (activeWeek !== undefined) {
-      return `Through ${formatDay(weekEnds[activeWeek])}: ${formatCount(totals[activeWeek], noun)}`
+    if (activePeriod !== undefined) {
+      return `Through ${formatDay(periodEnds[activePeriod])}: ${formatCount(periodTotals[activePeriod], noun)}`
     }
     return summary
   }
@@ -242,25 +248,25 @@ export const WeeklyChart = ({
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className={cn(
           'overflow-visible',
-          // A finger dragged across it moves through the weeks, not the page.
+          // A finger dragged across it moves through the periods, not the page.
           'touch-none',
           // A mouse drags a zoomed-in chart along.
           PLOT_CURSOR_CLASSES[zoomed && onPan ? 'PANNABLE' : 'FIXED']
         )}
-        // A tap picks a week too, which a finger may not move to first.
-        onPointerDown={selectWeek}
+        // A tap picks a period too, which a finger may not move to first.
+        onPointerDown={selectPeriod}
         onPointerMove={(event) => {
           if (!pinchingRef.current) {
-            selectWeek(event)
+            selectPeriod(event)
           }
         }}
-        // A finger always leaves once lifted, so its week stays read out.
+        // A finger always leaves once lifted, so its period stays read out.
         onPointerLeave={(event) => {
           if (event.pointerType !== 'touch') {
             setPointerX(undefined)
           }
         }}
-        data-testid="weekly-chart-plot">
+        data-testid="running-total-chart-plot">
         <defs>
           {/* Crops a zoomed-in line at the plot's edges. */}
           <clipPath id={clipId}>
@@ -284,7 +290,7 @@ export const WeeklyChart = ({
             className={
               RELEASE_LINE_CLASSES[day === activeRelease ? 'ACTIVE' : 'IDLE']
             }
-            data-testid="weekly-chart-release"
+            data-testid="running-total-chart-release"
           />
         ))}
         <path
@@ -300,20 +306,21 @@ export const WeeklyChart = ({
           strokeLinecap="round"
           clipPath={`url(#${clipId})`}
           className={TONE_CLASSES[tone].LINE}
+          data-testid="running-total-chart-line"
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
-        {Date.parse(weekEnds[lastIndex]) <= endTime && (
+        {Date.parse(lastDay) <= endTime && (
           <text
             x={lastX + 6}
             // Centred on the line's end, about a third of the text's height down.
             y={toY(total) + 5}
             className="fill-ink text-sm font-bold"
-            data-testid="weekly-chart-total">
-            {/* Shortened like the glyphs, since hovering the last week reads it in full. */}
+            data-testid="running-total-chart-total">
+            {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
             {formatCompactCount(total)}
           </text>
         )}
-        {activeWeek !== undefined && activeX !== undefined && (
+        {activePeriod !== undefined && activeX !== undefined && (
           <>
             <line
               x1={activeX}
@@ -324,12 +331,12 @@ export const WeeklyChart = ({
             />
             <circle
               cx={activeX}
-              cy={toY(totals[activeWeek])}
+              cy={toY(periodTotals[activePeriod])}
               r={4}
               strokeWidth={2}
               // A ring in the tooltip's own color, so the dot stands off the line.
               className={cn(TONE_CLASSES[tone].DOT, 'stroke-surface-raised')}
-              data-testid="weekly-chart-dot"
+              data-testid="running-total-chart-dot"
             />
           </>
         )}
@@ -343,12 +350,12 @@ export const WeeklyChart = ({
           // clear, and letting the pointer through to the plot beneath.
           'pointer-events-none absolute top-0 left-0',
           READOUT_CLASSES[
-            activeWeek === undefined && activeRelease === undefined
+            activePeriod === undefined && activeRelease === undefined
               ? 'SUMMARY'
-              : 'WEEK'
+              : 'PERIOD'
           ]
         )}
-        data-testid="weekly-chart-readout">
+        data-testid="running-total-chart-readout">
         {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
         {getReadout()}
       </p>

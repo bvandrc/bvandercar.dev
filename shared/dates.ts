@@ -9,6 +9,10 @@ export const isoDate = (time: number) =>
 export const addDays = (day: string, days: number) =>
   isoDate(Date.parse(day) + days * DAY_MS)
 
+/** How many days `day` is after `from`, or before it for a negative count. */
+export const getDaysBetween = (from: string, day: string) =>
+  Math.round((Date.parse(day) - Date.parse(from)) / DAY_MS)
+
 /** The earlier of two ISO dates, which sort as strings. */
 export const earlierDay = (a: string, b: string) => [a, b].sort()[0]
 

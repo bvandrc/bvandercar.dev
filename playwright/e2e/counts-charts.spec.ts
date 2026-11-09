@@ -3,11 +3,12 @@ import { expect, type Locator, type Page, test } from '@playwright/test'
 import { SELECTORS } from '~/test-support/selectors'
 import { getChartedCounts } from '../support/charted-counts'
 
-const { ACTIVITY_CHART, DOWNLOADS_CHART, WEEKLY_CHART } = SELECTORS.PROJECTS
+const { ACTIVITY_CHART, DOWNLOADS_CHART, RUNNING_TOTAL_CHART } =
+  SELECTORS.PROJECTS
 
 /** Moves the pointer onto the middle of a chart's plot. */
 const hoverPlot = async (page: Page, chart: Locator) => {
-  const plot = await chart.getByTestId(WEEKLY_CHART.PLOT).boundingBox()
+  const plot = await chart.getByTestId(RUNNING_TOTAL_CHART.PLOT).boundingBox()
   if (!plot) {
     throw new Error('The chart has no box')
   }
@@ -26,23 +27,27 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
   const activity = tooltip.getByTestId(ACTIVITY_CHART)
   const downloads = tooltip.getByTestId(DOWNLOADS_CHART)
-  await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText('Commits')
-  await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
+  await expect(activity.getByTestId(RUNNING_TOTAL_CHART.READOUT)).toHaveText(
+    'Commits'
+  )
+  await expect(downloads.getByTestId(RUNNING_TOTAL_CHART.READOUT)).toHaveText(
     'npm downloads'
   )
   // Each chart ends at the count its glyph shows, shortened the same way.
   for (const chart of [activity, downloads]) {
-    const total = await chart.getByTestId(WEEKLY_CHART.TOTAL).textContent()
+    const total = await chart
+      .getByTestId(RUNNING_TOTAL_CHART.TOTAL)
+      .textContent()
     await expect(counts).toContainText(total ?? '')
   }
 
   // The tooltip stays open as the pointer crosses into it, and between charts.
   await hoverPlot(page, activity)
-  await expect(activity.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
+  await expect(activity.getByTestId(RUNNING_TOTAL_CHART.READOUT)).toHaveText(
     /^Through .+: [\d,]+ commits?$/
   )
   await hoverPlot(page, downloads)
-  await expect(downloads.getByTestId(WEEKLY_CHART.READOUT)).toHaveText(
+  await expect(downloads.getByTestId(RUNNING_TOTAL_CHART.READOUT)).toHaveText(
     /^Through .+: [\d,]+ downloads?$/
   )
 })
@@ -54,7 +59,7 @@ test("the wheel zooms both of a project's charts around the pointer, without scr
 
   await getChartedCounts(page).hover()
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
-  const totals = tooltip.getByTestId(WEEKLY_CHART.TOTAL)
+  const totals = tooltip.getByTestId(RUNNING_TOTAL_CHART.TOTAL)
   await expect(totals).toHaveCount(2)
   const scrollY = await page.evaluate(() => window.scrollY)
 
@@ -75,8 +80,8 @@ test('a mouse drags a zoomed-in chart along its timeline', async ({ page }) => {
   const activity = page
     .getByTestId(SELECTORS.TOOLTIP)
     .getByTestId(ACTIVITY_CHART)
-  const plot = activity.getByTestId(WEEKLY_CHART.PLOT)
-  const readout = activity.getByTestId(WEEKLY_CHART.READOUT)
+  const plot = activity.getByTestId(RUNNING_TOTAL_CHART.PLOT)
+  const readout = activity.getByTestId(RUNNING_TOTAL_CHART.READOUT)
   await hoverPlot(page, activity)
   await page.mouse.wheel(0, -600)
   const box = await plot.boundingBox()

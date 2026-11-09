@@ -3,22 +3,31 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { getWheelZoomFactor } from '@/hooks/useZoomPanGestures'
 import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
-import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
+import {
+  RunningTotalChart,
+  type RunningTotalChartProps,
+} from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, DOT, RELEASE } = SELECTORS.PROJECTS.WEEKLY_CHART
+const { PLOT, READOUT, TOTAL, DOT, RELEASE, LINE } =
+  SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+
+// Each day's commits for the three weeks from Mar 2: 5, 1,200, then 12.
+const DAILY = [
+  1, 0, 1, 0, 1, 1, 1, 200, 100, 300, 100, 200, 200, 100, 2, 2, 2, 2, 2, 1, 1,
+]
 
 type ChartOptions = Pick<
-  WeeklyChartProps,
+  RunningTotalChartProps,
   'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 >
 
-/** Builds a chart of 5, 1,200, then 12 commits over the three weeks from Mar 2, summarized as "Commits". */
+/** Builds a chart of `DAILY`, reading out each week, summarized as "Commits". */
 const buildChart = (props?: ChartOptions) => (
-  <WeeklyChart
+  <RunningTotalChart
     firstDay="2026-03-02"
-    weekEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
+    daily={DAILY}
+    periodEnds={['2026-03-08', '2026-03-15', '2026-03-22']}
     noun="commit"
-    weekly={[5, 1200, 12]}
     tone="COMMITS"
     icon="git-commit"
     summary="Commits"
@@ -34,7 +43,7 @@ const renderChart = (props?: ChartOptions) => render(buildChart(props))
 const movePointer = (clientX: number) =>
   fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX })
 
-describe('WeeklyChart', () => {
+describe('RunningTotalChart', () => {
   it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
     renderChart()
     const readout = screen.getByTestId(READOUT)
@@ -55,7 +64,16 @@ describe('WeeklyChart', () => {
     expect(readout.textContent).toBe('Commits')
   })
 
-  it('leaves out the weeks before a later span start, starting from the total by then', () => {
+  it('draws its line through every day, though it reads out each week', () => {
+    renderChart()
+
+    // A segment to each of the 21 days, from where the line starts.
+    expect(
+      screen.getByTestId(LINE).getAttribute('d')?.match(/L/g)
+    ).toHaveLength(21)
+  })
+
+  it('leaves out the days before a later span start, starting from the total by then', () => {
     renderChart({ span: { start: '2026-03-10', end: '2026-03-22' } })
 
     // Its left edge is now in the second week, where the total had reached 1,205.
