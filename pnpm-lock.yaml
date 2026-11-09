@@ -167,8 +167,8 @@ importers:
   .:
     dependencies:
       '@bvandrc/react-toolkit':
-        specifier: ^2.3
-        version: 2.3.0(@testing-library/react@16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(vitest@5.0.5(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(happy-dom@21.0.4)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)))
+        specifier: ^2.4
+        version: 2.4.0(@testing-library/react@16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(vitest@5.0.5(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(happy-dom@21.0.4)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)))
       class-variance-authority:
         specifier: ^0.7
         version: 0.7.1
@@ -374,8 +374,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@bvandrc/react-toolkit@2.3.0':
-    resolution: {integrity: sha512-6ZeUSxiZlrvmcz7lZNkGjfXnbfAYbYkg75VicTkf0MPYFnEOgQsgNfS3DiQ4Vc6YPYx2rVDUthxAHzmW8GGTyg==}
+  '@bvandrc/react-toolkit@2.4.0':
+    resolution: {integrity: sha512-lSz7AJK+8OSGFWTCGvMqDK7Jp87qGK5xO2nJmZ2h3M8r2dy997eyuCtgSREqV+o/UACDcfV6WbWViAQ25Hc6JQ==}
     engines: {node: '>=20'}
     peerDependencies:
       '@testing-library/react': ^16
@@ -3137,7 +3137,7 @@ snapshots:
   '@biomejs/cli-win32-x64@2.6.4':
     optional: true
 
-  '@bvandrc/react-toolkit@2.3.0(@testing-library/react@16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(vitest@5.0.5(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(happy-dom@21.0.4)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)))':
+  '@bvandrc/react-toolkit@2.4.0(@testing-library/react@16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(vitest@5.0.5(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(happy-dom@21.0.4)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)))':
     dependencies:
       es-toolkit: 1.53.0
       react: 19.3.1
