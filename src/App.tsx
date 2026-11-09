@@ -2,6 +2,7 @@ import './styles/index.css'
 
 import { BeyondCode } from './components/BeyondCode'
 import { Contents } from './components/Contents'
+import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Projects } from './components/Projects'
 import { TooltipProvider } from './components/primitives/Tooltip'
@@ -23,6 +24,7 @@ export const App = () => (
         <Skills />
         <BeyondCode />
       </main>
+      <Footer />
     </div>
   </TooltipProvider>
 )
