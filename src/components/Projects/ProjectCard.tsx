@@ -16,16 +16,9 @@ import { COUNTS_FIELDS } from '~/counts'
 import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
-type NameLength = 'SHORT' | 'LONG'
-
 // Names longer than this take a size smaller, so the counts still fit beside
 // them.
 const LONG_NAME_LENGTH = 20
-
-const NAME_SIZE_CLASSES = {
-  SHORT: 'text-lg',
-  LONG: 'text-base',
-} satisfies Record<NameLength, string>
 
 // Each part's `centered` variant: a centered card spans its group's width, so
 // from md, where other groups' cards pair up, it centers its name and blurb,
@@ -116,9 +109,7 @@ export const ProjectCard = ({
           <h4
             className={cn(
               'font-semibold',
-              NAME_SIZE_CLASSES[
-                project.name.length > LONG_NAME_LENGTH ? 'LONG' : 'SHORT'
-              ],
+              project.name.length > LONG_NAME_LENGTH ? 'text-base' : 'text-lg',
               // On the 24px line the name had before, whatever its size, so the
               // card keeps its height. After the size, whose own line height
               // would otherwise win.
