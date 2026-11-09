@@ -13,7 +13,13 @@ import { BigQuery } from '@google-cloud/bigquery'
 import { DAY_MS } from '../shared/constants.ts'
 import { earlierDay, isoDate, laterDay, listDays } from '../shared/dates.ts'
 import { fetchJson } from '../shared/http.ts'
-import { byDay, type DailyDownloads, type Release } from './common.ts'
+import {
+  byDay,
+  type DailyDownloads,
+  type RegistryHistory,
+  type Release,
+  warnSkipped,
+} from './common.ts'
 
 // Gitignored; CI's deploy and preview builds carry it between runs in the
 // Actions cache.
@@ -37,15 +43,13 @@ const MAX_BYTES_BILLED = String(50 * 1000 ** 3)
 
 // Set by CI's Google Cloud auth step, or by hand locally. Checked up front
 // because looking for credentials elsewhere can wait on a metadata server.
-export const hasGoogleCredentials = Boolean(
-  process.env.GOOGLE_APPLICATION_CREDENTIALS
-)
+const hasGoogleCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS)
 
 /** Each package's downloads, by package, then ISO date. */
 type DailyCache = Record<string, Record<string, number> | undefined>
 
 /** A PyPI package's first upload day, and its releases, oldest first, leaving out pre-releases. */
-export const fetchPypiPackage = async (pkg: string) => {
+const fetchPypiPackage = async (pkg: string) => {
   const { releases } = await fetchJson<{
     releases: Record<string, { upload_time_iso_8601: string }[]>
   }>(`https://pypi.org/pypi/${pkg}/json`)
@@ -71,7 +75,7 @@ export const fetchPypiPackage = async (pkg: string) => {
 }
 
 /** The PyPI counts a run before this one kept, or none. */
-export const readPypiCache = async (): Promise<DailyCache> => {
+const readPypiCache = async (): Promise<DailyCache> => {
   try {
     return JSON.parse(await readFile(PYPI_CACHE_FILE, 'utf8')) as DailyCache
   } catch {
@@ -126,7 +130,7 @@ const queryPypiDownloads = async (
  * partway keeps what it got. A package it lacks back to the first day is
  * queried in full, a window of days at a time.
  */
-export const fetchPypiDailyDownloads = async (
+const fetchPypiDailyDownloads = async (
   packages: { pkg: string; firstDay: string }[],
   cache: DailyCache
 ) => {
@@ -177,7 +181,54 @@ export const fetchPypiDailyDownloads = async (
 }
 
 /** Keeps `cache` for the next run, even after a query that failed partway, so it picks up where this one left off. */
-export const writePypiCache = async (cache: DailyCache) => {
+const writePypiCache = async (cache: DailyCache) => {
   await mkdir(CACHE_DIR, { recursive: true })
   await writeFile(PYPI_CACHE_FILE, JSON.stringify(cache))
+}
+
+/**
+ * Each of the PyPI `packages`' releases, and its downloads per day since its
+ * first upload, leaving out with a warning any that can't be read.
+ *
+ * Releases need no credentials, so they're read even when downloads aren't:
+ * without `GOOGLE_APPLICATION_CREDENTIALS`, no package has downloads.
+ */
+export const fetchPypiHistory = async (
+  packages: string[]
+): Promise<RegistryHistory> => {
+  const history: RegistryHistory = { downloads: [], releases: [] }
+  const firstDays: { pkg: string; firstDay: string }[] = []
+  const results = await Promise.allSettled(packages.map(fetchPypiPackage))
+  results.forEach((result, index) => {
+    const pkg = packages[index]
+    if (result.status === 'rejected') {
+      warnSkipped(`PyPI releases for ${pkg}`, result.reason)
+    } else {
+      history.releases.push({ pkg, releases: result.value.releases })
+      firstDays.push({ pkg, firstDay: result.value.firstDay })
+    }
+  })
+  if (firstDays.length === 0) {
+    return history
+  }
+  if (!hasGoogleCredentials) {
+    console.warn(
+      "::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages' glyphs keep the profile's counts"
+    )
+    return history
+  }
+  try {
+    const cache = await readPypiCache()
+    try {
+      const days = await fetchPypiDailyDownloads(firstDays, cache)
+      firstDays.forEach(({ pkg }, index) => {
+        history.downloads.push({ pkg, days: days[index] })
+      })
+    } finally {
+      await writePypiCache(cache)
+    }
+  } catch (error) {
+    warnSkipped('PyPI downloads', error)
+  }
+  return history
 }

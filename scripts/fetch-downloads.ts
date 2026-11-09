@@ -17,20 +17,14 @@
 
 import { chunk, sumBy } from 'es-toolkit'
 
-import type { DailyDownloads, Release } from './fetch-downloads/common.ts'
-import {
-  fetchNpmDailyDownloads,
-  fetchNpmPackage,
-} from './fetch-downloads/npm.ts'
-import {
-  fetchPypiDailyDownloads,
-  fetchPypiPackage,
-  hasGoogleCredentials,
-  readPypiCache,
-  writePypiCache,
-} from './fetch-downloads/pypi.ts'
+import type {
+  DailyDownloads,
+  RegistryHistory,
+  Release,
+} from './fetch-downloads/common.ts'
+import { fetchNpmHistory } from './fetch-downloads/npm.ts'
+import { fetchPypiHistory } from './fetch-downloads/pypi.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
-import { getErrorMessage } from './shared/errors.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
 import { readProjectValues } from './shared/projects.ts'
 
@@ -59,66 +53,30 @@ const formatEntry = (pkg: string, days: DailyDownloads[]) => {
     : []
 }
 
-const warnSkipped = (what: string, error: unknown) =>
-  console.warn(
-    `::warning::${what} could not be read, so its glyph keeps the profile's count: ${getErrorMessage(error)}`
-  )
-
 exitIfReusing('package downloads', [OUT_FILE])
 
 /** A line of the generated file listing one package's releases. */
 const formatReleases = (pkg: string, releases: Release[]) =>
   `    '${pkg}': ${JSON.stringify(releases)},`
 
-const npmPackages = await readProjectValues('npmPackage')
-const npmEntries: string[] = []
-const npmReleaseEntries: string[] = []
-for (const pkg of npmPackages) {
-  try {
-    const { firstDay, releases } = await fetchNpmPackage(pkg)
-    npmReleaseEntries.push(formatReleases(pkg, releases))
-    npmEntries.push(
-      ...formatEntry(pkg, await fetchNpmDailyDownloads(pkg, firstDay))
-    )
-  } catch (error) {
-    warnSkipped(`npm downloads for ${pkg}`, error)
-  }
-}
-
-const pypiPackages = await readProjectValues('pypiPackage')
-const pypiEntries: string[] = []
-const pypiReleaseEntries: string[] = []
-// Releases need no credentials, so they're read even when downloads aren't.
-const pypiFirstDays: { pkg: string; firstDay: string }[] = []
-const pypiResults = await Promise.allSettled(pypiPackages.map(fetchPypiPackage))
-pypiResults.forEach((result, index) => {
-  const pkg = pypiPackages[index]
-  if (result.status === 'rejected') {
-    warnSkipped(`PyPI releases for ${pkg}`, result.reason)
-  } else {
-    pypiReleaseEntries.push(formatReleases(pkg, result.value.releases))
-    pypiFirstDays.push({ pkg, firstDay: result.value.firstDay })
-  }
+/** The generated file's lines for one registry: each package's downloads, and each one's releases. */
+const formatHistory = (history: RegistryHistory) => ({
+  entries: history.downloads.flatMap(({ pkg, days }) => formatEntry(pkg, days)),
+  releaseEntries: history.releases.map(({ pkg, releases }) =>
+    formatReleases(pkg, releases)
+  ),
 })
-if (pypiFirstDays.length > 0 && !hasGoogleCredentials) {
-  console.warn(
-    "::notice::GOOGLE_APPLICATION_CREDENTIALS is not set, so PyPI packages' glyphs keep the profile's counts"
-  )
-} else if (pypiFirstDays.length > 0) {
-  try {
-    const cache = await readPypiCache()
-    try {
-      const histories = await fetchPypiDailyDownloads(pypiFirstDays, cache)
-      pypiFirstDays.forEach(({ pkg }, index) => {
-        pypiEntries.push(...formatEntry(pkg, histories[index]))
-      })
-    } finally {
-      await writePypiCache(cache)
-    }
-  } catch (error) {
-    warnSkipped('PyPI downloads', error)
-  }
+
+const npmPackages = await readProjectValues('npmPackage')
+const pypiPackages = await readProjectValues('pypiPackage')
+const histories = {
+  npm: await fetchNpmHistory(npmPackages),
+  pypi: await fetchPypiHistory(pypiPackages),
 }
+const { entries: npmEntries, releaseEntries: npmReleaseEntries } =
+  formatHistory(histories.npm)
+const { entries: pypiEntries, releaseEntries: pypiReleaseEntries } =
+  formatHistory(histories.pypi)
 
 await writeGenerated(
   OUT_FILE,
