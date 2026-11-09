@@ -1,5 +1,6 @@
-import { createEvent, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
+import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import { getWheelZoomFactor } from '../lib/weeks'
 import { WeeklyChart, type WeeklyChartProps } from '../WeeklyChart'
@@ -26,22 +27,6 @@ const renderChart = (
       {...props}
     />
   )
-
-/** Turns the wheel over `target` at `clientX`, with any other `init`, returning whether the page would scroll. */
-const turnWheel = (
-  target: Element,
-  clientX: number,
-  deltaY: number,
-  init?: WheelEventInit
-) => {
-  const event = createEvent.wheel(target, { deltaY })
-  // The test DOM's WheelEvent drops a clientX or ctrlKey passed in, which a
-  // browser's keeps.
-  for (const [key, value] of Object.entries({ clientX, ...init })) {
-    Object.defineProperty(event, key, { value })
-  }
-  return fireEvent(target, event)
-}
 
 /** Moves the pointer to `clientX` on the plot, which the test DOM lays out from x = 0. */
 const movePointer = (clientX: number) =>

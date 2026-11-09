@@ -1,16 +1,11 @@
-import {
-  createEvent,
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-totals'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
 import { renderWithProviders } from '@/test-helpers/render'
+import { turnWheel } from '@/test-helpers/wheel'
 import type {
   Registry,
   Release,
@@ -146,22 +141,6 @@ vi.mock('@/generated/package-downloads', () => ({
     },
   } satisfies Record<Registry, Record<string, Release[]>>,
 }))
-
-/** Turns the wheel over `target` at `clientX`, with any other `init`, returning whether the page would scroll. */
-const turnWheel = (
-  target: Element,
-  clientX: number,
-  deltaY: number,
-  init?: WheelEventInit
-) => {
-  const event = createEvent.wheel(target, { deltaY })
-  // The test DOM's WheelEvent drops a clientX or deltaX passed in, which a
-  // browser's keeps.
-  for (const [key, value] of Object.entries({ clientX, ...init })) {
-    Object.defineProperty(event, key, { value })
-  }
-  return fireEvent(target, event)
-}
 
 /** Hovers the counts, and returns the tooltip once it opens and any charts in it have loaded. */
 const hoverCounts = async () => {

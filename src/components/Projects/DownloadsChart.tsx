@@ -22,25 +22,17 @@ export type DownloadsChartProps = Pick<
 export const DownloadsChart = ({
   history,
   registry,
-  releases,
-  span,
-  zoomed,
-  onZoom,
-  onPan,
+  ...chartProps
 }: DownloadsChartProps) => (
   <WeeklyChart
+    {...chartProps}
     firstDay={history.firstDay}
     weekEnds={getDownloadWeekEnds(history)}
-    span={span}
-    zoomed={zoomed}
-    onZoom={onZoom}
-    onPan={onPan}
     noun="download"
     weekly={history.weekly}
     tone="DOWNLOADS"
     icon={COUNT_ICONS.downloads}
     summary={`${REGISTRY_NAMES[registry]} downloads`}
-    releases={releases}
     data-testid="downloads-chart"
   />
 )
