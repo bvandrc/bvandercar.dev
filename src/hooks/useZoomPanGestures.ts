@@ -5,7 +5,7 @@ import { useGesture } from '@use-gesture/react'
 const WHEEL_ZOOM_RATE = 0.002
 
 /** How much a wheel's turn scales a span: under 1, zooming in, for a negative `deltaY`, and over 1, zooming out, for a positive one. */
-export const getWheelZoomFactor = (deltaY: number) =>
+const getWheelZoomFactor = (deltaY: number) =>
   Math.exp(deltaY * WHEEL_ZOOM_RATE)
 
 export type ZoomPanGestures = {

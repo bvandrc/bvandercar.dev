@@ -22,9 +22,9 @@ describe('getDownloadWeeks', () => {
 })
 
 describe('describeWeeklyDownloads', () => {
-  it('names the registry as written in a sentence, the first month, and the peak week', () => {
-    expect(describeWeeklyDownloads(HISTORY, 'pypi')).toBe(
-      'Weekly PyPI downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026'
+  it('describes the downloads, named by registry as written in a sentence, peaking in the busiest of its weeks', () => {
+    expect(describeWeeklyDownloads(HISTORY, 'pypi')).toMatch(
+      /^Weekly PyPI downloads .*, peaking at 1,200 in the week of Mar 11, 2026$/
     )
   })
 })

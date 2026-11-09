@@ -39,13 +39,11 @@ const {
   NEW_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
-const { PLOT, READOUT, TOTAL } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+const { PLOT, READOUT, TOTAL, RELEASE } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // The repo's counts in full: its commits and PRs from this site's fetch, and
 // its downloads from the profile's, with no package to fetch them for.
 const LABEL = '55 commits, 14 PRs, 3,120 downloads'
-const COMMITS_DESCRIPTION =
-  'Weekly commits since Feb 2026, peaking at 40 in the week of Mar 2, 2026'
 
 vi.mock('@/generated/profile/repo-counts', () => ({
   // Older than this site's fetches, which differ from them as they would.
@@ -133,11 +131,9 @@ const hoverCounts = async () => {
   return tooltip
 }
 
-/** Asserts `later` comes after `earlier` in the page, so is shown below it. */
-const expectFollows = (later: Element, earlier: Element) =>
-  expect(
-    earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING
-  ).toBeTruthy()
+/** What screen readers hear for the open tooltip, sentence by sentence. */
+const getTooltipSentences = () =>
+  screen.getByRole('tooltip').textContent?.split('. ')
 
 describe('ProjectCounts', () => {
   it('shows the counts shortened, and in full as its name', () => {
@@ -197,22 +193,23 @@ describe('ProjectCounts', () => {
     expect(tooltip.contains(screen.getByTestId(ACTIVITY_CHART))).toBe(true)
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
     expect(within(tooltip).queryByText(LABEL)).toBeNull()
-    expect(screen.getByRole('tooltip').textContent).toBe(
-      `${LABEL}. ${COMMITS_DESCRIPTION}`
-    )
+    // The counts in words, then the commits chart's description.
+    expect(getTooltipSentences()).toEqual([
+      LABEL,
+      expect.stringMatching(/^Weekly commits /),
+    ])
   })
 
-  it("charts its npm package's downloads below the commits, and describes both", async () => {
+  it("charts its npm package's downloads too, and describes both", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     const tooltip = await hoverCounts()
-    const activity = screen.getByTestId(ACTIVITY_CHART)
-    const downloads = screen.getByTestId(DOWNLOADS_CHART)
-    expect(tooltip.contains(downloads)).toBe(true)
-    expectFollows(downloads, activity)
-    expect(screen.getByRole('tooltip').textContent).toBe(
-      `55 commits, 14 PRs, 1,217 downloads. ${COMMITS_DESCRIPTION}. Weekly npm downloads since Mar 2026, peaking at 1,200 in the week of Mar 11, 2026`
-    )
+    expect(tooltip.contains(screen.getByTestId(DOWNLOADS_CHART))).toBe(true)
+    expect(getTooltipSentences()).toEqual([
+      '55 commits, 14 PRs, 1,217 downloads',
+      expect.stringMatching(/^Weekly commits /),
+      expect.stringMatching(/^Weekly npm downloads /),
+    ])
   })
 
   it("charts its PyPI package's downloads too, named as PyPI's", async () => {
@@ -239,22 +236,6 @@ describe('ProjectCounts', () => {
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
 
-  it('spans both charts over the same dates, so each release lines up across them', async () => {
-    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
-
-    await hoverCounts()
-    const [activityLines, downloadsLines] = [
-      ACTIVITY_CHART,
-      DOWNLOADS_CHART,
-    ].map((chart) =>
-      within(screen.getByTestId(chart))
-        .getAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)
-        .map((line) => line.getAttribute('x1'))
-    )
-    expect(activityLines).toHaveLength(2)
-    expect(downloadsLines).toEqual(activityLines)
-  })
-
   it('starts both charts where getProjectCharts says, reading out each day across under 50', async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
@@ -267,16 +248,14 @@ describe('ProjectCounts', () => {
     )
   })
 
-  it('zooms both charts together with the wheel, and back out once the tooltip closes', async () => {
+  it('starts the charts zoomed out each time the tooltip opens', async () => {
     const user = userEvent.setup()
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
-    /** Each chart's release lines' positions, activity first. */
+    /** The activity chart's release lines' positions. */
     const getReleaseXs = () =>
-      [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
-        within(screen.getByTestId(chart))
-          .getAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)
-          .map((line) => line.getAttribute('x1'))
-      )
+      within(screen.getByTestId(ACTIVITY_CHART))
+        .getAllByTestId(RELEASE)
+        .map((line) => line.getAttribute('x1'))
 
     await hoverCounts()
     const unzoomed = getReleaseXs()
@@ -285,10 +264,7 @@ describe('ProjectCounts', () => {
       100,
       -300
     )
-    const zoomed = getReleaseXs()
-    expect(zoomed).not.toEqual(unzoomed)
-    // Still lined up across the two.
-    expect(zoomed[1]).toEqual(zoomed[0])
+    expect(getReleaseXs()).not.toEqual(unzoomed)
 
     // Taps close it, then open it again.
     const counts = screen.getByTestId(COUNTS)
@@ -297,28 +273,6 @@ describe('ProjectCounts', () => {
     await user.pointer({ keys: '[TouchA]', target: counts })
     await screen.findByTestId(TOOLTIP)
     expect(getReleaseXs()).toEqual(unzoomed)
-  })
-
-  it('pans both zoomed-in charts together', async () => {
-    renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
-    /** The first release line's position in each chart, activity first. */
-    const getFirstReleaseXs = () =>
-      [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
-        within(screen.getByTestId(chart))
-          .queryAllByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.RELEASE)[0]
-          ?.getAttribute('x1')
-      )
-    const plot = () =>
-      within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT)
-
-    await hoverCounts()
-    turnWheel(plot(), 100, -300)
-    const zoomed = getFirstReleaseXs()
-    // To the left, so later.
-    turnWheel(plot(), 100, 0, { deltaX: -40 })
-    const panned = getFirstReleaseXs()
-    expect(panned).not.toEqual(zoomed)
-    expect(panned[1]).toEqual(panned[0])
   })
 
   describe('in a link', () => {

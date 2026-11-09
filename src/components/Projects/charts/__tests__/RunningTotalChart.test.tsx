@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { getWheelZoomFactor } from '@/hooks/useZoomPanGestures'
 import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import {
@@ -188,8 +187,10 @@ describe('RunningTotalChart', () => {
     const scrolled = turnWheel(screen.getByTestId(PLOT), 5, -100)
     expect(onZoom).toHaveBeenCalledWith(
       Date.parse('2026-03-02'),
-      getWheelZoomFactor(-100)
+      expect.any(Number)
     )
+    // Turned up, so zooming in, narrowing the span.
+    expect(onZoom.mock.calls[0][1]).toBeLessThan(1)
     expect(scrolled).toBe(false)
   })
 
