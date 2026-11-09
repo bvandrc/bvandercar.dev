@@ -283,17 +283,26 @@ export const fetchPypiHistory = async (
           reportSkipped(`PyPI downloads for ${pkg}`, 'BigQuery has no uploads')
         }
       }
-      const days = await fetchPypiDailyDownloads(firstDays, cache)
-      const releases = await Promise.allSettled(
+      // Read alongside the BigQuery queries, which they don't depend on.
+      const releasesRead = Promise.allSettled(
         firstDays.map(({ pkg }) => fetchPypiReleases(pkg))
       )
+      const days = await fetchPypiDailyDownloads(firstDays, cache)
+      const releases = await releasesRead
       firstDays.forEach(({ pkg }, index) => {
         const result = releases[index]
+        // Releases only mark the charts, so a package whose releases can't
+        // be read keeps its downloads, rather than losing its count too.
         if (result.status === 'rejected') {
-          reportSkipped(`PyPI releases for ${pkg}`, result.reason)
-        } else {
-          history.push({ pkg, days: days[index], releases: result.value })
+          console.warn(
+            `::warning::PyPI releases for ${pkg} could not be read, so its charts mark none: ${getErrorMessage(result.reason)}`
+          )
         }
+        history.push({
+          pkg,
+          days: days[index],
+          releases: result.status === 'fulfilled' ? result.value : [],
+        })
       })
     } finally {
       await writePublished(FIRST_DAYS_FILE, firstDaysCache)

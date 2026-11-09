@@ -25,8 +25,9 @@ const fetchNpmPackage = async (pkg: string) => {
   return {
     firstDay: time.created.slice(0, 10),
     releases: Object.keys(versions)
-      // A pre-release, like 2.0.0-beta.1, has a hyphen.
-      .filter((version) => !version.includes('-'))
+      // A pre-release, like 2.0.0-beta.1, has a hyphen. One with no publish
+      // time can't be placed, so it's left out rather than failing the rest.
+      .filter((version) => !version.includes('-') && time[version])
       .map((version): Release => ({ version, day: time[version].slice(0, 10) }))
       .sort(byDay),
   }
