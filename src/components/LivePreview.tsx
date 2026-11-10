@@ -116,10 +116,11 @@ export const LivePreview = ({
         <span
           className={cn(
             'inline-flex items-center justify-center gap-2',
-            // Over the poster's bottom edge, on a fade to the card's surface,
-            // so it reads against any screenshot.
+            // Over the poster's bottom edge, on a fade to a see-through
+            // surface, with a shadow, so it reads against any screenshot
+            // while the screenshot still shows through.
             showsPoster &&
-              'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:bg-linear-to-t max-md:from-surface max-md:from-40% max-md:to-transparent max-md:pt-3 max-md:pb-1.5'
+              'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:bg-linear-to-t max-md:from-surface/70 max-md:from-40% max-md:to-transparent max-md:pt-3 max-md:pb-1.5 max-md:text-shadow-md max-md:text-shadow-black/80'
           )}>
           <Icon
             name="chevron-right"
