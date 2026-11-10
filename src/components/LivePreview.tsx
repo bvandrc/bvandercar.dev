@@ -73,7 +73,7 @@ export const LivePreview = ({
   const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
   // Only while closed: once open, the page itself takes the screenshot's place.
-  const showsPoster = Boolean(poster) && !open
+  const shownPoster = open ? undefined : poster
   useEffect(() => {
     if (!open) {
       // Closed before the scroll ran: don't scroll to a preview going away.
@@ -98,21 +98,21 @@ export const LivePreview = ({
           'data-[pulse=true]:animate-glow-pulse',
           // Below md, a poster fills the toggle, with its label over the
           // bottom edge.
-          showsPoster &&
+          shownPoster &&
             'max-md:relative max-md:block max-md:overflow-hidden max-md:p-0'
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
-        {poster && showsPoster && (
+        {shownPoster && (
           <img
-            src={poster.src}
-            srcSet={poster.srcSet}
+            src={shownPoster.src}
+            srcSet={shownPoster.srcSet}
             // The toggle's label names it; the screenshot only shows the page.
             alt=""
             // As wide as the screen, less the card's padding, below md.
             sizes="100vw"
             loading="lazy"
-            style={{ height: poster.height ?? DEFAULT_POSTER_HEIGHT }}
+            style={{ height: shownPoster.height ?? DEFAULT_POSTER_HEIGHT }}
             className={cn(
               'w-full md:hidden',
               // Cropped to fit, keeping the page's top, where its header is.
@@ -121,7 +121,7 @@ export const LivePreview = ({
             data-testid="live-preview-poster"
           />
         )}
-        {showsPoster && (
+        {shownPoster && (
           // A fade that eases from clear at the poster's top to a nearly solid
           // surface under the label, so the label reads against any
           // screenshot while the screenshot still shows through.
@@ -136,10 +136,10 @@ export const LivePreview = ({
           className={cn(
             'inline-flex items-center justify-center gap-2',
             // Over the poster's bottom edge.
-            showsPoster &&
+            shownPoster &&
               'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:pb-1.5',
             // A shadow, for where the busier screenshots show through the fade.
-            showsPoster && 'max-md:text-shadow-md max-md:text-shadow-black/80'
+            shownPoster && 'max-md:text-shadow-md max-md:text-shadow-black/80'
           )}>
           <Icon
             name="chevron-right"
