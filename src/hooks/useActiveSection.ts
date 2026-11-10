@@ -17,12 +17,15 @@ const measureSections = (ids: readonly string[]): SectionBounds[] =>
 
 /**
  * The id of the section, of `ids` in page order, the reader is scrolled to:
- * the last whose top has passed `line` px down the viewport.
+ * the last whose top has passed `getLine(viewportHeight)` px down the viewport.
  *
  * `undefined` above the first or past the last. Keeps up as the page scrolls
- * or resizes. Pass the same array each render.
+ * or resizes. Pass the same array and function each render.
  */
-export const useActiveSection = (ids: readonly string[], line: number) => {
+export const useActiveSection = (
+  ids: readonly string[],
+  getLine: (viewportHeight: number) => number
+) => {
   const [activeId, setActiveId] = useState<string>()
 
   useEffect(() => {
@@ -32,7 +35,7 @@ export const useActiveSection = (ids: readonly string[], line: number) => {
       const { scrollY, innerHeight } = window
       setActiveId(
         pickActiveSection(measureSections(ids), {
-          line,
+          line: getLine(innerHeight),
           viewportHeight: innerHeight,
           // A px short, for a page whose height isn't a whole number of them.
           atBottom:
@@ -55,7 +58,7 @@ export const useActiveSection = (ids: readonly string[], line: number) => {
         cancelAnimationFrame(frame)
       }
     }
-  }, [ids, line])
+  }, [ids, getLine])
 
   return activeId
 }
