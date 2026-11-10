@@ -91,6 +91,7 @@
     "lighthouse-audit-utils": "^1",
     "octokit": "^5",
     "semver": "^7",
+    "sharp": "^0.35",
     "tailwindcss": "^4",
     "type-fest": "^5",
     "typescript": "^7",

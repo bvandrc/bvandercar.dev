@@ -37,7 +37,9 @@ const SCROLL_DELAY_MS = 50
  *
  * The frame mounts only while open, so a closed preview loads nothing. Its
  * origin must be in the CSP's `frame-src`, in `site.config.ts`. Pass `open`
- * with `onOpenChange` to open and close it from outside as well.
+ * with `onOpenChange` to open and close it from outside as well. Its toggle
+ * looks hovered while an element marked `data-opens-preview` is, inside one
+ * marked `data-preview-scope` around both.
  */
 export const LivePreview = ({
   src,
@@ -79,7 +81,9 @@ export const LivePreview = ({
           'group inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm',
           // A hand, like a link's, which Tailwind leaves off buttons.
           'cursor-pointer',
-          'transition-colors hover:border-accent hover:text-accent',
+          // Also while something else in its `data-preview-scope` that
+          // opens it is hovered, so the two read as one control.
+          'transition-colors preview-hover:border-accent preview-hover:text-accent',
           'data-[pulse=true]:animate-glow-pulse'
         )}
         data-pulse={pulse}

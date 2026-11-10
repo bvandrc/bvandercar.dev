@@ -7,7 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB } = SELECTORS.PROJECTS
+const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -81,5 +81,50 @@ describe('ProjectCard', () => {
 
     await user.click(card)
     expect(within(card).queryByTestId(LIVE_PREVIEW.FRAME)).toBeNull()
+  })
+
+  it("shows a live preview's screenshot as a thumbnail, until the preview opens", async () => {
+    const user = userEvent.setup()
+    const card = renderPreviewCard()
+    expect(within(card).getByTestId(THUMBNAIL).getAttribute('src')).toMatch(
+      /^\/project-screenshots\/.+\.thumb\.webp$/
+    )
+
+    await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
+    expect(within(card).queryByTestId(THUMBNAIL)).toBeNull()
+
+    await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
+    expect(within(card).getByTestId(THUMBNAIL)).toBeDefined()
+  })
+
+  it("tabs from its repo link to its live preview's toggle, and on past its thumbnail", async () => {
+    const user = userEvent.setup()
+    const card = renderPreviewCard()
+    within(card).getByTestId(REPO_LINK).focus()
+
+    await user.tab()
+    expect(document.activeElement).toBe(
+      within(card).getByTestId(LIVE_PREVIEW.TOGGLE)
+    )
+    // A click on the thumbnail opens the preview, but the keyboard has the
+    // toggle for that, as it does for a click on the rest of the card. The
+    // thumbnail follows the toggle, so it would be next.
+    await user.tab()
+    expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
+  })
+
+  it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {
+    const PROJECT = {
+      name: 'Pictured',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'A site that refuses framing.',
+      screenshot: './project-screenshots/pictured.png',
+    } satisfies Project
+    renderCard(PROJECT)
+
+    expect(screen.queryByTestId(THUMBNAIL)).toBeNull()
+    expect(screen.getByAltText('Pictured screenshot')).toBeDefined()
   })
 })
