@@ -27,7 +27,7 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     pulse?: boolean
     /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
-    /** A screenshot of the page, drawn across the toggle while it's closed below md, where nothing beside the toggle has room for one. */
+    /** A screenshot of the page, drawn across the toggle while it's closed below sm, where nothing beside the toggle has room for one. */
     poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'> & {
       /** How many px of the screenshot's top to show; defaults to 64. */
       height?: number
@@ -96,10 +96,10 @@ export const LivePreview = ({
           // opens it is hovered, so the two read as one control.
           'transition-colors preview-hover:border-accent preview-hover:text-accent',
           'data-[pulse=true]:animate-glow-pulse',
-          // Below md, a poster fills the toggle, with its label over the
+          // Below sm, a poster fills the toggle, with its label over the
           // bottom edge.
           shownPoster &&
-            'max-md:relative max-md:block max-md:overflow-hidden max-md:p-0'
+            'max-sm:relative max-sm:block max-sm:overflow-hidden max-sm:p-0'
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
@@ -111,12 +111,12 @@ export const LivePreview = ({
               // The toggle's label names it; the screenshot only shows the
               // page.
               alt=""
-              // As wide as the screen, less the card's padding, below md.
+              // As wide as the screen, less the card's padding, below sm.
               sizes="100vw"
               loading="lazy"
               style={{ height: shownPoster.height ?? DEFAULT_POSTER_HEIGHT }}
               className={cn(
-                'w-full md:hidden',
+                'w-full sm:hidden',
                 // Cropped to fit, keeping the page's top, where its header is.
                 'object-cover object-top'
               )}
@@ -127,7 +127,7 @@ export const LivePreview = ({
                 screenshot while the screenshot still shows through. */}
             <span
               className={cn(
-                'absolute inset-0 md:hidden',
+                'absolute inset-0 sm:hidden',
                 'bg-linear-to-t from-surface/90 from-15% via-surface/45 via-55% to-transparent'
               )}
             />
@@ -138,9 +138,9 @@ export const LivePreview = ({
             'inline-flex items-center justify-center gap-2',
             // Over the poster's bottom edge.
             shownPoster &&
-              'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:pb-1.5',
+              'max-sm:absolute max-sm:inset-x-0 max-sm:bottom-0 max-sm:flex max-sm:pb-1.5',
             // A shadow, for where the busier screenshots show through the fade.
-            shownPoster && 'max-md:text-shadow-md max-md:text-shadow-black/80'
+            shownPoster && 'max-sm:text-shadow-md max-sm:text-shadow-black/80'
           )}>
           <Icon
             name="chevron-right"

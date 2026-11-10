@@ -64,7 +64,7 @@ export const ProjectCard = ({
   const [previewOpen, setPreviewOpen] = useState(false)
   const screenshotSrc = project.screenshot && getPublicUrl(project.screenshot)
   // A live preview's card shows its screenshot small: beside its name and
-  // blurb from md, and across its toggle below.
+  // blurb from sm, and across its toggle below.
   const thumbnail =
     project.embed && project.screenshot
       ? getThumbnail(project.screenshot)
@@ -212,8 +212,8 @@ export const ProjectCard = ({
         </div>
         {thumbnail && !previewOpen && (
           // What the site looks like, until its live preview takes over. From
-          // md: below, the toggle carries it.
-          <div className="relative hidden w-60 shrink-0 md:block">
+          // sm: below, the toggle carries it.
+          <div className="relative hidden w-60 shrink-0 sm:block">
             {/* Out of the flow, so it fills the height the name, blurb, and
                 toggle give the card, rather than adding its own. */}
             <img
