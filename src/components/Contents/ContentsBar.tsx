@@ -13,9 +13,10 @@ import { ContentsMenu } from './ContentsMenu'
 
 /**
  * How near a section's heading must scroll to where its contents link lands
- * it, in px, to light that link up: once it has mostly taken the screen.
+ * it, in px, to light that link up: once the cards above it have started to
+ * scroll under the bar.
  */
-const ACTIVE_SLACK = 150
+const ACTIVE_SLACK = 70
 
 const barVariants = cva(
   [
