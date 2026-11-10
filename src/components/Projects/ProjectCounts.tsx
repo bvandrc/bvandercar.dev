@@ -1,5 +1,6 @@
 import { Fragment, useEffect } from 'react'
 import {
+  createLazyLoad,
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
@@ -10,7 +11,6 @@ import type { Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { CountsField } from '~/counts'
-import { useLazyCharts } from './hooks/useLazyCharts'
 import { getProjectCounts } from './lib/project-counts'
 
 // Charts size the tooltip to themselves, with text to match, where the
@@ -19,6 +19,25 @@ const TOOLTIP_CLASSES = {
   CHARTS: 'max-w-none p-3 text-sm',
   WORDS: undefined,
 } as const
+
+/** Loads the charts' code, and the histories they chart. */
+const loadCharts = () =>
+  Promise.all([
+    import('./charts/ProjectCharts'),
+    import('./charts/lib/project-charts'),
+  ]).then(([{ ProjectCharts }, { getProjectCharts }]) => ({
+    ProjectCharts,
+    getProjectCharts,
+  }))
+
+/**
+ * The project charts' code and data, which stay out of the page's first load,
+ * and a `prefetch` that starts loading them.
+ *
+ * Takes whether the project may chart at all. Loading them for one set of
+ * counts loads them for every other, mounted or mounted later.
+ */
+const useLazyCharts = createLazyLoad(loadCharts)
 
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
 // hover, clicks through to the link the counts sit in.
