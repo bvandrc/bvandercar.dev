@@ -9,6 +9,7 @@ import {
   CONTENTS_SECTION_IDS,
   ContentsLink,
 } from './ContentsLink'
+import { ContentsMenu } from './ContentsMenu'
 
 /**
  * How far down the viewport a section's top must scroll to light up its link,
@@ -41,7 +42,7 @@ type ContentsBarProps = {
 
 /**
  * The contents again, pinned to the top of the screen, with the link to the
- * section in view lit up and a logo that goes back to the top.
+ * section in view lit up, and a chevron that lists them all.
  *
  * On a narrow screen, the links scroll sideways, keeping the lit one in view.
  */
@@ -68,19 +69,7 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
       className={barVariants({ shown })}
       data-testid="contents-bar">
       <div className="mx-auto flex h-full max-w-4xl items-center gap-2 px-3 sm:px-5">
-        <a
-          href="#top"
-          aria-label="Back to top"
-          className="shrink-0 rounded-md"
-          data-testid="contents-bar-top-link">
-          <img
-            src={`${import.meta.env.BASE_URL}logo.svg`}
-            alt=""
-            width={32}
-            height={32}
-            className="size-8"
-          />
-        </a>
+        <ContentsMenu activeId={activeId} shown={shown} />
         <div
           ref={scrollerRef}
           className={cn(

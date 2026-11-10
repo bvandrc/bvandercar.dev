@@ -3,7 +3,7 @@ import { SECTIONS } from '@/generated/profile/content/sections'
 import { cn } from '@/lib/cn'
 import { sectionAnchor } from '@/lib/section-anchor'
 import { Badge } from '../primitives/Badge'
-import { Link } from '../primitives/Link'
+import { Link, type LinkProps } from '../primitives/Link'
 import { SectionIcon, SubSectionIcon } from '../Section'
 
 type ContentsEntry = {
@@ -36,11 +36,14 @@ export const CONTENTS_SECTION_IDS = CONTENTS_ENTRIES.map(
   ({ sectionId }) => sectionId
 )
 
-type ContentsLinkProps = ContentsEntry & {
-  /** Marks it as the section the reader is in now. */
-  current?: boolean
-  'data-testid': string
-}
+type ContentsLinkProps = ContentsEntry &
+  Pick<LinkProps, 'onClick'> & {
+    /** Marks it as the section the reader is in now. */
+    current?: boolean
+    /** Classes for the chip itself. */
+    className?: string
+    'data-testid': string
+  }
 
 /** A chip linking to one section further down the page. */
 export const ContentsLink = ({
@@ -48,6 +51,8 @@ export const ContentsLink = ({
   title,
   icon,
   current = false,
+  className,
+  onClick,
   'data-testid': testId,
 }: ContentsLinkProps) => (
   <li>
@@ -57,12 +62,14 @@ export const ContentsLink = ({
         // Glows orange on hover, like the skills.
         'hover-glow-12',
         // Outlined in the same orange while its section is the one in view.
-        'aria-[current=location]:border-orange-400 aria-[current=location]:text-ink'
+        'aria-[current=location]:border-orange-400 aria-[current=location]:text-ink',
+        className
       )}>
       <Link
         href={`#${sectionId}`}
         tone="muted"
         aria-current={current ? 'location' : undefined}
+        onClick={onClick}
         data-testid={testId}>
         {icon}
         {title}

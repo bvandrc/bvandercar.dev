@@ -21,6 +21,8 @@ export const SKILL_BADGES = SKILLS.flatMap(({ rows }) => rows).flatMap(
 
 /** Every interface glyph and logo the site's own code draws, by its Iconify name. */
 export const UI_ICON_NAMES = [
+  'arrow-up',
+  'chevron-down',
   'chevron-right',
   'code-xml',
   'external-link',

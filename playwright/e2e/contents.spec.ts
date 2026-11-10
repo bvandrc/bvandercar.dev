@@ -92,12 +92,54 @@ test.describe('Contents bar', () => {
     }
   })
 
-  test('its logo goes back to the top', async ({ page }) => {
-    await page.goto('/')
-    await scrollPastContents(page)
+  test.describe('menu', () => {
+    const { MENU_TOGGLE, MENU } = BAR
 
-    await page.getByTestId(BAR.TOP_LINK).click()
-    await expect(page.getByTestId(CONTENTS.SELF)).toBeInViewport()
-    await expect(page.getByTestId(BAR.SELF)).toBeHidden()
+    test('lists every section, lights up the one in view, and closes on a link', async ({
+      page,
+    }) => {
+      await page.goto('/')
+      const contentsLinks = page.getByTestId(CONTENTS.LINK)
+      // The second section, so the one lit up isn't just the first.
+      const href = (await contentsLinks.nth(1).getAttribute('href')) ?? ''
+      await contentsLinks.nth(1).click()
+
+      await page.getByTestId(MENU_TOGGLE).click()
+      const menu = page.getByTestId(MENU.SELF)
+      await expect(menu).toBeVisible()
+      const links = menu.getByTestId(MENU.LINK)
+      await expect(links).toHaveCount(await contentsLinks.count())
+      await expect(menu.locator('[aria-current]')).toHaveAttribute('href', href)
+
+      const lastLink = links.last()
+      const lastHref = (await lastLink.getAttribute('href')) ?? ''
+      await lastLink.click()
+      await expect(menu).toBeHidden()
+      await expect(page.locator(`section${lastHref}`)).toBeInViewport()
+    })
+
+    test('goes back to the top', async ({ page }) => {
+      await page.goto('/')
+      await scrollPastContents(page)
+
+      await page.getByTestId(MENU_TOGGLE).click()
+      await page.getByTestId(MENU.TOP_LINK).click()
+      await expect(page.getByTestId(CONTENTS.SELF)).toBeInViewport()
+      await expect(page.getByTestId(BAR.SELF)).toBeHidden()
+    })
+
+    test('closes on Escape, handing focus back to its toggle', async ({
+      page,
+    }) => {
+      await page.goto('/')
+      await scrollPastContents(page)
+      const toggle = page.getByTestId(MENU_TOGGLE)
+
+      await toggle.click()
+      await expect(page.getByTestId(MENU.SELF)).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(page.getByTestId(MENU.SELF)).toBeHidden()
+      await expect(toggle).toBeFocused()
+    })
   })
 })

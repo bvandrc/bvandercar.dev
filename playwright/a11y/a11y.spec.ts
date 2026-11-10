@@ -40,6 +40,16 @@ test.describe('Accessibility', () => {
     await checkA11y(page)
   })
 
+  test('Open contents bar menu', async ({ page }) => {
+    await page.goto('/')
+
+    await page.getByTestId(CONTENTS.LINK).first().click()
+    await page.getByTestId(CONTENTS.BAR.MENU_TOGGLE).click()
+    await expect(page.getByTestId(CONTENTS.BAR.MENU.SELF)).toBeVisible()
+
+    await checkA11y(page)
+  })
+
   test('Open tooltip', async ({ page }) => {
     await page.goto('/')
 
