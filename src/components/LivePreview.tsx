@@ -1,13 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   useIsMobile,
   useMaybeControlled,
-  useScrollIntoView,
   useTimer,
 } from '@bvandrc/react-toolkit'
 import { Collapsible } from 'radix-ui'
 import type { RequireAllOrNone } from 'type-fest'
 
+import { getCenteredScrollTop } from '@/lib/centered-scroll-top'
 import { cn } from '@/lib/cn'
 import { Icon } from './primitives/Icon'
 
@@ -25,7 +25,7 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     scale?: number
     /** Pulses a glow around the toggle, to draw the eye to it. */
     pulse?: boolean
-    /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
+    /** What to center on screen once opened, such as a card around it; defaults to the preview and its toggle. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
     /** A screenshot of the page, drawn across the toggle while it's closed below sm, where nothing beside the toggle has room for one. */
     poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'> & {
@@ -39,6 +39,26 @@ const DEFAULT_POSTER_HEIGHT = 64
 
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
 const SCROLL_DELAY_MS = 50
+
+/**
+ * Centers `target` in the screen below the contents bar, or lines its top up
+ * under the bar when it's too tall to fit, so a toggle at its top stays in view.
+ *
+ * Glides there, or jumps under reduced motion, as the page's `scroll-behavior`
+ * says.
+ */
+const scrollBelowContentsBar = (target: HTMLElement) => {
+  // The page's top scroll padding is the bar's height, kept clear for the
+  // same reason: so what's scrolled to doesn't land under it.
+  const { scrollPaddingTop } = getComputedStyle(document.documentElement)
+  window.scrollTo({
+    top: getCenteredScrollTop(target.getBoundingClientRect(), {
+      scrollY: window.scrollY,
+      viewportHeight: window.innerHeight,
+      topInset: Number.parseFloat(scrollPaddingTop) || 0,
+    }),
+  })
+}
 
 /**
  * A live page in an iframe, collapsed behind a toggle until asked for.
@@ -70,7 +90,7 @@ export const LivePreview = ({
   // phone draws it untransformed, at full size, where the portrait frame
   // gives it its own phone layout anyway.
   const frameScale = useIsMobile() ? 1 : scale
-  const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
+  const rootRef = useRef<HTMLDivElement>(null)
   const scrollTimer = useTimer()
   // Only while closed: once open, the page itself takes the screenshot's place.
   const shownPoster = open ? undefined : poster
@@ -82,6 +102,7 @@ export const LivePreview = ({
   }, [open, scrollTimer])
   return (
     <Collapsible.Root
+      ref={rootRef}
       open={open}
       onOpenChange={setOpen}
       className={cn('flex flex-col gap-2', className)}
@@ -156,15 +177,15 @@ export const LivePreview = ({
           'data-[state=closed]:animate-collapsible-close data-[state=open]:animate-collapsible-open'
         )}
         onAnimationEnd={(event) => {
-          // Shortly after it finishes opening, center the preview, or
-          // whatever holds it, on screen; one too tall to fit lines its top
-          // up with the top of the screen instead.
+          // Shortly after it finishes opening, center the preview and its
+          // toggle, or whatever holds them, on screen.
           if (open && event.target === event.currentTarget) {
-            const target = scrollTargetRef?.current ?? event.currentTarget
-            scrollTimer.start(
-              () => scrollIntoView(target, 'center'),
-              SCROLL_DELAY_MS
-            )
+            scrollTimer.start(() => {
+              const target = scrollTargetRef?.current ?? rootRef.current
+              if (target) {
+                scrollBelowContentsBar(target)
+              }
+            }, SCROLL_DELAY_MS)
           }
         }}>
         {/* Portrait on a narrow screen, where a phone layout fits better. */}
