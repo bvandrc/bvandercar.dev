@@ -13,13 +13,13 @@ import { ContentsMenu } from './ContentsMenu'
 
 /**
  * How far down the viewport a section's top must scroll to light up its link,
- * in px: a third of the way, where the next section has mostly taken the screen.
+ * in px: a quarter of the way, where the next section has mostly taken the screen.
  *
  * Never above 120px, so on a short screen it's still below where a contents
  * link lands a section, under the bar and the section's own margin.
  */
 const getActiveLine = (viewportHeight: number) =>
-  Math.max(120, viewportHeight / 3)
+  Math.max(120, viewportHeight / 4)
 
 const barVariants = cva(
   [
