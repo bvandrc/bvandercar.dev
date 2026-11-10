@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useEffectEvent } from 'react'
+import { Fragment, useEffect } from 'react'
 import {
+  createLazyLoad,
   type UsePressToggleOptions,
   usePressToggle,
 } from '@bvandrc/react-toolkit'
@@ -10,7 +11,6 @@ import type { Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { CountsField } from '~/counts'
-import { useLazyCharts } from './hooks/useLazyCharts'
 import { getProjectCounts } from './lib/project-counts'
 
 // Charts size the tooltip to themselves, with text to match, where the
@@ -19,6 +19,23 @@ const TOOLTIP_CLASSES = {
   CHARTS: 'max-w-none p-3 text-sm',
   WORDS: undefined,
 } as const
+
+/**
+ * The project charts' code and data, which stay out of the page's first load,
+ * and a `prefetch` that starts loading them.
+ *
+ * Takes whether the project may chart at all. Loading them for one set of
+ * counts loads them for every other, mounted or mounted later.
+ */
+const useLazyCharts = createLazyLoad(() =>
+  Promise.all([
+    import('./charts/ProjectCharts'),
+    import('./charts/lib/project-charts'),
+  ]).then(([{ ProjectCharts }, { getProjectCharts }]) => ({
+    ProjectCharts,
+    getProjectCharts,
+  }))
+)
 
 // A tap stands in for the hover a touch screen lacks; a mouse, which can
 // hover, clicks through to the link the counts sit in.
@@ -83,8 +100,13 @@ export const ProjectCounts = ({
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
   const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
   const mayChart = chartCount > 0
-  // Charts that failed to load leave the counts in words.
-  const { charts, prefetchCharts } = useLazyCharts(mayChart)
+  // Charts that failed to load leave the counts in words, until the next
+  // hover or tap tries again.
+  const {
+    value: charts,
+    isFailed: chartsFailed,
+    prefetch: prefetchCharts,
+  } = useLazyCharts(mayChart)
   const projectCharts = charts?.getProjectCharts(repo, pkg)
   /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
   const changeOpen = (next: boolean) => {
@@ -95,16 +117,15 @@ export const ProjectCounts = ({
     }
   }
   // Opened from outside, it loads the charts as it opens too.
-  const prefetchOnOpen = useEffectEvent(prefetchCharts)
   useEffect(() => {
     if (open) {
-      prefetchOnOpen()
+      prefetchCharts()
     }
-  }, [open])
+  }, [open, prefetchCharts])
   if (shown.length === 0) {
     return null
   }
-  const isLoading = mayChart && charts === undefined
+  const isLoading = mayChart && !charts && !chartsFailed
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')

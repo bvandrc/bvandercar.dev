@@ -1,7 +1,8 @@
+import { useFocusVisibleOpen } from '@bvandrc/react-toolkit'
+
 import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
-import { useFocusVisibleOpen } from '@/hooks/useFocusVisibleOpen'
 import { cn } from '@/lib/cn'
 import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'

@@ -55,7 +55,6 @@ src/
     primitives/   Presentational building blocks (Card, Link, List, Tooltip, ...)
     ...           Page sections composed from primitives
     __tests__/    Unit tests, beside the modules they cover (in every src/ folder)
-  hooks/          Shared hooks, camelCase files, e.g. useZoomPanGestures.ts
   lib/            Shared non-React helpers, e.g. cn.ts and theme-colors.ts
   styles/         Tailwind entrypoint and theme tokens
 scripts/

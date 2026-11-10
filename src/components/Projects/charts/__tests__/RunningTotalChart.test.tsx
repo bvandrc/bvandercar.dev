@@ -179,71 +179,18 @@ describe('RunningTotalChart', () => {
     expect(screen.getAllByTestId(RELEASE)).toHaveLength(1)
   })
 
-  it('zooms with the wheel, around the time under the pointer, in place of scrolling the page', () => {
+  // How a wheel, a pinch, or a drag zooms and pans is useZoomPanGestures'
+  // own, tested in @bvandrc/react-toolkit; this keeps what the chart adds.
+  it('zooms with the wheel around the time under the pointer', () => {
     const onZoom = vi.fn()
     renderChart({ onZoom })
 
     // Over the plot's start, so the time is the first day's.
-    const scrolled = turnWheel(screen.getByTestId(PLOT), 5, -100)
+    turnWheel(screen.getByTestId(PLOT), 5, -100)
     expect(onZoom).toHaveBeenCalledWith(
       Date.parse('2026-03-02'),
       expect.any(Number)
     )
-    // Turned up, so zooming in, narrowing the span.
-    expect(onZoom.mock.calls[0][1]).toBeLessThan(1)
-    expect(scrolled).toBe(false)
-  })
-
-  it("zooms for a trackpad's pinch, around the point under it, rather than as a wheel's turn", () => {
-    const onZoom = vi.fn()
-    renderChart({ onZoom })
-    const plot = screen.getByTestId(PLOT)
-
-    // A trackpad pinch reaches the page as a wheel with ctrl held: two
-    // steps apart, since the first only sets where the pinch starts.
-    for (const deltaY of [-10, -10]) {
-      turnWheel(plot, 150, deltaY, { ctrlKey: true })
-    }
-    // A plain wheel turned at the same point, for the time there.
-    turnWheel(plot, 150, -100)
-    const [pinchCall, wheelCall] = onZoom.mock.calls
-    expect(onZoom).toHaveBeenCalledTimes(2)
-    // Spreading, so zooming in, by its own scale rather than a wheel's.
-    expect(pinchCall[1]).toBeLessThan(1)
-    expect(pinchCall[1]).not.toBe(wheelCall[1])
-    expect(pinchCall[0]).toBe(wheelCall[0])
-  })
-
-  it('reads out a week, not a zoom, for one finger moving alone', () => {
-    const onZoom = vi.fn()
-    renderChart({ onZoom })
-    const plot = screen.getByTestId(PLOT)
-
-    fireEvent.pointerDown(plot, {
-      pointerId: 1,
-      clientX: 0,
-      pointerType: 'touch',
-    })
-    fireEvent.pointerMove(plot, {
-      pointerId: 1,
-      clientX: 400,
-      pointerType: 'touch',
-    })
-    expect(onZoom).not.toHaveBeenCalled()
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 22, 2026: 1,217 commits'
-    )
-  })
-
-  it('pans for a sideways scroll, later for one to the right, rather than zooming', () => {
-    const onZoom = vi.fn()
-    const onPan = vi.fn()
-    renderChart({ onZoom, onPan })
-
-    turnWheel(screen.getByTestId(PLOT), 150, 0, { deltaX: 40 })
-    expect(onZoom).not.toHaveBeenCalled()
-    expect(onPan).toHaveBeenCalledWith(expect.any(Number))
-    expect(onPan.mock.calls[0][0]).toBeGreaterThan(0)
   })
 
   it("hides the total while zoomed in short of the line's end", () => {
