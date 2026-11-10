@@ -69,7 +69,7 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it('toggles its live preview on a click on the card', async () => {
+  it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
     const user = userEvent.setup()
     const onPreviewOpen = vi.fn()
     const card = renderPreviewCard(onPreviewOpen)
@@ -79,7 +79,11 @@ describe('ProjectCard', () => {
     // So the page stops the toggles pulsing, as it would for the toggle.
     expect(onPreviewOpen).toHaveBeenCalledOnce()
 
+    // As a click around the open page would be.
     await user.click(card)
+    expect(within(card).getByTestId(LIVE_PREVIEW.FRAME)).toBeDefined()
+
+    await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).queryByTestId(LIVE_PREVIEW.FRAME)).toBeNull()
   })
 

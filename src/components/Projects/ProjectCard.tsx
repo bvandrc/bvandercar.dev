@@ -78,9 +78,13 @@ export const ProjectCard = ({
   return (
     <Card
       ref={cardRef}
-      // A click anywhere else on a card with a live preview toggles it too.
+      // A click anywhere else on a card with a live preview opens it too.
+      // Only the toggle closes it, so a click on or around the open page,
+      // even as it's still growing, leaves it open.
       onSurfaceClick={
-        project.embed ? () => changePreviewOpen(!previewOpen) : undefined
+        project.embed && !previewOpen
+          ? () => changePreviewOpen(true)
+          : undefined
       }
       className={cn(
         'flex h-full flex-col gap-2.5',
