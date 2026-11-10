@@ -2,6 +2,7 @@ import { SKILL_ICON_COLORS } from 'virtual:icons'
 
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { SKILLS } from '@/generated/profile/content/skills'
+import { cn } from '@/lib/cn'
 import { skillIconSlug } from '@/lib/icons'
 import { sectionAnchor } from '@/lib/section-anchor'
 import { THEME_COLORS } from '@/lib/theme-colors'
@@ -22,17 +23,28 @@ export const Skills = () => (
             // The label's line breaks are for the README's narrow column.
             const label = row.label.replaceAll('\n', ' ')
             return (
-              // Below sm, a label sits above its skills; from sm up, beside
-              // them, with the row centered as a whole.
+              // A label sits beside its skills. Below sm, the labels form a
+              // right-aligned column the skills wrap beside; from sm up, each
+              // row is centered as a whole.
               <div
                 key={label}
-                className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-3">
-                <dt className="shrink-0 text-sm text-ink-muted">{label}</dt>
-                <dd className="flex flex-wrap justify-center gap-2">
+                className="flex items-center gap-2 sm:justify-center sm:gap-3">
+                <dt
+                  className={cn(
+                    'shrink-0 text-ink-muted',
+                    'w-16 text-right text-xs',
+                    'sm:w-auto sm:text-left sm:text-sm'
+                  )}>
+                  {label}
+                </dt>
+                <dd className="flex flex-wrap gap-1.5 sm:justify-center sm:gap-2">
                   {row.lines.flat().map((skill) => {
                     const slug = skillIconSlug(skill)
                     return (
-                      <Badge key={skill.alt}>
+                      // Smaller below sm, to fit more skills to a line.
+                      <Badge
+                        key={skill.alt}
+                        className="gap-1 px-1.5 py-0.5 text-xs sm:gap-1.5 sm:px-2 sm:py-1 sm:text-sm">
                         <BrandIcon
                           slug={slug}
                           color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
