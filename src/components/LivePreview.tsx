@@ -113,14 +113,25 @@ export const LivePreview = ({
             data-testid="live-preview-poster"
           />
         )}
+        {showsPoster && (
+          // A fade that eases from clear at the poster's top to a nearly solid
+          // surface under the label, so the label reads against any
+          // screenshot while the screenshot still shows through.
+          <span
+            className={cn(
+              'absolute inset-0 md:hidden',
+              'bg-linear-to-t from-surface/90 from-15% via-surface/45 via-55% to-transparent'
+            )}
+          />
+        )}
         <span
           className={cn(
             'inline-flex items-center justify-center gap-2',
-            // Over the poster's bottom edge, on a fade to a see-through
-            // surface, with a shadow, so it reads against any screenshot
-            // while the screenshot still shows through.
+            // Over the poster's bottom edge.
             showsPoster &&
-              'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:bg-linear-to-t max-md:from-surface/90 max-md:from-40% max-md:to-transparent max-md:pt-3 max-md:pb-1.5 max-md:text-shadow-md max-md:text-shadow-black/80'
+              'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:pb-1.5',
+            // A shadow, for where the busier screenshots show through the fade.
+            showsPoster && 'max-md:text-shadow-md max-md:text-shadow-black/80'
           )}>
           <Icon
             name="chevron-right"
