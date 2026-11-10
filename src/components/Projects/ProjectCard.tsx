@@ -77,8 +77,9 @@ export const ProjectCard = ({
         'flex h-full flex-col gap-2.5',
         // Edge to edge on a phone, past the page's px-5 gutter in App.tsx.
         '-mx-5 md:mx-0',
-        // Tighter on a phone, so more of each card fits on screen.
-        'px-4 py-2 md:px-5 md:py-3.5',
+        // Tighter on a phone, so more of each card fits on screen. From md,
+        // as wide at the sides as at the top and bottom.
+        'px-4 py-2 md:p-3.5',
         // Glows orange on hover, or while a link inside has keyboard focus.
         'hover-glow-24'
       )}
