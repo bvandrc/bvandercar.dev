@@ -12,14 +12,10 @@ import {
 import { ContentsMenu } from './ContentsMenu'
 
 /**
- * How far down the viewport a section's top must scroll to light up its link,
- * in px: a quarter of the way, where the next section has mostly taken the screen.
- *
- * Never above 120px, so on a short screen it's still below where a contents
- * link lands a section, under the bar and the section's own margin.
+ * How near a section's heading must scroll to where its contents link lands
+ * it, in px, to light that link up: once it has mostly taken the screen.
  */
-const getActiveLine = (viewportHeight: number) =>
-  Math.max(120, viewportHeight / 4)
+const ACTIVE_SLACK = 150
 
 const barVariants = cva(
   [
@@ -50,7 +46,7 @@ type ContentsBarProps = {
  * On a narrow screen, the links scroll sideways, keeping the lit one in view.
  */
 export const ContentsBar = ({ shown }: ContentsBarProps) => {
-  const activeId = useActiveSection(CONTENTS_SECTION_IDS, getActiveLine)
+  const activeId = useActiveSection(CONTENTS_SECTION_IDS, ACTIVE_SLACK)
   const scrollerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
