@@ -69,7 +69,7 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it('toggles its live preview on a click on the card', async () => {
+  it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
     const user = userEvent.setup()
     const onPreviewOpen = vi.fn()
     const card = renderPreviewCard(onPreviewOpen)
@@ -79,16 +79,28 @@ describe('ProjectCard', () => {
     // So the page stops the toggles pulsing, as it would for the toggle.
     expect(onPreviewOpen).toHaveBeenCalledOnce()
 
+    // As a click around the open page would be.
     await user.click(card)
+    expect(within(card).getByTestId(LIVE_PREVIEW.FRAME)).toBeDefined()
+
+    await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).queryByTestId(LIVE_PREVIEW.FRAME)).toBeNull()
   })
 
   it("shows a live preview's screenshot as a thumbnail, until the preview opens", async () => {
     const user = userEvent.setup()
     const card = renderPreviewCard()
-    expect(within(card).getByTestId(THUMBNAIL).getAttribute('src')).toMatch(
-      /^\/project-screenshots\/.+\.thumb\.webp$/
+    const thumbnail = within(card).getByTestId(THUMBNAIL)
+    expect(thumbnail.getAttribute('src')).toMatch(
+      /^\/project-screenshots\/.+\.480w\.webp$/
     )
+    // Both widths, for the browser to pick from, as below md the toggle does.
+    expect(thumbnail.getAttribute('srcset')).toMatch(
+      /\.480w\.webp 480w, \/.+\.900w\.webp 900w$/
+    )
+    expect(
+      within(card).getByTestId(LIVE_PREVIEW.POSTER).getAttribute('srcset')
+    ).toBe(thumbnail.getAttribute('srcset'))
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).queryByTestId(THUMBNAIL)).toBeNull()
@@ -111,6 +123,21 @@ describe('ProjectCard', () => {
     // thumbnail follows the toggle, so it would be next.
     await user.tab()
     expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
+  })
+
+  it("crops its toggle's poster to its embed's poster height", () => {
+    const PROJECT = {
+      name: 'Busy',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'A site with a busy top.',
+      screenshot: './project-screenshots/busy.png',
+      embed: { posterHeight: 48 },
+    } satisfies Project
+    renderCard(PROJECT)
+
+    expect(screen.getByTestId(LIVE_PREVIEW.POSTER).style.height).toBe('48px')
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {

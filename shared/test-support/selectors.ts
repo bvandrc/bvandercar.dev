@@ -41,6 +41,7 @@ export const SELECTORS = {
   LIVE_PREVIEW: {
     SELF: 'live-preview',
     TOGGLE: 'live-preview-toggle',
+    POSTER: 'live-preview-poster',
     FRAME: 'live-preview-frame',
   },
   TOOLTIP: 'tooltip',

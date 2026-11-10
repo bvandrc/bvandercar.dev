@@ -12,7 +12,7 @@ import { fillBlurb, type Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
-import { getThumbnailPath } from '~/screenshots'
+import { getThumbnailPath, THUMBNAIL_WIDTHS } from '~/screenshots'
 import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
@@ -23,6 +23,14 @@ const NAME_SIZES = ['text-lg', 'text-base', 'text-[15px]']
 /** Where the site serves a repo-relative path ('./project-screenshots/…') from public/. */
 const getPublicUrl = (path: string) =>
   `${import.meta.env.BASE_URL}${path.replace(/^\.\//, '')}`
+
+/** A screenshot's WebP thumbnails, as an image's `src` and `srcSet`, for the browser to pick the width it needs. */
+const getThumbnail = (screenshot: string) => ({
+  src: getPublicUrl(getThumbnailPath(screenshot, THUMBNAIL_WIDTHS[0])),
+  srcSet: THUMBNAIL_WIDTHS.map(
+    (width) => `${getPublicUrl(getThumbnailPath(screenshot, width))} ${width}w`
+  ).join(', '),
+})
 
 export type ProjectCardProps = {
   project: Project
@@ -55,11 +63,12 @@ export const ProjectCard = ({
   })
   const [previewOpen, setPreviewOpen] = useState(false)
   const screenshotSrc = project.screenshot && getPublicUrl(project.screenshot)
-  // A live preview's card shows its screenshot beside its name and blurb.
-  const thumbnailSrc =
-    project.embed &&
-    project.screenshot &&
-    getPublicUrl(getThumbnailPath(project.screenshot))
+  // A live preview's card shows its screenshot small: beside its name and
+  // blurb from sm, and across its toggle below.
+  const thumbnail =
+    project.embed && project.screenshot
+      ? getThumbnail(project.screenshot)
+      : undefined
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
     if (open) {
@@ -69,9 +78,13 @@ export const ProjectCard = ({
   return (
     <Card
       ref={cardRef}
-      // A click anywhere else on a card with a live preview toggles it too.
+      // A click anywhere else on a card with a live preview opens it too.
+      // Only the toggle closes it, so a click on or around the open page,
+      // even as it's still growing, leaves it open.
       onSurfaceClick={
-        project.embed ? () => changePreviewOpen(!previewOpen) : undefined
+        project.embed && !previewOpen
+          ? () => changePreviewOpen(true)
+          : undefined
       }
       className={cn(
         'flex h-full flex-col gap-2.5',
@@ -176,6 +189,12 @@ export const ProjectCard = ({
               // preview. A phone's screen is too short for both, so it
               // centers the preview.
               scrollTargetRef={isMobile ? undefined : cardRef}
+              poster={
+                thumbnail && {
+                  ...thumbnail,
+                  height: project.embed.posterHeight,
+                }
+              }
               open={previewOpen}
               onOpenChange={changePreviewOpen}
               className="mt-auto"
@@ -191,15 +210,16 @@ export const ProjectCard = ({
             )
           )}
         </div>
-        {thumbnailSrc && !previewOpen && (
+        {thumbnail && !previewOpen && (
           // What the site looks like, until its live preview takes over. From
-          // md: a phone shows the toggle alone.
-          <div className="relative hidden w-60 shrink-0 md:block">
+          // sm: below, the toggle carries it.
+          <div className="relative hidden w-60 shrink-0 sm:block">
             {/* Out of the flow, so it fills the height the name, blurb, and
                 toggle give the card, rather than adding its own. */}
             <img
-              src={thumbnailSrc}
+              {...thumbnail}
               alt={`${project.name} screenshot`}
+              sizes="240px"
               loading="lazy"
               className={cn(
                 'absolute inset-0 size-full rounded-md border border-border',

@@ -27,7 +27,15 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     pulse?: boolean
     /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
+    /** A screenshot of the page, drawn across the toggle while it's closed below sm, where nothing beside the toggle has room for one. */
+    poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'> & {
+      /** How many px of the screenshot's top to show; defaults to 64. */
+      height?: number
+    }
   }
+
+/** How many px of its screenshot's top a poster shows, unless it says otherwise. */
+const DEFAULT_POSTER_HEIGHT = 64
 
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
 const SCROLL_DELAY_MS = 50
@@ -47,6 +55,7 @@ export const LivePreview = ({
   scale = 1,
   pulse = false,
   scrollTargetRef,
+  poster,
   open: controlledOpen,
   onOpenChange,
   className,
@@ -63,6 +72,8 @@ export const LivePreview = ({
   const frameScale = useIsMobile() ? 1 : scale
   const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
+  // Only while closed: once open, the page itself takes the screenshot's place.
+  const shownPoster = open ? undefined : poster
   useEffect(() => {
     if (!open) {
       // Closed before the scroll ran: don't scroll to a preview going away.
@@ -84,15 +95,59 @@ export const LivePreview = ({
           // Also while something else in its `data-preview-scope` that
           // opens it is hovered, so the two read as one control.
           'transition-colors preview-hover:border-accent preview-hover:text-accent',
-          'data-[pulse=true]:animate-glow-pulse'
+          'data-[pulse=true]:animate-glow-pulse',
+          // Below sm, a poster fills the toggle, with its label over the
+          // bottom edge.
+          shownPoster &&
+            'max-sm:relative max-sm:block max-sm:overflow-hidden max-sm:p-0'
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
-        <Icon
-          name="chevron-right"
-          className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90"
-        />
-        {`${open ? 'Hide' : 'Show'} live preview`}
+        {shownPoster && (
+          <>
+            <img
+              src={shownPoster.src}
+              srcSet={shownPoster.srcSet}
+              // The toggle's label names it; the screenshot only shows the
+              // page.
+              alt=""
+              // As wide as the screen, less the card's padding, below sm.
+              sizes="100vw"
+              loading="lazy"
+              style={{ height: shownPoster.height ?? DEFAULT_POSTER_HEIGHT }}
+              className={cn(
+                'w-full sm:hidden',
+                // Cropped to fit, keeping the page's top, where its header is.
+                'object-cover object-top'
+              )}
+              data-testid="live-preview-poster"
+            />
+            {/* A fade that eases from clear at the poster's top to a nearly
+                solid surface under the label, so the label reads against any
+                screenshot while the screenshot still shows through. */}
+            <span
+              className={cn(
+                'absolute inset-0 sm:hidden',
+                'bg-linear-to-t from-surface/90 from-15% via-surface/45 via-55% to-transparent'
+              )}
+            />
+          </>
+        )}
+        <span
+          className={cn(
+            'inline-flex items-center justify-center gap-2',
+            // Over the poster's bottom edge.
+            shownPoster &&
+              'max-sm:absolute max-sm:inset-x-0 max-sm:bottom-0 max-sm:flex max-sm:pb-1.5',
+            // A shadow, for where the busier screenshots show through the fade.
+            shownPoster && 'max-sm:text-shadow-md max-sm:text-shadow-black/80'
+          )}>
+          <Icon
+            name="chevron-right"
+            className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90"
+          />
+          {`${open ? 'Hide' : 'Show'} live preview`}
+        </span>
       </Collapsible.Trigger>
       <Collapsible.Content
         className={cn(

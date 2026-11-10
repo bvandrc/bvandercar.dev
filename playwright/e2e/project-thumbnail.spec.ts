@@ -16,6 +16,10 @@ test('a live preview card shows its screenshot as a thumbnail', async ({
   await expect
     .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBeGreaterThan(0)
+  // Beside the toggle, there's no screenshot across it.
+  await expect(
+    page.getByTestId(CARD).first().getByTestId(SELECTORS.LIVE_PREVIEW.POSTER)
+  ).toBeHidden()
 })
 
 test("hovering a card's thumbnail draws its toggle as hovered", async ({
@@ -31,23 +35,35 @@ test("hovering a card's thumbnail draws its toggle as hovered", async ({
   const getToggleColor = () =>
     toggle.evaluate((button) => getComputedStyle(button).color)
   const UNHOVERED_COLOR = await getToggleColor()
+  // A busy browser can apply a hover a frame or so after the pointer
+  // arrives, so each color is waited for rather than read once.
   await toggle.hover()
+  await expect.poll(getToggleColor).not.toBe(UNHOVERED_COLOR)
   const HOVERED_COLOR = await getToggleColor()
-  expect(HOVERED_COLOR).not.toBe(UNHOVERED_COLOR)
+
+  // Off the toggle first, so its own hover can't linger into the check below.
+  await page.mouse.move(0, 0)
+  await expect.poll(getToggleColor).toBe(UNHOVERED_COLOR)
 
   await card.getByTestId(THUMBNAIL).hover()
   // The thumbnail opens the preview too, so it shows as the toggle's hover.
   await expect.poll(getToggleColor).toBe(HOVERED_COLOR)
 })
 
-test('on a phone, a live preview card shows its toggle without a thumbnail', async ({
+test('on a phone, a live preview card shows its screenshot across its toggle, not beside it', async ({
   page,
 }) => {
-  // A phone's width, which is all the thumbnail's hiding turns on.
+  // A phone's width, which is all that moves the screenshot.
   await page.setViewportSize(devices['Pixel 7'].viewport)
   await page.goto('/')
 
   const card = page.getByTestId(CARD).first()
-  await expect(card.getByTestId(SELECTORS.LIVE_PREVIEW.TOGGLE)).toBeVisible()
+  const poster = card.getByTestId(SELECTORS.LIVE_PREVIEW.POSTER)
+  await poster.scrollIntoViewIfNeeded()
+  await expect(poster).toBeVisible()
+  // Fails if the screenshot didn't load, as a missing file or the CSP would.
+  await expect
+    .poll(() => poster.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0)
   await expect(card.getByTestId(THUMBNAIL)).toBeHidden()
 })
