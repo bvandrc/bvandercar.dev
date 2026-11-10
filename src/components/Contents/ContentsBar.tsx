@@ -12,11 +12,11 @@ import {
 import { ContentsMenu } from './ContentsMenu'
 
 /**
- * How far down the viewport a section's top must scroll to light up its link,
- * in px: below where a contents link lands it, under the bar and the section's
- * own margin, with room to spare.
+ * How near a section's heading must scroll to where its contents link lands
+ * it, in px, to light that link up: once the cards above it have started to
+ * scroll under the bar.
  */
-const ACTIVE_LINE = 120
+const ACTIVE_SLACK = 70
 
 const barVariants = cva(
   [
@@ -47,7 +47,7 @@ type ContentsBarProps = {
  * On a narrow screen, the links scroll sideways, keeping the lit one in view.
  */
 export const ContentsBar = ({ shown }: ContentsBarProps) => {
-  const activeId = useActiveSection(CONTENTS_SECTION_IDS, ACTIVE_LINE)
+  const activeId = useActiveSection(CONTENTS_SECTION_IDS, ACTIVE_SLACK)
   const scrollerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
