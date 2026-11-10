@@ -187,7 +187,7 @@ export const ProjectCard = ({
               pulse={pulsePreview}
               // Opening centers the whole card on screen, not just the
               // preview. A phone's screen is too short for both, so it
-              // centers the preview.
+              // centers the preview and its toggle.
               scrollTargetRef={isMobile ? undefined : cardRef}
               poster={
                 thumbnail && {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   useIsMobile,
   useMaybeControlled,
@@ -25,7 +25,7 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     scale?: number
     /** Pulses a glow around the toggle, to draw the eye to it. */
     pulse?: boolean
-    /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
+    /** What to center on screen once opened, such as a card around it; defaults to the preview and its toggle. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
     /** A screenshot of the page, drawn across the toggle while it's closed below sm, where nothing beside the toggle has room for one. */
     poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'> & {
@@ -70,6 +70,7 @@ export const LivePreview = ({
   // phone draws it untransformed, at full size, where the portrait frame
   // gives it its own phone layout anyway.
   const frameScale = useIsMobile() ? 1 : scale
+  const rootRef = useRef<HTMLDivElement>(null)
   const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
   // Only while closed: once open, the page itself takes the screenshot's place.
@@ -82,6 +83,7 @@ export const LivePreview = ({
   }, [open, scrollTimer])
   return (
     <Collapsible.Root
+      ref={rootRef}
       open={open}
       onOpenChange={setOpen}
       className={cn('flex flex-col gap-2', className)}
@@ -156,15 +158,18 @@ export const LivePreview = ({
           'data-[state=closed]:animate-collapsible-close data-[state=open]:animate-collapsible-open'
         )}
         onAnimationEnd={(event) => {
-          // Shortly after it finishes opening, center the preview, or
-          // whatever holds it, on screen; one too tall to fit lines its top
-          // up with the top of the screen instead.
+          // Shortly after it finishes opening, center the preview and its
+          // toggle, or whatever holds them, in the screen below the contents
+          // bar, which the page's scroll padding keeps clear; one too tall to
+          // fit lines its top up under the bar instead, keeping the toggle in
+          // view.
           if (open && event.target === event.currentTarget) {
-            const target = scrollTargetRef?.current ?? event.currentTarget
-            scrollTimer.start(
-              () => scrollIntoView(target, 'center'),
-              SCROLL_DELAY_MS
-            )
+            scrollTimer.start(() => {
+              const target = scrollTargetRef?.current ?? rootRef.current
+              if (target) {
+                scrollIntoView(target, 'center')
+              }
+            }, SCROLL_DELAY_MS)
           }
         }}>
         {/* Portrait on a narrow screen, where a phone layout fits better. */}
