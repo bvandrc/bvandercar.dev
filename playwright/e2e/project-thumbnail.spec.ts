@@ -2,7 +2,7 @@ import { devices, expect, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
 
-const { CARD, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
 
 test('a live preview card shows its screenshot as a thumbnail', async ({
   page,
@@ -16,6 +16,22 @@ test('a live preview card shows its screenshot as a thumbnail', async ({
   await expect
     .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBeGreaterThan(0)
+})
+
+test("the keyboard reaches a card's toggle, and tabs on past its thumbnail", async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  // A click on the thumbnail opens the preview, but the keyboard has the
+  // toggle for that, as it does for a click on the rest of the card.
+  const card = page.getByTestId(CARD).first()
+  await card.getByTestId(REPO_LINK).focus()
+  await page.keyboard.press('Tab')
+  await expect(card.getByTestId(SELECTORS.LIVE_PREVIEW.TOGGLE)).toBeFocused()
+  // The thumbnail follows the toggle in the page, so it would be next.
+  await page.keyboard.press('Tab')
+  await expect(card.getByTestId(THUMBNAIL)).not.toBeFocused()
 })
 
 test('on a phone, a live preview card shows its toggle without a thumbnail', async ({
