@@ -28,8 +28,14 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
     /** A screenshot of the page, drawn across the toggle while it's closed below md, where nothing beside the toggle has room for one. */
-    poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'>
+    poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'> & {
+      /** How many px of the screenshot's top to show; defaults to 64. */
+      height?: number
+    }
   }
+
+/** How many px of its screenshot's top a poster shows, unless it says otherwise. */
+const DEFAULT_POSTER_HEIGHT = 64
 
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
 const SCROLL_DELAY_MS = 50
@@ -97,16 +103,18 @@ export const LivePreview = ({
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
-        {showsPoster && (
+        {poster && showsPoster && (
           <img
-            {...poster}
+            src={poster.src}
+            srcSet={poster.srcSet}
             // The toggle's label names it; the screenshot only shows the page.
             alt=""
             // As wide as the screen, less the card's padding, below md.
             sizes="100vw"
             loading="lazy"
+            style={{ height: poster.height ?? DEFAULT_POSTER_HEIGHT }}
             className={cn(
-              'h-16 w-full md:hidden',
+              'w-full md:hidden',
               // Cropped to fit, keeping the page's top, where its header is.
               'object-cover object-top'
             )}

@@ -76,6 +76,22 @@ describe('LivePreview', () => {
     expect(screen.queryByTestId(POSTER)).toBeNull()
   })
 
+  it("shows its poster's top 64px, or as many as it asks for", () => {
+    const { rerender } = render(
+      <LivePreview src={SRC} title="Example" poster={{ src: '/shot.webp' }} />
+    )
+    expect(screen.getByTestId(POSTER).style.height).toBe('64px')
+
+    rerender(
+      <LivePreview
+        src={SRC}
+        title="Example"
+        poster={{ src: '/shot.webp', height: 48 }}
+      />
+    )
+    expect(screen.getByTestId(POSTER).style.height).toBe('48px')
+  })
+
   it('pulses its toggle only while asked to', () => {
     const { rerender } = render(<LivePreview src={SRC} title="Example" pulse />)
     expect(screen.getByTestId(TOGGLE).dataset.pulse).toBe('true')

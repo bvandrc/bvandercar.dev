@@ -125,6 +125,21 @@ describe('ProjectCard', () => {
     expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
   })
 
+  it("crops its toggle's poster to its embed's poster height", () => {
+    const PROJECT = {
+      name: 'Busy',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'A site with a busy top.',
+      screenshot: './project-screenshots/busy.png',
+      embed: { posterHeight: 48 },
+    } satisfies Project
+    renderCard(PROJECT)
+
+    expect(screen.getByTestId(LIVE_PREVIEW.POSTER).style.height).toBe('48px')
+  })
+
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {
     const PROJECT = {
       name: 'Pictured',

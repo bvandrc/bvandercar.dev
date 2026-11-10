@@ -189,7 +189,12 @@ export const ProjectCard = ({
               // preview. A phone's screen is too short for both, so it
               // centers the preview.
               scrollTargetRef={isMobile ? undefined : cardRef}
-              poster={thumbnail}
+              poster={
+                thumbnail && {
+                  ...thumbnail,
+                  height: project.embed.posterHeight,
+                }
+              }
               open={previewOpen}
               onOpenChange={changePreviewOpen}
               className="mt-auto"
