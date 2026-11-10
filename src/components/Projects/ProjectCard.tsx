@@ -97,7 +97,7 @@ export const ProjectCard = ({
               'leading-6'
             )}>
             <Tooltip content={project.href}>
-              <Link href={project.href} newTab data-testid="project-name-link">
+              <Link href={project.href} newTab>
                 <span id={nameId}>{project.name}</span>
               </Link>
             </Tooltip>

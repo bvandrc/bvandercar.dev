@@ -51,7 +51,7 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       />
       <Tooltip content="GitHub Repository">
         {/* Keeps its icon on its line. */}
-        <span className="whitespace-nowrap" data-testid="project-repo-label">
+        <span className="whitespace-nowrap">
           repo{' '}
           <Icon
             name="external-link"
