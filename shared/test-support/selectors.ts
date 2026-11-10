@@ -8,6 +8,16 @@ export const SELECTORS = {
   CONTENTS: {
     SELF: 'contents',
     LINK: 'contents-link',
+    BAR: {
+      SELF: 'contents-bar',
+      LINK: 'contents-bar-link',
+      MENU_TOGGLE: 'contents-bar-menu-toggle',
+      MENU: {
+        SELF: 'contents-bar-menu',
+        LINK: 'contents-bar-menu-link',
+        TOP_LINK: 'contents-bar-menu-top-link',
+      },
+    },
   },
   MAIN: 'main',
   PROJECTS: {

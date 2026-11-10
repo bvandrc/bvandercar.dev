@@ -19,6 +19,9 @@
   /* GitHub's dark-theme green for contributions, for the commits chart. */
   --color-commits: #238636;
 
+  /* The height of the contents bar pinned to the top once the page scrolls. */
+  --spacing-contents-bar: 3rem;
+
   /* Pulses an accent glow around an element, to draw the eye to it. */
   --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
 
@@ -113,6 +116,9 @@
     color-scheme: dark;
     /* Glides to a section a contents link goes to; reduced motion jumps. */
     scroll-behavior: smooth;
+    /* Lands a section a link goes to, or whatever focus scrolls to, below the
+       contents bar rather than under it. */
+    scroll-padding-top: var(--spacing-contents-bar);
   }
 
   body {

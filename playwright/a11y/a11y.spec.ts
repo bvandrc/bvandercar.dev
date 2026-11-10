@@ -5,8 +5,15 @@ import { getChartedCounts } from '../support/charted-counts'
 import { mockFramedPages } from '../support/mock-framed-pages'
 import { checkA11y } from './accessibility'
 
-const { HEADER, PROJECTS, BEYOND_CODE, FOOTER, TOOLTIP, LIVE_PREVIEW } =
-  SELECTORS
+const {
+  HEADER,
+  CONTENTS,
+  PROJECTS,
+  BEYOND_CODE,
+  FOOTER,
+  TOOLTIP,
+  LIVE_PREVIEW,
+} = SELECTORS
 
 test.describe('Accessibility', () => {
   test('Home page', async ({ page }) => {
@@ -16,6 +23,29 @@ test.describe('Accessibility', () => {
     await expect(page.getByTestId(PROJECTS.CARD).first()).toBeVisible()
     await expect(page.getByTestId(BEYOND_CODE)).toBeVisible()
     await expect(page.getByTestId(FOOTER.SELF)).toBeVisible()
+
+    await checkA11y(page)
+  })
+
+  test('Contents bar', async ({ page }) => {
+    await page.goto('/')
+
+    // Jumps to a section, past the page's own contents, which brings the bar.
+    await page.getByTestId(CONTENTS.LINK).first().click()
+    await expect(page.getByTestId(CONTENTS.BAR.SELF)).toBeVisible()
+    await expect(
+      page.getByTestId(CONTENTS.BAR.SELF).locator('[aria-current]')
+    ).toHaveCount(1)
+
+    await checkA11y(page)
+  })
+
+  test('Open contents bar menu', async ({ page }) => {
+    await page.goto('/')
+
+    await page.getByTestId(CONTENTS.LINK).first().click()
+    await page.getByTestId(CONTENTS.BAR.MENU_TOGGLE).click()
+    await expect(page.getByTestId(CONTENTS.BAR.MENU.SELF)).toBeVisible()
 
     await checkA11y(page)
   })
