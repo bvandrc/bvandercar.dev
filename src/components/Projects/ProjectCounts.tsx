@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useEffectEvent } from 'react'
+import { Fragment, useEffect } from 'react'
 import {
   type UsePressToggleOptions,
   usePressToggle,
@@ -83,8 +83,13 @@ export const ProjectCounts = ({
   const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
   const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
   const mayChart = chartCount > 0
-  // Charts that failed to load leave the counts in words.
-  const { charts, prefetchCharts } = useLazyCharts(mayChart)
+  // Charts that failed to load leave the counts in words, until the next
+  // hover or tap tries again.
+  const {
+    value: charts,
+    isFailed: chartsFailed,
+    prefetch: prefetchCharts,
+  } = useLazyCharts(mayChart)
   const projectCharts = charts?.getProjectCharts(repo, pkg)
   /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
   const changeOpen = (next: boolean) => {
@@ -95,16 +100,15 @@ export const ProjectCounts = ({
     }
   }
   // Opened from outside, it loads the charts as it opens too.
-  const prefetchOnOpen = useEffectEvent(prefetchCharts)
   useEffect(() => {
     if (open) {
-      prefetchOnOpen()
+      prefetchCharts()
     }
-  }, [open])
+  }, [open, prefetchCharts])
   if (shown.length === 0) {
     return null
   }
-  const isLoading = mayChart && charts === undefined
+  const isLoading = mayChart && !charts && !chartsFailed
   const label = shown
     .map(({ count, noun }) => formatCount(count, noun))
     .join(', ')
