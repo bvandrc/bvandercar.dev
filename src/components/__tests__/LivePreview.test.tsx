@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { SELECTORS } from '~/test-support/selectors'
 import { LivePreview } from '../LivePreview'
 
-const { TOGGLE, FRAME } = SELECTORS.LIVE_PREVIEW
+const { TOGGLE, POSTER, FRAME } = SELECTORS.LIVE_PREVIEW
 
 const SRC = 'https://example.com/'
 
@@ -59,6 +59,21 @@ describe('LivePreview', () => {
         transform: '',
       })
     })
+  })
+
+  it("draws its poster across its toggle while closed, under the toggle's own name", async () => {
+    const user = userEvent.setup()
+    const POSTER_SRC = '/screenshot.480w.webp'
+    render(
+      <LivePreview src={SRC} title="Example" poster={{ src: POSTER_SRC }} />
+    )
+    expect(screen.getByTestId(POSTER).getAttribute('src')).toBe(POSTER_SRC)
+    // The screenshot only shows the page: the toggle's label still names it.
+    expect(screen.getByRole('button').textContent).toBe('Show live preview')
+
+    await user.click(screen.getByTestId(TOGGLE))
+    // Open, the page itself takes the screenshot's place.
+    expect(screen.queryByTestId(POSTER)).toBeNull()
   })
 
   it('pulses its toggle only while asked to', () => {

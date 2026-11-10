@@ -27,6 +27,8 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
     pulse?: boolean
     /** What to center on screen once opened, such as a card around it; defaults to the preview itself. */
     scrollTargetRef?: React.RefObject<HTMLElement | null>
+    /** A screenshot of the page, drawn across the toggle while it's closed below md, where nothing beside the toggle has room for one. */
+    poster?: Pick<React.ComponentProps<'img'>, 'src' | 'srcSet'>
   }
 
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
@@ -47,6 +49,7 @@ export const LivePreview = ({
   scale = 1,
   pulse = false,
   scrollTargetRef,
+  poster,
   open: controlledOpen,
   onOpenChange,
   className,
@@ -63,6 +66,8 @@ export const LivePreview = ({
   const frameScale = useIsMobile() ? 1 : scale
   const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
+  // Only while closed: once open, the page itself takes the screenshot's place.
+  const showsPoster = Boolean(poster) && !open
   useEffect(() => {
     if (!open) {
       // Closed before the scroll ran: don't scroll to a preview going away.
@@ -84,15 +89,44 @@ export const LivePreview = ({
           // Also while something else in its `data-preview-scope` that
           // opens it is hovered, so the two read as one control.
           'transition-colors preview-hover:border-accent preview-hover:text-accent',
-          'data-[pulse=true]:animate-glow-pulse'
+          'data-[pulse=true]:animate-glow-pulse',
+          // Below md, a poster fills the toggle, with its label over the
+          // bottom edge.
+          showsPoster &&
+            'max-md:relative max-md:block max-md:overflow-hidden max-md:p-0'
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
-        <Icon
-          name="chevron-right"
-          className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90"
-        />
-        {`${open ? 'Hide' : 'Show'} live preview`}
+        {showsPoster && (
+          <img
+            {...poster}
+            // The toggle's label names it; the screenshot only shows the page.
+            alt=""
+            // As wide as the screen, less the card's padding, below md.
+            sizes="100vw"
+            loading="lazy"
+            className={cn(
+              'h-16 w-full md:hidden',
+              // Cropped to fit, keeping the page's top, where its header is.
+              'object-cover object-top'
+            )}
+            data-testid="live-preview-poster"
+          />
+        )}
+        <span
+          className={cn(
+            'inline-flex items-center justify-center gap-2',
+            // Over the poster's bottom edge, on a fade to the card's surface,
+            // so it reads against any screenshot.
+            showsPoster &&
+              'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:flex max-md:bg-linear-to-t max-md:from-surface max-md:from-40% max-md:to-transparent max-md:pt-3 max-md:pb-1.5'
+          )}>
+          <Icon
+            name="chevron-right"
+            className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90"
+          />
+          {`${open ? 'Hide' : 'Show'} live preview`}
+        </span>
       </Collapsible.Trigger>
       <Collapsible.Content
         className={cn(

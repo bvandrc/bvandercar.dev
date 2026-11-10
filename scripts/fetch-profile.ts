@@ -4,7 +4,7 @@
  *
  * Copies its src/content/ and src/generated/repo-counts.ts to
  * src/generated/profile/, and the screenshots the projects reference to
- * public/, each with a small WebP thumbnail beside it, all gitignored. Reads bvandrc's PROFILE_DEV_BRANCH while it exists,
+ * public/, each with WebP thumbnails beside it, all gitignored. Reads bvandrc's PROFILE_DEV_BRANCH while it exists,
  * else main; PROFILE_REF, if set, reads that branch or commit instead.
  */
 
@@ -15,7 +15,7 @@ import { join } from 'node:path'
 import sharp from 'sharp'
 
 import { GITHUB_OWNER, getRepoUrl } from '../shared/github.ts'
-import { getThumbnailPath, THUMBNAIL_WIDTH } from '../shared/screenshots.ts'
+import { getThumbnailPath, THUMBNAIL_WIDTHS } from '../shared/screenshots.ts'
 import { PROFILE_DIR } from './shared/constants.ts'
 
 // A GitHub profile's README comes from the repo named after its owner.
@@ -78,12 +78,16 @@ try {
     screenshots.map(async (path) => {
       const source = join(checkout, path)
       await cp(source, join('public', path))
-      // A card shows its screenshot small, where the full image would be
-      // several times the bytes it needs.
-      await sharp(source)
-        .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
-        .webp()
-        .toFile(join('public', getThumbnailPath(path)))
+      // A card shows its screenshot as WebP, at the width it needs, where
+      // the PNG would be several times the bytes.
+      await Promise.all(
+        THUMBNAIL_WIDTHS.map((width) =>
+          sharp(source)
+            .resize({ width, withoutEnlargement: true })
+            .webp()
+            .toFile(join('public', getThumbnailPath(path, width)))
+        )
+      )
     })
   )
 

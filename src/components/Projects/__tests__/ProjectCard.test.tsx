@@ -86,9 +86,17 @@ describe('ProjectCard', () => {
   it("shows a live preview's screenshot as a thumbnail, until the preview opens", async () => {
     const user = userEvent.setup()
     const card = renderPreviewCard()
-    expect(within(card).getByTestId(THUMBNAIL).getAttribute('src')).toMatch(
-      /^\/project-screenshots\/.+\.thumb\.webp$/
+    const thumbnail = within(card).getByTestId(THUMBNAIL)
+    expect(thumbnail.getAttribute('src')).toMatch(
+      /^\/project-screenshots\/.+\.480w\.webp$/
     )
+    // Both widths, for the browser to pick from, as below md the toggle does.
+    expect(thumbnail.getAttribute('srcset')).toMatch(
+      /\.480w\.webp 480w, \/.+\.900w\.webp 900w$/
+    )
+    expect(
+      within(card).getByTestId(LIVE_PREVIEW.POSTER).getAttribute('srcset')
+    ).toBe(thumbnail.getAttribute('srcset'))
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).queryByTestId(THUMBNAIL)).toBeNull()
