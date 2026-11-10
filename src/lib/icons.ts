@@ -14,9 +14,15 @@ export const skillIconSlug = ({ logo }: SkillBadge) =>
   // Shields accepts slug aliases like `tailwind-css`; Simple Icons doesn't.
   logo.toLowerCase().replaceAll('-', '')
 
+/** Every skill badge, across the groups and rows. */
+export const SKILL_BADGES = SKILLS.flatMap(({ rows }) => rows).flatMap(
+  ({ lines }) => lines.flat()
+)
+
 /** Every interface glyph and logo the site's own code draws, by its Iconify name. */
 export const UI_ICON_NAMES = [
   'chevron-right',
+  'code-xml',
   'external-link',
   'simple-icons:github',
   'simple-icons:linkedin',
@@ -58,7 +64,5 @@ export const ICON_SLUGS = uniq([
   ...PROJECTS.flatMap(({ icon }) =>
     typeof icon === 'string' ? [] : icon.slug
   ),
-  ...SKILLS.flatMap(({ rows }) => rows)
-    .flatMap(({ lines }) => lines.flat())
-    .map(skillIconSlug),
+  ...SKILL_BADGES.map(skillIconSlug),
 ])

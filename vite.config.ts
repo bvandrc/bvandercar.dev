@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
 
 import { iconsPlugin } from './scripts/icons-plugin'
+import { isoDate } from './shared/dates'
 import { BASE_PATH, SECURITY_HEADERS } from './site.config'
 
 /** Writes `SECURITY_HEADERS` to `dist/_headers`, which Cloudflare applies to every path. */
@@ -27,6 +28,10 @@ export default defineConfig(() => ({
   // Lighthouse probes `/.well-known/` files and fails on an HTML 200.
   appType: 'mpa' as const,
   plugins: [tailwindcss(), react(), iconsPlugin(), securityHeadersFile()],
+  // The day the site was built, which the footer shows.
+  define: {
+    'import.meta.env.BUILD_DATE': JSON.stringify(isoDate(Date.now())),
+  },
   resolve: {
     tsconfigPaths: true,
   },

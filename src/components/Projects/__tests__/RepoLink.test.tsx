@@ -27,8 +27,8 @@ describe('RepoLink', () => {
     expect(within(link).getByTestId(COUNTS)).toBeDefined()
   })
 
-  // The test DOM matches :focus-visible on any focus, a click's too, so
-  // playwright/e2e/repo-link.spec.ts checks that a click opens none.
+  // Which focus opens it, and that it stays open through the scroll focus
+  // brings, are useFocusVisibleOpen's own, tested in @bvandrc/react-toolkit.
   it("shows the counts' tooltip on keyboard focus", async () => {
     const user = userEvent.setup()
     const link = renderLink()

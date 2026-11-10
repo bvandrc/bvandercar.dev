@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react'
-import { useIsMobile } from '@bvandrc/react-toolkit'
+import { useIsMobile, useShrinkToFit } from '@bvandrc/react-toolkit'
 import { pick } from 'es-toolkit'
 
 import { LivePreview } from '@/components/LivePreview'
@@ -9,7 +9,6 @@ import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { fillBlurb, type Project } from '@/generated/profile/content/projects'
-import { useShrinkToFit } from '@/hooks/useShrinkToFit'
 import { cn } from '@/lib/cn'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
@@ -49,7 +48,11 @@ export const ProjectCard = ({
   const { counts } = getProjectCounts(countsFields)
   const headerRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLDivElement>(null)
-  const nameStep = useShrinkToFit(headerRef, nameRef, NAME_SIZES.length)
+  const nameStep = useShrinkToFit({
+    lineRef: headerRef,
+    textRef: nameRef,
+    stepCount: NAME_SIZES.length,
+  })
   const [previewOpen, setPreviewOpen] = useState(false)
   const screenshotSrc = project.screenshot && getPublicUrl(project.screenshot)
   // A live preview's card shows its screenshot beside its name and blurb.

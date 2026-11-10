@@ -1,7 +1,8 @@
+import { useFocusVisibleOpen } from '@bvandrc/react-toolkit'
+
 import { Icon } from '@/components/primitives/Icon'
 import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
-import { useFocusVisibleOpen } from '@/hooks/useFocusVisibleOpen'
 import { cn } from '@/lib/cn'
 import { getRepoUrl } from '~/github'
 import { ProjectCounts, type ProjectCountsProps } from './ProjectCounts'
@@ -50,7 +51,7 @@ export const RepoLink = ({ nameId, ...countsProps }: RepoLinkProps) => {
       />
       <Tooltip content="GitHub Repository">
         {/* Keeps its icon on its line. */}
-        <span className="whitespace-nowrap" data-testid="project-repo-label">
+        <span className="whitespace-nowrap">
           repo{' '}
           <Icon
             name="external-link"

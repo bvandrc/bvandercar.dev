@@ -16,7 +16,6 @@ export const SELECTORS = {
     BLURB: 'project-blurb',
     THUMBNAIL: 'project-thumbnail',
     REPO_LINK: 'project-repo-link',
-    REPO_LABEL: 'project-repo-label',
     COUNTS: 'project-counts',
     CHARTS_LOADING: 'project-charts-loading',
     ACTIVITY_CHART: 'activity-chart',
@@ -34,6 +33,11 @@ export const SELECTORS = {
     SELF: 'skills',
   },
   BEYOND_CODE: 'beyond-code',
+  FOOTER: {
+    SELF: 'footer',
+    SOURCE_LINK: 'footer-source-link',
+    BUILD_DATE: 'footer-build-date',
+  },
   LIVE_PREVIEW: {
     SELF: 'live-preview',
     TOGGLE: 'live-preview-toggle',

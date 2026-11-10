@@ -1,3 +1,4 @@
+import { useTooltipFocusOpen } from '@bvandrc/react-toolkit'
 import { Tooltip as RadixTooltip } from 'radix-ui'
 
 import { cn } from '@/lib/cn'
@@ -41,24 +42,32 @@ export const Tooltip = ({
   children,
   'aria-label': ariaLabel,
   className,
-  ...rootProps
-}: TooltipProps) => (
-  <RadixTooltip.Root {...rootProps}>
-    <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
-    <RadixTooltip.Portal>
-      <RadixTooltip.Content
-        // What screen readers hear in place of `content`, for content that
-        // isn't all text, like a chart.
-        aria-label={ariaLabel}
-        sideOffset={3}
-        collisionPadding={8}
-        className={cn(
-          'z-50 max-w-xs animate-tooltip-in rounded-md border border-ink-muted/30 bg-surface-raised px-2 py-1 text-xs break-words text-ink shadow-lg shadow-black/50',
-          className
-        )}
-        data-testid="tooltip">
-        {content}
-      </RadixTooltip.Content>
-    </RadixTooltip.Portal>
-  </RadixTooltip.Root>
-)
+  open,
+  onOpenChange,
+}: TooltipProps) => {
+  // Opens on keyboard focus itself, as Radix's own open on focus is closed by
+  // the scroll that focus brings, for a trigger out of view.
+  const { rootProps, focusProps } = useTooltipFocusOpen(open, onOpenChange)
+  return (
+    <RadixTooltip.Root {...rootProps}>
+      <RadixTooltip.Trigger asChild {...focusProps}>
+        {children}
+      </RadixTooltip.Trigger>
+      <RadixTooltip.Portal>
+        <RadixTooltip.Content
+          // What screen readers hear in place of `content`, for content that
+          // isn't all text, like a chart.
+          aria-label={ariaLabel}
+          sideOffset={3}
+          collisionPadding={8}
+          className={cn(
+            'z-50 max-w-xs animate-tooltip-in rounded-md border border-ink-muted/30 bg-surface-raised px-2 py-1 text-xs break-words text-ink shadow-lg shadow-black/50',
+            className
+          )}
+          data-testid="tooltip">
+          {content}
+        </RadixTooltip.Content>
+      </RadixTooltip.Portal>
+    </RadixTooltip.Root>
+  )
+}

@@ -1,9 +1,8 @@
 import { useState } from 'react'
-
 import {
   useZoomPanGestures,
   type ZoomPanGestures,
-} from '@/hooks/useZoomPanGestures'
+} from '@bvandrc/react-toolkit/gestures'
 
 export type PlotInputOptions = Omit<ZoomPanGestures, 'getValueAt'> & {
   /** The time at `x` pixels across the plot, which a zoom is anchored at */

@@ -51,11 +51,10 @@
     "pw:report": "playwright show-report playwright/results/html"
   },
   "dependencies": {
-    "@bvandrc/react-toolkit": "^2.4",
+    "@bvandrc/react-toolkit": "^2.6",
     "@use-gesture/react": "^10",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
-    "colord": "^2",
     "es-toolkit": "^1",
     "radix-ui": "^1",
     "react": "^19",
@@ -86,6 +85,7 @@
     "@vite-pwa/assets-generator": "^2",
     "@vitejs/plugin-react": "^6",
     "axe-core": "^4",
+    "colord": "^2",
     "happy-dom": "^21",
     "lighthouse": "^13",
     "lighthouse-audit-utils": "^1",

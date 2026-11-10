@@ -1,33 +1,6 @@
 import { INTRO_LINES } from '@/generated/profile/content/about'
 import { cn } from '@/lib/cn'
-import type { UiIconName } from '@/lib/icons'
-import { GITHUB_OWNER, GITHUB_PROFILE_URL } from '~/github'
-import { Icon } from './primitives/Icon'
-import { Link, type LinkProps } from './primitives/Link'
-import { Tooltip } from './primitives/Tooltip'
-
-type HeaderSocialLinkProps = Pick<LinkProps, 'href'> & {
-  /** The tooltip, naming the profile the link goes to. */
-  tooltip: string
-  /** The site's logo, shown before the text in the link's own color. */
-  icon: UiIconName
-  children: React.ReactNode
-}
-
-/** A link to one of my profiles on another site, with that site's logo. */
-const HeaderSocialLink = ({
-  href,
-  tooltip,
-  icon,
-  children,
-}: HeaderSocialLinkProps) => (
-  <Tooltip content={tooltip}>
-    <Link href={href} newTab className="inline-flex items-center gap-2">
-      <Icon name={icon} className="size-4" />
-      {children}
-    </Link>
-  </Tooltip>
-)
+import { SocialLinks } from './SocialLinks'
 
 export const Header = () => (
   <header className="flex flex-col items-center gap-3" data-testid="header">
@@ -60,18 +33,7 @@ export const Header = () => (
       ))}
     </div>
     <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-      <HeaderSocialLink
-        href={GITHUB_PROFILE_URL}
-        tooltip="GitHub Profile"
-        icon="simple-icons:github">
-        github.com/{GITHUB_OWNER}
-      </HeaderSocialLink>
-      <HeaderSocialLink
-        href="https://www.linkedin.com/in/blake-vandercar"
-        tooltip="LinkedIn Profile"
-        icon="simple-icons:linkedin">
-        LinkedIn
-      </HeaderSocialLink>
+      <SocialLinks />
     </div>
   </header>
 )

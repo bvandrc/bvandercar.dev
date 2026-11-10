@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  /** The UTC day the site was built, as an ISO date: `'2026-03-02'`. */
+  readonly BUILD_DATE: string
+}
+
 /** The site's icons, from Iconify's sets, bundled by `scripts/icons-plugin.ts`. */
 declare module 'virtual:icons' {
   /**
@@ -14,4 +19,11 @@ declare module 'virtual:icons' {
 
   /** Glyphs keyed by name, for every name in `GLYPH_NAMES`. */
   export const UI_ICONS: Partial<Record<string, VirtualIcon>>
+
+  /**
+   * Each skill badge's logo color, as hex without the `#`, keyed by its slug.
+   *
+   * Its brand color where that shows on the chip, else the chip's ink.
+   */
+  export const SKILL_ICON_COLORS: Partial<Record<string, string>>
 }
