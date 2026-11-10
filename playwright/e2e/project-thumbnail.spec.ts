@@ -2,7 +2,7 @@ import { devices, expect, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
 
-const { CARD, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, THUMBNAIL } = SELECTORS.PROJECTS
 
 test('a live preview card shows its screenshot as a thumbnail', async ({
   page,
@@ -38,22 +38,6 @@ test("hovering a card's thumbnail draws its toggle as hovered", async ({
   await card.getByTestId(THUMBNAIL).hover()
   // The thumbnail opens the preview too, so it shows as the toggle's hover.
   await expect.poll(getToggleColor).toBe(HOVERED_COLOR)
-})
-
-test("the keyboard reaches a card's toggle, and tabs on past its thumbnail", async ({
-  page,
-}) => {
-  await page.goto('/')
-
-  // A click on the thumbnail opens the preview, but the keyboard has the
-  // toggle for that, as it does for a click on the rest of the card.
-  const card = page.getByTestId(CARD).first()
-  await card.getByTestId(REPO_LINK).focus()
-  await page.keyboard.press('Tab')
-  await expect(card.getByTestId(SELECTORS.LIVE_PREVIEW.TOGGLE)).toBeFocused()
-  // The thumbnail follows the toggle in the page, so it would be next.
-  await page.keyboard.press('Tab')
-  await expect(card.getByTestId(THUMBNAIL)).not.toBeFocused()
 })
 
 test('on a phone, a live preview card shows its toggle without a thumbnail', async ({

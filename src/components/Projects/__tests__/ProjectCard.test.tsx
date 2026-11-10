@@ -7,7 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -95,6 +95,22 @@ describe('ProjectCard', () => {
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).getByTestId(THUMBNAIL)).toBeDefined()
+  })
+
+  it("tabs from its repo link to its live preview's toggle, and on past its thumbnail", async () => {
+    const user = userEvent.setup()
+    const card = renderPreviewCard()
+    within(card).getByTestId(REPO_LINK).focus()
+
+    await user.tab()
+    expect(document.activeElement).toBe(
+      within(card).getByTestId(LIVE_PREVIEW.TOGGLE)
+    )
+    // A click on the thumbnail opens the preview, but the keyboard has the
+    // toggle for that, as it does for a click on the rest of the card. The
+    // thumbnail follows the toggle, so it would be next.
+    await user.tab()
+    expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {
