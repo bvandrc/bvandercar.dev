@@ -18,6 +18,28 @@ test('a live preview card shows its screenshot as a thumbnail', async ({
     .toBeGreaterThan(0)
 })
 
+test("hovering a card's thumbnail draws its toggle as hovered", async ({
+  page,
+}) => {
+  // The site's reduced motion drops the toggle's color transition, so each
+  // color is read where it lands.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+
+  const card = page.getByTestId(CARD).first()
+  const toggle = card.getByTestId(SELECTORS.LIVE_PREVIEW.TOGGLE)
+  const getToggleColor = () =>
+    toggle.evaluate((button) => getComputedStyle(button).color)
+  const UNHOVERED_COLOR = await getToggleColor()
+  await toggle.hover()
+  const HOVERED_COLOR = await getToggleColor()
+  expect(HOVERED_COLOR).not.toBe(UNHOVERED_COLOR)
+
+  await card.getByTestId(THUMBNAIL).hover()
+  // The thumbnail opens the preview too, so it shows as the toggle's hover.
+  await expect.poll(getToggleColor).toBe(HOVERED_COLOR)
+})
+
 test("the keyboard reaches a card's toggle, and tabs on past its thumbnail", async ({
   page,
 }) => {

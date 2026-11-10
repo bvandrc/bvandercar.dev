@@ -63,6 +63,21 @@
   }
 }
 
+/*
+ * `preview-hover:`, a live preview toggle's hover, which also shows while
+ * something else that opens the preview, marked `data-opens-preview`, is
+ * hovered inside the same `data-preview-scope`.
+ */
+@custom-variant preview-hover {
+  /* Only where a pointer can hover, as Tailwind's own `hover:` does. */
+  @media (hover: hover) {
+    &:hover,
+    [data-preview-scope]:has([data-opens-preview]:hover) & {
+      @slot;
+    }
+  }
+}
+
 /* A glow: `shadow-glow-<blur-px>`, colored by the standard `shadow-<color>` utilities. */
 @utility shadow-glow-* {
   box-shadow: 0 0 calc(--value(number) * 1px)

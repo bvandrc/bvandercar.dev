@@ -83,6 +83,8 @@ export const ProjectCard = ({
         // Glows orange on hover, or while a link inside has keyboard focus.
         'hover-glow-24'
       )}
+      // Its thumbnail's hover shows on its live preview's toggle.
+      data-preview-scope
       data-testid="project-card">
       <div className="flex grow gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-2.5">
@@ -199,10 +201,11 @@ export const ProjectCard = ({
                 // header and the start of its text are.
                 'object-cover object-left-top',
                 // A click on it opens the preview, as on the rest of the
-                // card's surface, so it looks clickable: a hand, and on hover
-                // a brighter image in a border of the card's orange glow.
-                'cursor-pointer transition hover:border-orange-500 hover:brightness-110'
+                // card's surface, so it takes a hand, and its hover shows on
+                // the toggle, the control it stands in for.
+                'cursor-pointer'
               )}
+              data-opens-preview
               data-testid="project-thumbnail"
             />
           </div>
