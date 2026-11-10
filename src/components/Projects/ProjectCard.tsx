@@ -102,7 +102,7 @@ export const ProjectCard = ({
               ref={nameRef}
               className={cn(
                 'flex shrink-0 items-center gap-2',
-                centered && 'md:col-start-2'
+                centered && 'relative md:col-start-2'
               )}>
               <h4
                 className={cn(
@@ -125,7 +125,13 @@ export const ProjectCard = ({
                   color={THEME_COLORS.INK_MUTED}
                   alt={typeIcon.title}
                   size={14}
-                  className="size-3.5"
+                  className={cn(
+                    'size-3.5',
+                    // A centered name centers by its own text: its icon
+                    // hangs off its right, out of the width being centered.
+                    centered &&
+                      'md:absolute md:top-1/2 md:left-full md:ml-2 md:-translate-y-1/2'
+                  )}
                 />
               </Tooltip>
             </div>
