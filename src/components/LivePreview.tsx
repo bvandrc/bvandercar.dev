@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react'
 import {
   useIsMobile,
   useMaybeControlled,
+  useScrollIntoView,
   useTimer,
 } from '@bvandrc/react-toolkit'
 import { Collapsible } from 'radix-ui'
 import type { RequireAllOrNone } from 'type-fest'
 
-import { getCenteredScrollTop } from '@/lib/centered-scroll-top'
 import { cn } from '@/lib/cn'
 import { Icon } from './primitives/Icon'
 
@@ -41,26 +41,6 @@ const DEFAULT_POSTER_HEIGHT = 64
 const SCROLL_DELAY_MS = 50
 
 /**
- * Centers `target` in the screen below the contents bar, or lines its top up
- * under the bar when it's too tall to fit, so a toggle at its top stays in view.
- *
- * Glides there, or jumps under reduced motion, as the page's `scroll-behavior`
- * says.
- */
-const scrollBelowContentsBar = (target: HTMLElement) => {
-  // The page's top scroll padding is the bar's height, kept clear for the
-  // same reason: so what's scrolled to doesn't land under it.
-  const { scrollPaddingTop } = getComputedStyle(document.documentElement)
-  window.scrollTo({
-    top: getCenteredScrollTop(target.getBoundingClientRect(), {
-      scrollY: window.scrollY,
-      viewportHeight: window.innerHeight,
-      topInset: Number.parseFloat(scrollPaddingTop) || 0,
-    }),
-  })
-}
-
-/**
  * A live page in an iframe, collapsed behind a toggle until asked for.
  *
  * The frame mounts only while open, so a closed preview loads nothing. Its
@@ -91,6 +71,7 @@ export const LivePreview = ({
   // gives it its own phone layout anyway.
   const frameScale = useIsMobile() ? 1 : scale
   const rootRef = useRef<HTMLDivElement>(null)
+  const { scrollIntoView } = useScrollIntoView({ scrollBehavior: 'smooth' })
   const scrollTimer = useTimer()
   // Only while closed: once open, the page itself takes the screenshot's place.
   const shownPoster = open ? undefined : poster
@@ -178,12 +159,15 @@ export const LivePreview = ({
         )}
         onAnimationEnd={(event) => {
           // Shortly after it finishes opening, center the preview and its
-          // toggle, or whatever holds them, on screen.
+          // toggle, or whatever holds them, in the screen below the contents
+          // bar, which the page's scroll padding keeps clear; one too tall to
+          // fit lines its top up under the bar instead, keeping the toggle in
+          // view.
           if (open && event.target === event.currentTarget) {
             scrollTimer.start(() => {
               const target = scrollTargetRef?.current ?? rootRef.current
               if (target) {
-                scrollBelowContentsBar(target)
+                scrollIntoView(target, 'center')
               }
             }, SCROLL_DELAY_MS)
           }
