@@ -8,6 +8,18 @@ const { BAR } = CONTENTS
 const scrollToTop = (page: Page) =>
   page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
 
+/** Scrolls the page's own contents' top to `top` px down the viewport. */
+const scrollContentsTo = (page: Page, top: number) =>
+  page.getByTestId(CONTENTS.SELF).evaluate(
+    (contents, contentsTop) =>
+      window.scrollTo({
+        top:
+          contents.getBoundingClientRect().top + window.scrollY - contentsTop,
+        behavior: 'instant',
+      }),
+    top
+  )
+
 /** Scrolls the page's own contents just out of view off the top. */
 const scrollPastContents = (page: Page) =>
   page.getByTestId(CONTENTS.SELF).evaluate((contents) =>
@@ -35,14 +47,19 @@ test.describe('Contents bar', () => {
   // Jumps rather than glides, so a section has landed once its link is current.
   test.use({ reducedMotion: 'reduce' })
 
-  test('shows only once the contents have scrolled off the top', async ({
+  test('shows once the contents start to scroll off the top', async ({
     page,
   }) => {
     await page.goto('/')
     const bar = page.getByTestId(BAR.SELF)
     await expect(bar).toBeHidden()
 
-    await scrollPastContents(page)
+    // Still all in view, just below the top.
+    await scrollContentsTo(page, 1)
+    await expect(bar).toBeHidden()
+
+    // Their first px cut off.
+    await scrollContentsTo(page, -1)
     await expect(bar).toBeVisible()
 
     await scrollToTop(page)

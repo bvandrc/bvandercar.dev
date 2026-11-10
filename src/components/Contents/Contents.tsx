@@ -7,29 +7,35 @@ import { CONTENTS_ENTRIES, ContentsLink } from './ContentsLink'
 /**
  * Links to each project group, and to the skills, for a jump past the rest.
  *
- * Once they scroll off the top, the same links ride along in a bar pinned there.
+ * Once they start to scroll off the top, the same links ride along in a bar
+ * pinned there, taking over before any are cut off.
  */
 export const Contents = () => {
-  const { ref, entry: observed } = useIntersectionObserver()
+  // Out of full view, which the first px off the top is.
+  const {
+    ref,
+    isIntersecting: fullyInView,
+    entry,
+  } = useIntersectionObserver({
+    threshold: 1,
+  })
   // Off the top only: on a short screen, they can start out below the fold.
-  const scrolledPast =
-    observed !== undefined &&
-    !observed.isIntersecting &&
-    observed.boundingClientRect.top < 0
+  const clippedAtTop =
+    entry !== undefined && !fullyInView && entry.boundingClientRect.top < 0
   return (
     <>
       <nav ref={ref} aria-label="Contents" data-testid="contents">
         <List className="flex flex-wrap justify-center gap-2">
-          {CONTENTS_ENTRIES.map((entry) => (
+          {CONTENTS_ENTRIES.map((contentsEntry) => (
             <ContentsLink
-              key={entry.title}
-              {...entry}
+              key={contentsEntry.title}
+              {...contentsEntry}
               data-testid="contents-link"
             />
           ))}
         </List>
       </nav>
-      <ContentsBar shown={scrolledPast} />
+      <ContentsBar shown={clippedAtTop} />
     </>
   )
 }
