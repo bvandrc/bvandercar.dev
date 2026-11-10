@@ -104,33 +104,34 @@ export const LivePreview = ({
         data-pulse={pulse}
         data-testid="live-preview-toggle">
         {shownPoster && (
-          <img
-            src={shownPoster.src}
-            srcSet={shownPoster.srcSet}
-            // The toggle's label names it; the screenshot only shows the page.
-            alt=""
-            // As wide as the screen, less the card's padding, below md.
-            sizes="100vw"
-            loading="lazy"
-            style={{ height: shownPoster.height ?? DEFAULT_POSTER_HEIGHT }}
-            className={cn(
-              'w-full md:hidden',
-              // Cropped to fit, keeping the page's top, where its header is.
-              'object-cover object-top'
-            )}
-            data-testid="live-preview-poster"
-          />
-        )}
-        {shownPoster && (
-          // A fade that eases from clear at the poster's top to a nearly solid
-          // surface under the label, so the label reads against any
-          // screenshot while the screenshot still shows through.
-          <span
-            className={cn(
-              'absolute inset-0 md:hidden',
-              'bg-linear-to-t from-surface/90 from-15% via-surface/45 via-55% to-transparent'
-            )}
-          />
+          <>
+            <img
+              src={shownPoster.src}
+              srcSet={shownPoster.srcSet}
+              // The toggle's label names it; the screenshot only shows the
+              // page.
+              alt=""
+              // As wide as the screen, less the card's padding, below md.
+              sizes="100vw"
+              loading="lazy"
+              style={{ height: shownPoster.height ?? DEFAULT_POSTER_HEIGHT }}
+              className={cn(
+                'w-full md:hidden',
+                // Cropped to fit, keeping the page's top, where its header is.
+                'object-cover object-top'
+              )}
+              data-testid="live-preview-poster"
+            />
+            {/* A fade that eases from clear at the poster's top to a nearly
+                solid surface under the label, so the label reads against any
+                screenshot while the screenshot still shows through. */}
+            <span
+              className={cn(
+                'absolute inset-0 md:hidden',
+                'bg-linear-to-t from-surface/90 from-15% via-surface/45 via-55% to-transparent'
+              )}
+            />
+          </>
         )}
         <span
           className={cn(
