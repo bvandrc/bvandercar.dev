@@ -15,7 +15,6 @@ export const SELECTORS = {
     CARD: 'project-card',
     BLURB: 'project-blurb',
     REPO_LINK: 'project-repo-link',
-    REPO_LABEL: 'project-repo-label',
     COUNTS: 'project-counts',
     CHARTS_LOADING: 'project-charts-loading',
     ACTIVITY_CHART: 'activity-chart',
