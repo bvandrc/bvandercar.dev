@@ -4,12 +4,13 @@ import type { SectionLogo } from '@/generated/profile/content/projects'
 import type { GroupGlyph } from '@/generated/profile/content/sections'
 import { cn } from '@/lib/cn'
 import type { GlyphName } from '@/lib/icons'
+import { sectionAnchor } from '@/lib/section-anchor'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Icon } from './primitives/Icon'
 
 type TitledSectionProps = Omit<
   React.ComponentProps<'section'>,
-  'title' | 'children'
+  'id' | 'title' | 'children'
 > & {
   level: 'h2' | 'h3'
   /** The heading's type, and any spacing that differs from the default. */
@@ -22,7 +23,11 @@ type TitledSectionProps = Omit<
   children: React.ReactNode
 }
 
-/** A section labelled by its own heading, which shows the icon on both sides. */
+/**
+ * A section labelled by its own heading, which shows the icon on both sides.
+ *
+ * Its id is its title's anchor, so a `#` link, or a URL, can go straight to it.
+ */
 const TitledSection = ({
   level: Heading,
   headingClassName,
@@ -36,6 +41,7 @@ const TitledSection = ({
   const headingId = useId()
   return (
     <section
+      id={sectionAnchor(title)}
       aria-labelledby={headingId}
       // Clear of the viewport's top edge when a link scrolls to it.
       className={cn('scroll-mt-6', className)}
