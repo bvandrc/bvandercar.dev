@@ -25,8 +25,8 @@ const findRows = (list: HTMLElement) =>
  * element) and a wrapping flex box of badges (`dd`) whose lines start by it.
  * From sm up, the group centers on its first row's first line, and each line
  * a row wraps onto centers under that row's first. Below sm, it centers on
- * its labels and first lines together, and each wrapped line centers on the
- * page.
+ * its labels and first lines together, and the wrapped lines stay where they
+ * start, by the labels.
  */
 export const layOutSkills = (list: HTMLElement, isMobile: boolean) => {
   const area = list.parentElement?.getBoundingClientRect()
@@ -71,14 +71,17 @@ export const layOutSkills = (list: HTMLElement, isMobile: boolean) => {
     Math.floor(area.right - content.right)
   )
   shift(list, listShift)
+  if (isMobile) {
+    return
+  }
 
   for (const { first, wrapped } of measured) {
     for (const line of wrapped) {
-      const offset = isMobile
-        ? // On the page, not the first line, which the labels push right.
-          center - listShift - centerOf(line)
-        : // On the first line, or where it starts, for a line wider than it.
-          Math.max(centerOf(first) - centerOf(line), first.left - line.left)
+      // On the first line, or where it starts, for a line wider than it.
+      const offset = Math.max(
+        centerOf(first) - centerOf(line),
+        first.left - line.left
+      )
       for (const badge of line.items) {
         shift(badge, Math.round(offset))
       }

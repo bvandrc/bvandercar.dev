@@ -140,10 +140,9 @@ describe('layOutSkills', () => {
       expect(getShift(LIST_TEST_ID)).toBe('130px')
     })
 
-    it('centers each wrapped line on the parent, after the list’s shift', () => {
-      // Centered at 140, 270 once the list shifts, 30px left of the parent's.
+    it('leaves each wrapped line where it starts, by the labels', () => {
       layOut(ROWS, true)
-      expect(getShift(buildBadgeTestId(0, 2))).toBe('30px')
+      expect(getShift(buildBadgeTestId(0, 2))).toBe('')
     })
   })
 
