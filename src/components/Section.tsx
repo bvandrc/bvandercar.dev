@@ -85,6 +85,9 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
     headingClassName="text-2xl font-semibold tracking-tight"
     titleClassName={cn(
       'flex items-center gap-3',
+      // On one line, like "Beyond Code": on a narrow screen, the box shrinks
+      // past its content, and the rules beside the text give it their room.
+      'min-w-0 whitespace-nowrap',
       // An orange rule from each icon to the title, padded by the gaps on both
       // its sides: 12px, a 56px line, and 12px make 80px from icon to text.
       "before:h-0.5 before:w-14 before:rounded-full before:bg-orange-700 before:content-['']",
