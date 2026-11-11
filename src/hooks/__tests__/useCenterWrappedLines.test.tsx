@@ -12,9 +12,11 @@ import { useCenterWrappedLines } from '../useCenterWrappedLines'
 
 const mockLayout = (layouts: ItemLayout[]) => mockRects(buildItemRects(layouts))
 
-const Lines = ({ count }: { count: number }) => {
+type LinesProps = { count: number; isEnabled?: boolean }
+
+const Lines = ({ count, isEnabled }: LinesProps) => {
   const ref = useRef<HTMLDivElement>(null)
-  useCenterWrappedLines(ref)
+  useCenterWrappedLines(ref, isEnabled)
   return (
     <div ref={ref}>
       {Array.from({ length: count }, (_, index) => (
@@ -66,6 +68,13 @@ describe('useCenterWrappedLines', () => {
     ])
     renderLines(3)
     expect(getOffset(1)).toBe('')
+  })
+
+  it('drops its offsets, and sets none, once disabled', () => {
+    mockLayout(NARROWER_WRAP)
+    const { rerender } = renderLines(3)
+    rerender(<Lines count={3} isEnabled={false} />)
+    expect(getOffset(2)).toBe('')
   })
 
   it('measures again on a resize, dropping an offset the line no longer needs', () => {

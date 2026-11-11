@@ -21,21 +21,25 @@ import { Section, SubSection } from './Section'
 
 type SkillsRowProps = {
   row: SkillRow
+  /** Below sm, where the skills center rather than start by the label */
+  isMobile: boolean
 }
 
 /** A row's label, and its skills' badges beside it. */
-const SkillsRow = ({ row }: SkillsRowProps) => {
+const SkillsRow = ({ row, isMobile }: SkillsRowProps) => {
   const skillsRef = useRef<HTMLElement>(null)
-  useCenterWrappedLines(skillsRef)
+  useCenterWrappedLines(skillsRef, !isMobile)
   // The label's line breaks are for the README's narrow column.
   const label = row.label.replaceAll('\n', ' ')
   return (
-    // Two columns, on the group's grid: the label, right-aligned, and the
-    // skills beside it.
+    // Two columns, on the group's grid: the label, and the skills beside it.
     <div className="col-span-2 grid grid-cols-subgrid items-start">
       <dt
         className={cn(
-          'text-right text-ink-muted',
+          'text-ink-muted',
+          // Below sm, the group's labels line up on the left; from sm, on the
+          // right, by their skills.
+          'text-left sm:text-right',
           'text-xs sm:text-sm',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
@@ -43,11 +47,12 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
         )}>
         {label}
       </dt>
-      {/* Its first line starts right by the label, and the lines that wrap
+      {/* Below sm, every line centers in the group's column of skills. From
+          sm, the first starts right by the label, and the lines that wrap
           center on it. */}
       <dd
         ref={skillsRef}
-        className="flex flex-wrap justify-start gap-1.5 sm:gap-2">
+        className="flex flex-wrap justify-center gap-1.5 sm:justify-start sm:gap-2">
         {row.lines.flat().map((skill) => {
           const slug = skillIconSlug(skill)
           return (
@@ -130,7 +135,7 @@ const SkillsGroup = ({ group }: SkillsGroupProps) => {
           'gap-x-2 gap-y-3 sm:gap-x-3'
         )}>
         {group.rows.map((row) => (
-          <SkillsRow key={row.label} row={row} />
+          <SkillsRow key={row.label} row={row} isMobile={isMobile} />
         ))}
       </dl>
     </SubSection>
