@@ -14,7 +14,7 @@ import { describeWeeklyDownloads } from './weekly-downloads'
 // would squeeze the rest into their right edge.
 const EARLIEST_START = '2025-01-01'
 // How far back the charts open zoomed in to, from their last day.
-const INITIAL_ZOOM_MONTHS = 18
+const INITIAL_ZOOM_MONTHS = 12
 
 /** The ISO dates a history counts from and through. */
 type HistoryDays = Pick<DownloadHistory, 'firstDay' | 'lastDay'>
@@ -89,7 +89,7 @@ const sumDownloads = (
  * The charts span from the first day any of them counts, or Jan 1, 2025 if
  * that's later, with each line starting at the total counted by then, and
  * no releases marked, which would crowd them. Where they span longer, they
- * open zoomed in on their last 18 months. Undefined for nothing to chart: no
+ * open zoomed in on their last year. Undefined for nothing to chart: no
  * history, or a stretch under two weeks.
  */
 export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {

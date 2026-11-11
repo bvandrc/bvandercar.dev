@@ -132,7 +132,7 @@ describe('getTotalCharts', () => {
   it('spans every chart from the earliest first day to the latest last one, marking no releases, and describes each', () => {
     expect(getTotalCharts([REPO, LATER_REPO], PACKAGES)).toMatchObject({
       span: { start: '2026-03-02', end: '2026-03-20' },
-      // Under 18 months, so they open zoomed all the way out.
+      // Under a year, so they open zoomed all the way out.
       initialSpan: undefined,
       releases: undefined,
       // Each chart's, in its order.
@@ -152,10 +152,10 @@ describe('getTotalCharts', () => {
     })
   })
 
-  it('opens charts spanning over 18 months zoomed in on their last 18', () => {
+  it('opens charts spanning over a year zoomed in on their last year', () => {
     expect(getTotalCharts([LONG_REPO], [])).toMatchObject({
       span: { start: '2025-01-01', end: '2026-11-10' },
-      initialSpan: { start: '2025-05-10', end: '2026-11-10' },
+      initialSpan: { start: '2025-11-10', end: '2026-11-10' },
     })
   })
 
