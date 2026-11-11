@@ -19,56 +19,61 @@ export const Skills = () => (
     // fit more skills to a line.
     className="-mx-5 sm:mx-0"
     data-testid="skills">
-    {/* Only as wide as the widest row, and centered, so every group's rows
-        share one left edge, and their headings center over it. */}
-    <div className="mx-auto flex w-fit max-w-full flex-col gap-5">
-      {SKILLS.map((group) => (
-        <SubSection key={group.title} icon={group.glyph} title={group.title}>
-          <dl className="flex flex-col gap-3">
-            {group.rows.map((row) => {
-              // The label's line breaks are for the README's narrow column.
-              const label = row.label.replaceAll('\n', ' ')
-              return (
-                // Two columns: the labels, right-aligned and the same width in
-                // every group, and the skills, wrapping flush left beside them.
-                <div key={label} className="flex items-start gap-2 sm:gap-3">
-                  <dt
-                    className={cn(
-                      'shrink-0 text-right text-ink-muted',
-                      // Wide enough for every label but "Project Mgmt.", which
-                      // takes two lines below sm.
-                      'w-16 text-xs sm:w-24 sm:text-sm',
-                      // Level with the first line of badges, a touch above
-                      // center, where it reads in line with their names.
-                      'pt-0.5 sm:pt-0.75'
-                    )}>
-                    {label}
-                  </dt>
-                  <dd className="flex flex-wrap gap-1.5 sm:gap-2">
-                    {row.lines.flat().map((skill) => {
-                      const slug = skillIconSlug(skill)
-                      return (
-                        // Smaller below sm, to fit more skills to a line.
-                        <Badge
-                          key={skill.alt}
-                          className="px-1.5 py-0.5 text-[0.8125rem]/4.5 sm:px-2 sm:py-1 sm:text-sm">
-                          <BrandIcon
-                            slug={slug}
-                            color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
-                            size={14}
-                            className="size-3.5"
-                          />
-                          {skill.alt}
-                        </Badge>
-                      )
-                    })}
-                  </dd>
-                </div>
-              )
-            })}
-          </dl>
-        </SubSection>
-      ))}
-    </div>
+    {SKILLS.map((group) => (
+      <SubSection key={group.title} icon={group.glyph} title={group.title}>
+        <dl
+          className={cn(
+            'flex flex-col gap-3',
+            // From sm up, a grid only as wide as its widest row, centered
+            // under its heading, its labels' column as wide as its longest.
+            'sm:mx-auto sm:grid sm:w-fit sm:grid-cols-[auto_1fr]'
+          )}>
+          {group.rows.map((row) => {
+            // The label's line breaks are for the README's narrow column.
+            const label = row.label.replaceAll('\n', ' ')
+            return (
+              // Two columns: the labels, right-aligned, and the skills,
+              // wrapping flush left beside them. Below sm, the labels' column
+              // is the same width in every group.
+              <div
+                key={label}
+                className="flex items-start gap-2 sm:col-span-2 sm:grid sm:grid-cols-subgrid sm:gap-3">
+                <dt
+                  className={cn(
+                    'shrink-0 text-right text-ink-muted',
+                    // Below sm, wide enough for every label but "Project
+                    // Mgmt.", which takes two lines.
+                    'w-16 text-xs sm:w-auto sm:text-sm',
+                    // Level with the first line of badges, a touch above
+                    // center, where it reads in line with their names.
+                    'pt-0.5 sm:pt-0.75'
+                  )}>
+                  {label}
+                </dt>
+                <dd className="flex flex-wrap gap-1.5 sm:gap-2">
+                  {row.lines.flat().map((skill) => {
+                    const slug = skillIconSlug(skill)
+                    return (
+                      // Smaller below sm, to fit more skills to a line.
+                      <Badge
+                        key={skill.alt}
+                        className="px-1.5 py-0.5 text-[0.8125rem]/4.5 sm:px-2 sm:py-1 sm:text-sm">
+                        <BrandIcon
+                          slug={slug}
+                          color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
+                          size={14}
+                          className="size-3.5"
+                        />
+                        {skill.alt}
+                      </Badge>
+                    )
+                  })}
+                </dd>
+              </div>
+            )
+          })}
+        </dl>
+      </SubSection>
+    ))}
   </Section>
 )
