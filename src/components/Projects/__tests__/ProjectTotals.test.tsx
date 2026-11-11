@@ -135,7 +135,8 @@ describe('ProjectTotals', () => {
     expect(counts).toMatchObject({ textContent: '1K601.2K' })
     expect(counts.getAttribute('aria-label')).toBe(LABEL)
     expect(link.getAttribute('href')).toBe('#projects')
-    expect(link.textContent).toMatch(/across projects$/)
+    // Bracketed as a whole.
+    expect(link.textContent).toMatch(/^\[.+across projects\]$/)
   })
 
   it('charts the commits, merged PRs, and downloads across every project on hover, each ending at the total shown, and describes them', async () => {

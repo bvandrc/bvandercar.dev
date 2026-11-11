@@ -24,18 +24,23 @@ export const ProjectTotals = () => {
     <Link
       href={`#${sectionAnchor(SECTIONS.PROJECTS.title)}`}
       tone="muted"
-      className="inline-flex items-center gap-2"
+      className="inline-flex items-center gap-1"
       {...focusProps}
       data-testid="project-totals-link">
-      <CountGlyphs
-        shown={shown}
-        chartCount={chartCount}
-        getCharts={(charts) => charts.getTotalCharts(repos, packages)}
-        open={open}
-        onOpenChange={setOpen}
-        data-testid="project-totals"
-      />
-      across projects
+      {/* Only drawn, so its name reads as the counts and words alone. */}
+      <span aria-hidden>[</span>
+      <span className="inline-flex items-center gap-2">
+        <CountGlyphs
+          shown={shown}
+          chartCount={chartCount}
+          getCharts={(charts) => charts.getTotalCharts(repos, packages)}
+          open={open}
+          onOpenChange={setOpen}
+          data-testid="project-totals"
+        />
+        across projects
+      </span>
+      <span aria-hidden>]</span>
     </Link>
   )
 }
