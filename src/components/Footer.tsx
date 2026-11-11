@@ -6,7 +6,7 @@ import { Icon } from './primitives/Icon'
 import { Link } from './primitives/Link'
 import { SocialLinks } from './SocialLinks'
 
-/** The page's foot: my profiles again, the site's source, every project's counts added up, and the day it was built. */
+/** The page's foot: my profiles again, every project's counts added up, the site's source, and the day it was built. */
 export const Footer = () => {
   const buildDate = import.meta.env.BUILD_DATE
   return (
@@ -20,6 +20,7 @@ export const Footer = () => {
       )}
       data-testid="footer">
       <SocialLinks tone="muted" />
+      <ProjectTotals />
       <Link
         href={getRepoUrl('bvandercar.dev')}
         tone="muted"
@@ -29,7 +30,6 @@ export const Footer = () => {
         <Icon name="code-xml" />
         Source on GitHub
       </Link>
-      <ProjectTotals />
       <p>
         Built{' '}
         <time dateTime={buildDate} data-testid="footer-build-date">
