@@ -1,79 +1,10 @@
-import { Fragment, useEffect } from 'react'
-import {
-  createLazyLoad,
-  type UsePressToggleOptions,
-  usePressToggle,
-} from '@bvandrc/react-toolkit'
-
-import { Icon } from '@/components/primitives/Icon'
-import { Tooltip, type TooltipProps } from '@/components/primitives/Tooltip'
 import type { Project } from '@/generated/profile/content/projects'
-import { cn } from '@/lib/cn'
-import { formatCompactCount, formatCount } from '@/lib/format-count'
 import type { CountsField } from '~/counts'
+import { CountGlyphs, type CountGlyphsProps } from './CountGlyphs'
 import { getProjectCounts } from './lib/project-counts'
 
-// Charts size the tooltip to themselves, with text to match, where the
-// counts in words are a line of text.
-const TOOLTIP_CLASSES = {
-  CHARTS: 'max-w-none p-3 text-sm',
-  WORDS: undefined,
-} as const
-
-/**
- * The project charts' code and data, which stay out of the page's first load,
- * and a `prefetch` that starts loading them.
- *
- * Takes whether the project may chart at all. Loading them for one set of
- * counts loads them for every other, mounted or mounted later.
- */
-const useLazyCharts = createLazyLoad(() =>
-  Promise.all([
-    import('./charts/ProjectCharts'),
-    import('./charts/lib/project-charts'),
-  ]).then(([{ ProjectCharts }, { getProjectCharts }]) => ({
-    ProjectCharts,
-    getProjectCharts,
-  }))
-)
-
-// A tap stands in for the hover a touch screen lacks; a mouse, which can
-// hover, clicks through to the link the counts sit in.
-const TOGGLE_OPTIONS = {
-  pointerTypes: ['touch'],
-} satisfies UsePressToggleOptions
-
-/**
- * The gap between two counts: 10px with room, closing to 4px without.
- *
- * Its width is 10px at most and 4px at least, which a flex `gap` can't be.
- */
-const PairGap = () => (
-  // Its pieces wrap onto lines no one sees, so it can shrink to the widest.
-  <span className="flex h-0 flex-wrap overflow-hidden">
-    <span className="w-1" />
-    <span className="w-1" />
-    <span className="w-0.5" />
-  </span>
-)
-
-type ChartsPlaceholderProps = {
-  /** How many charts may show */
-  count: number
-}
-
-/** A blank chart's size for each that may show, so the tooltip jumps as little as it can once they load. */
-const ChartsPlaceholder = ({ count }: ChartsPlaceholderProps) => (
-  <div className="flex flex-col gap-3" data-testid="project-charts-loading">
-    {Array.from({ length: count }, (_, index) => (
-      // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
-      <div key={index} className="h-21 w-82" />
-    ))}
-  </div>
-)
-
 export type ProjectCountsProps = Pick<Project, CountsField> &
-  Pick<TooltipProps, 'open' | 'onOpenChange'>
+  Pick<CountGlyphsProps, 'open' | 'onOpenChange'>
 
 /**
  * A repo's counts as glyphs with shortened numbers, in full as alt text, and
@@ -90,105 +21,22 @@ export type ProjectCountsProps = Pick<Project, CountsField> &
  */
 export const ProjectCounts = ({
   repo,
-  open = false,
+  open,
   onOpenChange,
   ...packages
 }: ProjectCountsProps) => {
-  // Its pointerdown handler reads the state before Radix's own closes an open
-  // tooltip, and its click handler cancels the click, which also stops
-  // Radix's from closing it again.
-  const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
   const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
-  const mayChart = chartCount > 0
-  // Charts that failed to load leave the counts in words, until the next
-  // hover or tap tries again.
-  const {
-    value: charts,
-    isFailed: chartsFailed,
-    prefetch: prefetchCharts,
-  } = useLazyCharts(mayChart)
-  const projectCharts = charts?.getProjectCharts(repo, pkg)
-  /** Opens or closes the tooltip, loading the charts as it opens, however it opened. */
-  const changeOpen = (next: boolean) => {
-    setIsActive(next)
-    onOpenChange?.(next)
-    if (next) {
-      prefetchCharts()
-    }
-  }
-  // Opened from outside, it loads the charts as it opens too.
-  useEffect(() => {
-    if (open) {
-      prefetchCharts()
-    }
-  }, [open, prefetchCharts])
-  if (shown.length === 0) {
-    return null
-  }
-  const isLoading = mayChart && !charts && !chartsFailed
-  const label = shown
-    .map(({ count, noun }) => formatCount(count, noun))
-    .join(', ')
-  // The charts' history in words, for screen readers.
-  const description = projectCharts
-    ? [label, ...projectCharts.descriptions].join('. ')
-    : undefined
-  /** The charts, a blank space their size while they load, or else the counts in words. */
-  const getContent = () => {
-    if (projectCharts && charts) {
-      return (
-        <charts.ProjectCharts
-          activity={projectCharts.activity}
-          downloads={projectCharts.downloads}
-          releases={projectCharts.releases}
-          span={projectCharts.span}
-        />
-      )
-    }
-    if (isLoading) {
-      return <ChartsPlaceholder count={chartCount} />
-    }
-    return label
-  }
   return (
-    <Tooltip
-      open={isActive || open}
-      onOpenChange={changeOpen}
-      content={getContent()}
-      aria-label={description}
-      className={
-        TOOLTIP_CLASSES[projectCharts || isLoading ? 'CHARTS' : 'WORDS']
-      }>
-      {/* An image, like the profile README's badge, so its name can be the
-          full counts rather than the shortened ones it shows. */}
-      <span
-        role="img"
-        aria-label={label}
-        className={cn(
-          'flex items-center',
-          // Takes the room its gaps need at their tightest, then grows them
-          // back as room allows, so they close up before "repo" wraps below.
-          'max-w-max grow basis-0'
-        )}
-        {...triggerProps}
-        // Starts loading the charts as the pointer arrives, ahead of the
-        // tooltip's open delay, or with a tap.
-        onPointerEnter={prefetchCharts}
-        onPointerDown={(event) => {
-          prefetchCharts()
-          triggerProps.onPointerDown(event)
-        }}
-        data-testid="project-counts">
-        {shown.map(({ key, icon, count }, index) => (
-          <Fragment key={key}>
-            {index > 0 && <PairGap />}
-            <span className="inline-flex items-center gap-1">
-              <Icon name={icon} className="size-[1.1em]" />
-              {formatCompactCount(count)}
-            </span>
-          </Fragment>
-        ))}
-      </span>
-    </Tooltip>
+    <CountGlyphs
+      shown={shown}
+      chartCount={chartCount}
+      getCharts={(charts) => charts.getProjectCharts(repo, pkg)}
+      open={open}
+      onOpenChange={onOpenChange}
+      // Takes the room its gaps need at their tightest, then grows them back
+      // as room allows, so they close up before "repo" wraps below.
+      className="max-w-max grow basis-0"
+      data-testid="project-counts"
+    />
   )
 }

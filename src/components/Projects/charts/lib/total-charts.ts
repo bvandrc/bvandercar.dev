@@ -1,0 +1,116 @@
+import { isNotNil } from 'es-toolkit'
+
+import { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
+import { REPO_ACTIVITY } from '@/generated/repo-activity'
+import type { ActivityHistory, DownloadHistory } from '~/counts'
+import { earlierDay, getDaysBetween, laterDay } from '~/dates'
+import type { ProjectPackage } from './project-charts'
+import { getSpanMs, MIN_CHART_MS } from './spans'
+import { describeWeeklyActivity } from './weekly-activity'
+import { describeWeeklyDownloads } from './weekly-downloads'
+
+/** The ISO dates a history counts from and through. */
+type HistoryDays = Pick<DownloadHistory, 'firstDay' | 'lastDay'>
+
+/** The days `histories` count between them, from the earliest first day through the latest last one; one or more histories. */
+const getCombinedDays = (histories: HistoryDays[]): HistoryDays => ({
+  firstDay: histories.map(({ firstDay }) => firstDay).reduce(earlierDay),
+  lastDay: histories.map(({ lastDay }) => lastDay).reduce(laterDay),
+})
+
+/** The days `histories` count between them, if they're enough to chart: two or more. */
+const getChartedDays = (histories: HistoryDays[]) => {
+  if (histories.length === 0) {
+    return undefined
+  }
+  const days = getCombinedDays(histories)
+  // A single day is a point, not a trend.
+  return days.firstDay === days.lastDay ? undefined : days
+}
+
+/** Each history's daily counts, read by `getDaily`, added up day by day across `days`, oldest first. */
+const sumDaily = <History extends HistoryDays>(
+  histories: History[],
+  getDaily: (history: History) => number[],
+  days: HistoryDays
+) => {
+  const totals = Array.from(
+    { length: getDaysBetween(days.firstDay, days.lastDay) + 1 },
+    () => 0
+  )
+  for (const history of histories) {
+    const offset = getDaysBetween(days.firstDay, history.firstDay)
+    getDaily(history).forEach((count, index) => {
+      totals[offset + index] += count
+    })
+  }
+  return totals
+}
+
+/** The repos' commits and merged PRs added up, day by day, if they span enough days to chart. */
+const sumActivity = (
+  histories: ActivityHistory[]
+): ActivityHistory | undefined => {
+  const days = getChartedDays(histories)
+  if (!days) {
+    return undefined
+  }
+  return {
+    ...days,
+    commits: sumDaily(histories, ({ commits }) => commits, days),
+    prs: sumDaily(histories, ({ prs }) => prs, days),
+  }
+}
+
+/** The packages' downloads added up, day by day, if they span enough days to chart. */
+const sumDownloads = (
+  histories: DownloadHistory[]
+): DownloadHistory | undefined => {
+  const days = getChartedDays(histories)
+  if (!days) {
+    return undefined
+  }
+  return { ...days, daily: sumDaily(histories, ({ daily }) => daily, days) }
+}
+
+/**
+ * What every project's counts chart together: the repos' commits and merged
+ * PRs, and the packages' downloads, each added up day by day, the dates they
+ * span, and a sentence describing each chart for screen readers.
+ *
+ * The charts span from the first day any of them counts, with no releases
+ * marked, which would crowd them. Undefined for nothing to chart: no
+ * history, or a stretch under two weeks.
+ */
+export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
+  const activity = sumActivity(
+    repos.map((repo) => REPO_ACTIVITY[repo]).filter(isNotNil)
+  )
+  const downloads = sumDownloads(
+    packages
+      .map(({ registry, name }) => PACKAGE_DOWNLOADS[registry][name])
+      .filter(isNotNil)
+  )
+  const charted = [activity, downloads].filter(isNotNil)
+  if (charted.length === 0) {
+    return undefined
+  }
+  const { firstDay, lastDay } = getCombinedDays(charted)
+  const span = { start: firstDay, end: lastDay }
+  if (getSpanMs(span) < MIN_CHART_MS) {
+    return undefined
+  }
+  return {
+    activity,
+    prs: activity,
+    // From more than one registry, so it names none.
+    downloads: downloads && { history: downloads },
+    releases: undefined,
+    span,
+    descriptions: [
+      activity && describeWeeklyActivity(activity, 'commits'),
+      activity && describeWeeklyActivity(activity, 'prs'),
+      downloads && describeWeeklyDownloads(downloads, undefined),
+    ].filter(isNotNil),
+  }
+}

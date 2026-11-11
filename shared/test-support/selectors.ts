@@ -29,8 +29,13 @@ export const SELECTORS = {
     THUMBNAIL: 'project-thumbnail',
     REPO_LINK: 'project-repo-link',
     COUNTS: 'project-counts',
+    TOTALS: {
+      LINK: 'project-totals-link',
+      COUNTS: 'project-totals',
+    },
     CHARTS_LOADING: 'project-charts-loading',
-    ACTIVITY_CHART: 'activity-chart',
+    COMMITS_CHART: 'commits-chart',
+    PRS_CHART: 'prs-chart',
     DOWNLOADS_CHART: 'downloads-chart',
     RUNNING_TOTAL_CHART: {
       PLOT: 'running-total-chart-plot',

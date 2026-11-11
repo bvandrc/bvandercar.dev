@@ -18,17 +18,22 @@ export const PACKAGE_FIELDS = {
   pypi: 'pypiPackage',
 } as const satisfies Record<Registry, CountsField>
 
-/** A repo's commits on its default branch, and its pull requests, in all. */
+/** A repo's commits on its default branch, and its merged pull requests, in all. */
 export type ActivityTotals = { commits: number; prs: number }
 
-/** A repo's commits per day. */
-export type CommitHistory = {
+/** A repo's activity, as charted: its commits and its merged pull requests. */
+export type ActivityKind = keyof ActivityTotals
+
+/** A repo's commits, and merged pull requests, per day. */
+export type ActivityHistory = {
   /** ISO date of the repo's first commit or pull request */
   firstDay: string
   /** ISO date the history was read */
   lastDay: string
   /** Commits on the default branch each day from `firstDay` through `lastDay`, oldest first; they sum to the repo's total */
   commits: number[]
+  /** Pull requests merged each day from `firstDay` through `lastDay`, oldest first; they sum to the repo's total */
+  prs: number[]
 }
 
 /** A package's downloads per day since its first publish. */

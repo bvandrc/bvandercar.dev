@@ -5,6 +5,9 @@ import { DAY_MS } from '~/dates'
 /** The dates a chart runs from and to, as ISO dates or times. */
 export type DaySpan = { start: string; end: string }
 
+/** The shortest stretch of dates charts are drawn over: two weeks. */
+export const MIN_CHART_MS = 14 * DAY_MS
+
 // The narrowest a zoom goes: four weeks, so there's still a line to draw, or
 // a quarter of a shorter chart's span.
 const MIN_ZOOM_MS = 28 * DAY_MS

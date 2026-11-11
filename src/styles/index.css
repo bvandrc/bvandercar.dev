@@ -18,6 +18,8 @@
   --color-link-subtle: #9da8da;
   /* GitHub's dark-theme green for contributions, for the commits chart. */
   --color-commits: #238636;
+  /* GitHub's dark-theme purple for merged pull requests, for the PRs chart. */
+  --color-prs: #8957e5;
 
   /* The height of the contents bar pinned to the top once the page scrolls. */
   --spacing-contents-bar: 3rem;

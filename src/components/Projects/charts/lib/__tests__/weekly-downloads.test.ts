@@ -27,4 +27,10 @@ describe('describeWeeklyDownloads', () => {
       /^Weekly PyPI downloads .*, peaking at 1,200 in the week of Mar 11, 2026$/
     )
   })
+
+  it('names no registry for downloads from more than one', () => {
+    expect(describeWeeklyDownloads(HISTORY, undefined)).toMatch(
+      /^Weekly downloads since /
+    )
+  })
 })

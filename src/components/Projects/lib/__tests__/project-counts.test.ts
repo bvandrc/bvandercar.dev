@@ -43,6 +43,7 @@ describe('getProjectCounts', () => {
         expect.objectContaining({ key: 'downloads', count: 1217 }),
       ],
       pkg: { registry: 'npm', name: NPM_PACKAGE },
+      fetched: { activity: true, downloads: true },
       chartCount: 2,
     })
   })
@@ -54,6 +55,7 @@ describe('getProjectCounts', () => {
       counts: { commits: 7, prs: 3 },
       shown: [expect.objectContaining({ key: 'commits', count: 7 })],
       pkg: { registry: 'pypi', name: PYPI_PACKAGE },
+      fetched: { activity: false, downloads: false },
       chartCount: 0,
     })
   })

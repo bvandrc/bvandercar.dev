@@ -78,8 +78,25 @@ test.describe('Accessibility', () => {
     await page.goto('/')
 
     await getChartedCounts(page).hover()
-    await expect(page.getByTestId(PROJECTS.ACTIVITY_CHART)).toBeVisible()
+    await expect(page.getByTestId(PROJECTS.COMMITS_CHART)).toBeVisible()
     await expect(page.getByTestId(PROJECTS.DOWNLOADS_CHART)).toBeVisible()
+
+    // Portaled outside every landmark, like any tooltip.
+    await checkA11y(page, { disableRules: ['region'] })
+  })
+
+  test('Open project totals', async ({ page }) => {
+    await page.goto('/')
+
+    // Charted where the build fetched every project's counts, in words where
+    // it couldn't, as in CI's test builds.
+    const link = page.getByTestId(PROJECTS.TOTALS.LINK)
+    // In view first: on a phone, the contents bar's own scroll ends before
+    // the page's, which opens the tooltip early, and the page's then closes it.
+    await link.scrollIntoViewIfNeeded()
+    await link.focus()
+    await expect(page.getByTestId(TOOLTIP)).toBeVisible()
+    await expect(page.getByTestId(PROJECTS.CHARTS_LOADING)).toHaveCount(0)
 
     // Portaled outside every landmark, like any tooltip.
     await checkA11y(page, { disableRules: ['region'] })

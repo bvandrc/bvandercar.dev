@@ -6,17 +6,17 @@ import {
 } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { Registry } from '~/counts'
-import { DAY_MS } from '~/dates'
-import { getSpanMs } from './spans'
-import { describeWeeklyCommits, getDayReachingCommits } from './weekly-activity'
+import { getSpanMs, MIN_CHART_MS } from './spans'
+import {
+  describeWeeklyActivity,
+  getDayReachingCommits,
+} from './weekly-activity'
 import { describeWeeklyDownloads } from './weekly-downloads'
 
 // How many commits a repo with no package needs before it gets a chart.
 const UNPACKAGED_MIN_COMMITS = 20
 // How many commits a repo with no package has made before its chart starts.
 const UNPACKAGED_START_COMMITS = 15
-// The shortest stretch of dates the charts are drawn over: two weeks.
-const MIN_CHART_MS = 14 * DAY_MS
 
 /** A package a project publishes: the registry, and its name there. */
 export type ProjectPackage = { registry: Registry; name: string }
@@ -91,7 +91,7 @@ export const getProjectCharts = (
     releases,
     span,
     descriptions: [
-      activity && describeWeeklyCommits(activity),
+      activity && describeWeeklyActivity(activity, 'commits'),
       downloads &&
         describeWeeklyDownloads(downloads.history, downloads.registry),
     ].filter(isNotNil),
