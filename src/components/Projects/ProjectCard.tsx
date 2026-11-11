@@ -12,7 +12,12 @@ import { fillBlurb, type Project } from '@/generated/profile/content/projects'
 import { cn } from '@/lib/cn'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
-import { getThumbnailPath, THUMBNAIL_WIDTHS } from '~/screenshots'
+import {
+  getPosterPath,
+  getThumbnailPath,
+  THUMBNAIL_WIDTHS,
+  type ThumbnailWidth,
+} from '~/screenshots'
 import { getProjectCounts } from './lib/project-counts'
 import { RepoLink } from './RepoLink'
 
@@ -24,11 +29,11 @@ const NAME_SIZES = ['text-lg', 'text-base', 'text-[15px]']
 const getPublicUrl = (path: string) =>
   `${import.meta.env.BASE_URL}${path.replace(/^\.\//, '')}`
 
-/** A screenshot's WebP thumbnails, as an image's `src` and `srcSet`, for the browser to pick the width it needs. */
-const getThumbnail = (screenshot: string) => ({
-  src: getPublicUrl(getThumbnailPath(screenshot, THUMBNAIL_WIDTHS[0])),
+/** A screenshot's WebP image at each of `THUMBNAIL_WIDTHS`, as an image's `src` and `srcSet`, for the browser to pick the width it needs. */
+const getSizedImage = (getPath: (width: ThumbnailWidth) => string) => ({
+  src: getPublicUrl(getPath(THUMBNAIL_WIDTHS[0])),
   srcSet: THUMBNAIL_WIDTHS.map(
-    (width) => `${getPublicUrl(getThumbnailPath(screenshot, width))} ${width}w`
+    (width) => `${getPublicUrl(getPath(width))} ${width}w`
   ).join(', '),
 })
 
@@ -62,12 +67,17 @@ export const ProjectCard = ({
     stepCount: NAME_SIZES.length,
   })
   const [previewOpen, setPreviewOpen] = useState(false)
-  const screenshotSrc = project.screenshot && getPublicUrl(project.screenshot)
+  const { screenshot } = project
+  const screenshotSrc = screenshot && getPublicUrl(screenshot)
   // A live preview's card shows its screenshot small: beside its name and
-  // blurb from sm, and across its toggle below.
+  // blurb from sm, and only its top, across its toggle, below.
   const thumbnail =
-    project.embed && project.screenshot
-      ? getThumbnail(project.screenshot)
+    project.embed && screenshot
+      ? getSizedImage((width) => getThumbnailPath(screenshot, width))
+      : undefined
+  const poster =
+    project.embed && screenshot
+      ? getSizedImage((width) => getPosterPath(screenshot, width))
       : undefined
   const changePreviewOpen = (open: boolean) => {
     setPreviewOpen(open)
@@ -190,10 +200,7 @@ export const ProjectCard = ({
               // centers the preview and its toggle.
               scrollTargetRef={isMobile ? undefined : cardRef}
               poster={
-                thumbnail && {
-                  ...thumbnail,
-                  height: project.embed.posterHeight,
-                }
+                poster && { ...poster, height: project.embed.posterHeight }
               }
               open={previewOpen}
               onOpenChange={changePreviewOpen}
