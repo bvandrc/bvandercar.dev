@@ -36,9 +36,10 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
         className={cn(
           'text-right text-ink-muted',
           'text-xs sm:text-sm',
-          // Below sm, "Project Mgmt.", the longest, takes two lines, which
-          // leaves its skills room for two to a line.
-          'max-w-16 sm:max-w-none',
+          // Below sm, the same width in every group, so the groups as wide as
+          // the screen share one edge; "Project Mgmt.", the longest, takes two
+          // lines, which leaves its skills room for two to a line.
+          'w-16 sm:w-auto',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
           'pt-0.5 sm:pt-0.75'
