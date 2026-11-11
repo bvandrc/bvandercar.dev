@@ -1,10 +1,10 @@
 import type { Project } from '@/generated/profile/content/projects'
 import type { CountsField } from '~/counts'
-import { CountGlyphs, type CountGlyphsProps } from './CountGlyphs'
+import { Counts, type CountsProps } from './Counts'
 import { getProjectCounts } from './lib/project-counts'
 
 export type ProjectCountsProps = Pick<Project, CountsField> &
-  Pick<CountGlyphsProps, 'open' | 'onOpenChange'>
+  Pick<CountsProps, 'open' | 'onOpenChange'>
 
 /**
  * A repo's counts as glyphs with shortened numbers, in full as alt text, and
@@ -27,7 +27,7 @@ export const ProjectCounts = ({
 }: ProjectCountsProps) => {
   const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
   return (
-    <CountGlyphs
+    <Counts
       shown={shown}
       chartCount={chartCount}
       getCharts={(charts) => charts.getProjectCharts(repo, pkg)}

@@ -83,12 +83,14 @@ const ChartsPlaceholder = ({ count }: ChartsPlaceholderProps) => (
   </div>
 )
 
-export type CountGlyphsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
+export type CountsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
   Pick<ReturnType<typeof getProjectCounts>, 'shown' | 'chartCount'> & {
     /** Picks what the counts chart, once the charts' code has loaded; undefined for nothing */
     getCharts: (charts: LazyCharts) => CountsCharts | undefined
     className?: string
     'data-testid': string
+    /** Words beside the glyphs, which open the tooltip too */
+    children?: React.ReactNode
   }
 
 /**
@@ -100,9 +102,10 @@ export type CountGlyphsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
  * first time the tooltip opens. On a touch screen, which has no hover, a tap
  * opens and closes the tooltip instead, rather than following a link the
  * counts sit in. Pass `open` and `onOpenChange` to also open it from
- * elsewhere.
+ * elsewhere, and `children` for words after the glyphs that hover, or a tap,
+ * opens it from too.
  */
-export const CountGlyphs = ({
+export const Counts = ({
   shown,
   chartCount,
   getCharts,
@@ -110,7 +113,8 @@ export const CountGlyphs = ({
   onOpenChange,
   className,
   'data-testid': testId,
-}: CountGlyphsProps) => {
+  children,
+}: CountsProps) => {
   // Its pointerdown handler reads the state before Radix's own closes an open
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
@@ -159,6 +163,33 @@ export const CountGlyphs = ({
     }
     return label
   }
+  // What opens the tooltip, wherever they're spread.
+  const openProps = {
+    ...triggerProps,
+    // Starts loading the charts as the pointer arrives, ahead of the
+    // tooltip's open delay, or with a tap.
+    onPointerEnter: prefetchCharts,
+    onPointerDown: (event: React.PointerEvent<HTMLElement>) => {
+      prefetchCharts()
+      triggerProps.onPointerDown(event)
+    },
+  }
+  /** The glyphs, as an image, with `props`. */
+  const renderGlyphs = (props?: React.ComponentProps<'span'>) => (
+    // An image, like the profile README's badge, so its name can be the full
+    // counts rather than the shortened ones it shows.
+    <span role="img" aria-label={label} {...props} data-testid={testId}>
+      {shown.map(({ key, icon, count }, index) => (
+        <Fragment key={key}>
+          {index > 0 && <PairGap />}
+          <span className="inline-flex items-center gap-1">
+            <Icon name={icon} className="size-[1.1em]" />
+            {formatCompactCount(count)}
+          </span>
+        </Fragment>
+      ))}
+    </span>
+  )
   return (
     <Tooltip
       open={isActive || open}
@@ -168,31 +199,20 @@ export const CountGlyphs = ({
       className={
         TOOLTIP_CLASSES[countsCharts || isLoading ? 'CHARTS' : 'WORDS']
       }>
-      {/* An image, like the profile README's badge, so its name can be the
-          full counts rather than the shortened ones it shows. */}
-      <span
-        role="img"
-        aria-label={label}
-        className={cn('flex items-center', className)}
-        {...triggerProps}
-        // Starts loading the charts as the pointer arrives, ahead of the
-        // tooltip's open delay, or with a tap.
-        onPointerEnter={prefetchCharts}
-        onPointerDown={(event) => {
-          prefetchCharts()
-          triggerProps.onPointerDown(event)
-        }}
-        data-testid={testId}>
-        {shown.map(({ key, icon, count }, index) => (
-          <Fragment key={key}>
-            {index > 0 && <PairGap />}
-            <span className="inline-flex items-center gap-1">
-              <Icon name={icon} className="size-[1.1em]" />
-              {formatCompactCount(count)}
-            </span>
-          </Fragment>
-        ))}
-      </span>
+      {children ? (
+        // The glyphs and the words both open it.
+        <span
+          className={cn('inline-flex items-center gap-2', className)}
+          {...openProps}>
+          {renderGlyphs({ className: 'flex items-center' })}
+          {children}
+        </span>
+      ) : (
+        renderGlyphs({
+          className: cn('flex items-center', className),
+          ...openProps,
+        })
+      )}
     </Tooltip>
   )
 }

@@ -32,6 +32,7 @@ export const SELECTORS = {
     TOTALS: {
       LINK: 'project-totals-link',
       COUNTS: 'project-totals',
+      WORDS: 'project-totals-words',
     },
     CHARTS_LOADING: 'project-charts-loading',
     COMMITS_CHART: 'commits-chart',

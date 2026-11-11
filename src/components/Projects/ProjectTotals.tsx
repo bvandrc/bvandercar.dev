@@ -3,16 +3,16 @@ import { useFocusVisibleOpen } from '@bvandrc/react-toolkit'
 import { Link } from '@/components/primitives/Link'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { sectionAnchor } from '@/lib/section-anchor'
-import { CountGlyphs } from './CountGlyphs'
+import { Counts } from './Counts'
 import { getProjectTotals } from './lib/project-totals'
 
 /**
  * Every project's commits, merged PRs, and downloads added up, as glyphs,
  * linking up to the projects.
  *
- * Hovering them, or keyboard focus on the link, charts each as a running
- * total across every project, as `getTotalCharts` decides, in place of the
- * counts in words. Renders nothing for no counts.
+ * Hovering them, or the words beside them, or keyboard focus on the link,
+ * charts each as a running total across every project, as `getTotalCharts`
+ * decides, in place of the counts in words. Renders nothing for no counts.
  */
 export const ProjectTotals = () => {
   const { open, setOpen, focusProps } = useFocusVisibleOpen()
@@ -29,17 +29,15 @@ export const ProjectTotals = () => {
       data-testid="project-totals-link">
       {/* Only drawn, so its name reads as the counts and words alone. */}
       <span aria-hidden>[</span>
-      <span className="inline-flex items-center gap-2">
-        <CountGlyphs
-          shown={shown}
-          chartCount={chartCount}
-          getCharts={(charts) => charts.getTotalCharts(repos, packages)}
-          open={open}
-          onOpenChange={setOpen}
-          data-testid="project-totals"
-        />
-        across projects
-      </span>
+      <Counts
+        shown={shown}
+        chartCount={chartCount}
+        getCharts={(charts) => charts.getTotalCharts(repos, packages)}
+        open={open}
+        onOpenChange={setOpen}
+        data-testid="project-totals">
+        <span data-testid="project-totals-words">across projects</span>
+      </Counts>
       <span aria-hidden>]</span>
     </Link>
   )
