@@ -61,12 +61,12 @@
     "react-dom": "^19",
     "react-ga4": "^3",
     "tailwind-merge": "^3",
-    "ts-extras": "^1",
+    "ts-extras": "^2",
     "usehooks-ts": "^3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4",
-    "@biomejs/biome": "^2.6",
+    "@biomejs/biome": "^2.6.7",
     "@google-cloud/bigquery": "^9",
     "@iconify-json/devicon": "^1",
     "@iconify-json/lucide": "^1",
