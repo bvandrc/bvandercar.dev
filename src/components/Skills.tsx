@@ -34,7 +34,7 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
           'sm:w-auto sm:text-left sm:text-sm',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
-          'pt-0.75 sm:pt-1'
+          'pt-0.5 sm:pt-0.75'
         )}>
         {label}
       </dt>
