@@ -37,6 +37,11 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
 /** How many px of its screenshot's top a poster shows, unless it says otherwise. */
 const DEFAULT_POSTER_HEIGHT = 64
 
+// Rounds a poster, and its fade, into the toggle's corners, inside its 1px
+// border. Where the toggle clipped them instead, it would clip its pulse's
+// glow too.
+const POSTER_ROUNDING = 'rounded-[calc(var(--radius-md)-1px)]'
+
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
 const SCROLL_DELAY_MS = 50
 
@@ -91,17 +96,16 @@ export const LivePreview = ({
       <Collapsible.Trigger
         aria-describedby={describedBy}
         className={cn(
-          'group inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm',
+          'group relative inline-flex items-center justify-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm',
           // A hand, like a link's, which Tailwind leaves off buttons.
           'cursor-pointer',
           // Also while something else in its `data-preview-scope` that
           // opens it is hovered, so the two read as one control.
           'transition-colors preview-hover:border-accent preview-hover:text-accent',
-          'data-[pulse=true]:animate-glow-pulse',
+          'data-[pulse=true]:glow-pulse',
           // Below sm, a poster fills the toggle, with its label over the
           // bottom edge.
-          shownPoster &&
-            'max-sm:relative max-sm:block max-sm:overflow-hidden max-sm:p-0'
+          shownPoster && 'max-sm:block max-sm:p-0'
         )}
         data-pulse={pulse}
         data-testid="live-preview-toggle">
@@ -120,7 +124,8 @@ export const LivePreview = ({
               className={cn(
                 'w-full sm:hidden',
                 // Cropped to fit, keeping the page's top, where its header is.
-                'object-cover object-top'
+                'object-cover object-top',
+                POSTER_ROUNDING
               )}
               data-testid="live-preview-poster"
             />
@@ -130,6 +135,7 @@ export const LivePreview = ({
             <span
               className={cn(
                 'absolute inset-0 sm:hidden',
+                POSTER_ROUNDING,
                 'bg-linear-to-t from-surface/90 from-15% via-surface/45 via-55% to-transparent'
               )}
             />
