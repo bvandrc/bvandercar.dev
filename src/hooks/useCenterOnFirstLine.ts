@@ -34,16 +34,23 @@ const centerOnFirstLine = (box: HTMLElement, lines: HTMLElement) => {
  * keeps its identity across renders, like one declared at module scope. It
  * sets the box's inline `translate`, so give the box none of its own. It
  * measures before the browser paints, and again when the parent or the flex
- * box resizes or a font loads.
+ * box resizes or a font loads. While `isEnabled` is false, the box stays
+ * where its layout puts it.
  */
 export const useCenterOnFirstLine = (
   ref: React.RefObject<HTMLElement | null>,
-  findLines: (box: HTMLElement) => HTMLElement | null
+  findLines: (box: HTMLElement) => HTMLElement | null,
+  isEnabled = true
 ) => {
   useIsomorphicLayoutEffect(() => {
     const box = ref.current
     const lines = box === null ? null : findLines(box)
     if (box === null || lines === null) {
+      return
+    }
+    if (!isEnabled) {
+      // Drops a shift from while it was enabled.
+      box.style.translate = ''
       return
     }
     const remeasure = () => centerOnFirstLine(box, lines)
@@ -60,5 +67,5 @@ export const useCenterOnFirstLine = (
       observer.disconnect()
       fonts?.removeEventListener('loadingdone', remeasure)
     }
-  }, [ref, findLines])
+  }, [ref, findLines, isEnabled])
 }

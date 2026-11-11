@@ -28,9 +28,11 @@ const FIRST_LINE: ItemLayout[] = [
 const findLines = (box: HTMLElement) =>
   box.querySelector<HTMLElement>(`[data-testid="${LINES_TEST_ID}"]`)
 
-const Shifted = ({ count }: { count: number }) => {
+type ShiftedProps = { count: number; isEnabled?: boolean }
+
+const Shifted = ({ count, isEnabled }: ShiftedProps) => {
   const ref = useRef<HTMLDivElement>(null)
-  useCenterOnFirstLine(ref, findLines)
+  useCenterOnFirstLine(ref, findLines, isEnabled)
   return (
     <div data-testid={AREA_TEST_ID}>
       <div ref={ref} data-testid={BOX_TEST_ID}>
@@ -86,6 +88,13 @@ describe('useCenterOnFirstLine', () => {
   it('leaves a box as wide as the parent where it is', () => {
     mockLayout(FIRST_LINE, AREA)
     renderShifted(2)
+    expect(getShift()).toBe('')
+  })
+
+  it('moves the box back, and leaves it there, once disabled', () => {
+    mockLayout(FIRST_LINE)
+    const { rerender } = renderShifted(2)
+    rerender(<Shifted count={2} isEnabled={false} />)
     expect(getShift()).toBe('')
   })
 

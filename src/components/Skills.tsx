@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { SKILL_ICON_COLORS } from 'virtual:icons'
+import { TAILWIND_BREAKPOINTS, useIsMobile } from '@bvandrc/react-toolkit'
 
 import { SECTIONS } from '@/generated/profile/content/sections'
 import {
@@ -82,9 +83,11 @@ type SkillsGroupProps = {
 /** A group's heading, and its rows below it. */
 const SkillsGroup = ({ group }: SkillsGroupProps) => {
   const listRef = useRef<HTMLDListElement>(null)
-  // Its first row's first line centers under the heading, with the labels to
-  // its left.
-  useCenterOnFirstLine(listRef, findFirstSkills)
+  // From sm up, its first row's first line centers under the heading, with
+  // the labels to its left. Below sm, the list centers as a whole, labels and
+  // all.
+  const isMobile = useIsMobile(TAILWIND_BREAKPOINTS.SM)
+  useCenterOnFirstLine(listRef, findFirstSkills, !isMobile)
   return (
     <SubSection icon={group.glyph} title={group.title}>
       <dl
