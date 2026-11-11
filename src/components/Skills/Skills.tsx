@@ -5,7 +5,6 @@ import { SECTIONS } from '@/generated/profile/content/sections'
 import { SKILLS, type SkillSection } from '@/generated/profile/content/skills'
 import { cn } from '@/lib/cn'
 import { skillIconSlug } from '@/lib/icons'
-import { sectionAnchor } from '@/lib/section-anchor'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { Badge } from '../primitives/Badge'
 import { BrandIcon } from '../primitives/BrandIcon'
@@ -92,7 +91,6 @@ export const Skills = () => (
   <Section
     glyph={SECTIONS.SKILLS.glyph}
     title={SECTIONS.SKILLS.title}
-    id={sectionAnchor(SECTIONS.SKILLS.title)}
     // The full screen's width below sm, for as many badges on a line as fit.
     className="max-sm:-mx-5"
     data-testid="skills">
