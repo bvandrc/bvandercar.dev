@@ -32,8 +32,9 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
           'shrink-0 text-ink-muted',
           'w-16 text-right text-xs',
           'sm:w-auto sm:text-left sm:text-sm',
-          // Centers its first line on the first line of badges.
-          'pt-1 sm:pt-1.25'
+          // Level with the first line of badges, a touch above center, where
+          // it reads in line with their names.
+          'pt-0.75 sm:pt-1'
         )}>
         {label}
       </dt>
