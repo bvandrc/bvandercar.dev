@@ -12,12 +12,8 @@ import { BrandIcon } from '../primitives/BrandIcon'
 import { Section, SubSection } from '../Section'
 import { useSkillGroupLayout } from './hooks/useSkillGroupLayout'
 
-type SkillRowProps = {
-  row: SkillSection['rows'][number]
-}
-
 /** A row's label, and its badges beside it, on its group's two columns. */
-const SkillRow = ({ row }: SkillRowProps) => (
+const SkillRow = ({ row }: { row: SkillSection['rows'][number] }) => (
   <div className="col-span-full grid grid-cols-subgrid">
     <dt
       data-testid="skill-label"
@@ -60,17 +56,13 @@ const SkillRow = ({ row }: SkillRowProps) => (
   </div>
 )
 
-type SkillGroupProps = {
-  group: SkillSection
-}
-
 /**
  * A group's rows as two columns: each label, right-aligned, beside its badges.
  *
  * The group is centered as a whole below sm, and from sm up, centered on its
  * first row of badges with the labels hanging to their left.
  */
-const SkillGroup = ({ group }: SkillGroupProps) => {
+const SkillGroup = ({ group }: { group: SkillSection }) => {
   const ref = useRef<HTMLDListElement>(null)
   useSkillGroupLayout(ref)
   return (
