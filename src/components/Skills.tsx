@@ -8,6 +8,7 @@ import {
   type SkillRow,
   type SkillSection,
 } from '@/generated/profile/content/skills'
+import { useAlignToFirstLine } from '@/hooks/useAlignToFirstLine'
 import { type Span, useCenterSpan } from '@/hooks/useCenterSpan'
 import { useCenterWrappedLines } from '@/hooks/useCenterWrappedLines'
 import { cn } from '@/lib/cn'
@@ -27,19 +28,20 @@ type SkillsRowProps = {
 
 /** A row's label, and its skills' badges beside it. */
 const SkillsRow = ({ row, isMobile }: SkillsRowProps) => {
+  const labelRef = useRef<HTMLElement>(null)
   const skillsRef = useRef<HTMLElement>(null)
   useCenterWrappedLines(skillsRef, !isMobile)
+  // Keeps the label right by its skills' first line, wherever that sits.
+  useAlignToFirstLine(labelRef, skillsRef)
   // The label's line breaks are for the README's narrow column.
   const label = row.label.replaceAll('\n', ' ')
   return (
     // Two columns, on the group's grid: the label, and the skills beside it.
     <div className="col-span-2 grid grid-cols-subgrid items-start">
       <dt
+        ref={labelRef}
         className={cn(
-          'text-ink-muted',
-          // Below sm, the group's labels line up on the left; from sm, on the
-          // right, by their skills.
-          'text-left sm:text-right',
+          'text-right text-ink-muted',
           'text-xs sm:text-sm',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
