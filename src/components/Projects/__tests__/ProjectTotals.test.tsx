@@ -164,6 +164,14 @@ describe('ProjectTotals', () => {
     ])
   })
 
+  it('charts them on hovering the words beside them too', async () => {
+    renderTotals()
+
+    await userEvent.setup().hover(screen.getByTestId(TOTALS.WORDS))
+    const tooltip = await findLoadedTooltip()
+    expect(within(tooltip).getByTestId(COMMITS_CHART)).toBeDefined()
+  })
+
   // Which focus opens it is useFocusVisibleOpen's own, tested in
   // @bvandrc/react-toolkit.
   it('shows the charts on keyboard focus on the link', async () => {
