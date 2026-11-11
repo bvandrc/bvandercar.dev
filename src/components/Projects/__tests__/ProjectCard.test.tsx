@@ -94,13 +94,15 @@ describe('ProjectCard', () => {
     expect(thumbnail.getAttribute('src')).toMatch(
       /^\/project-screenshots\/.+\.480w\.webp$/
     )
-    // Both widths, for the browser to pick from, as below md the toggle does.
+    // Both widths, for the browser to pick from.
     expect(thumbnail.getAttribute('srcset')).toMatch(
       /\.480w\.webp 480w, \/.+\.900w\.webp 900w$/
     )
+    // Below sm, its toggle shows only the top, cropped to just that, at the
+    // same widths.
     expect(
       within(card).getByTestId(LIVE_PREVIEW.POSTER).getAttribute('srcset')
-    ).toBe(thumbnail.getAttribute('srcset'))
+    ).toMatch(/\.poster\.480w\.webp 480w, \/.+\.poster\.900w\.webp 900w$/)
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).queryByTestId(THUMBNAIL)).toBeNull()
