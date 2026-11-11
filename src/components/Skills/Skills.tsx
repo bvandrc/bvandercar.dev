@@ -12,6 +12,54 @@ import { BrandIcon } from '../primitives/BrandIcon'
 import { Section, SubSection } from '../Section'
 import { useSkillGroupLayout } from './hooks/useSkillGroupLayout'
 
+type SkillRowProps = {
+  row: SkillSection['rows'][number]
+}
+
+/** A row's label, and its badges beside it, on its group's two columns. */
+const SkillRow = ({ row }: SkillRowProps) => (
+  <div className="col-span-full grid grid-cols-subgrid">
+    <dt
+      data-testid="skill-label"
+      className={cn(
+        'text-right text-xs text-ink-muted sm:text-sm',
+        // Level with its first line of badges, a touch above center, where it
+        // reads in line with their names.
+        'pt-0.5 sm:pt-0.75'
+      )}>
+      {/* The line breaks are for the README's narrow column. */}
+      {row.label.replaceAll('\n', ' ')}
+    </dt>
+    <dd
+      data-testid="skill-badges"
+      className={cn(
+        'flex flex-wrap gap-1.5 sm:justify-center sm:gap-2',
+        // Its badges' own height, not a two-line label's, which would stretch
+        // them.
+        'self-start'
+      )}>
+      {row.lines.flat().map((skill) => {
+        const slug = skillIconSlug(skill)
+        return (
+          <Badge
+            key={skill.alt}
+            data-testid="skill-badge"
+            // Smaller below sm, so more fit on a line.
+            className="max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[13px]/[18px]">
+            <BrandIcon
+              slug={slug}
+              color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
+              size={14}
+              className="size-3.5"
+            />
+            {skill.alt}
+          </Badge>
+        )
+      })}
+    </dd>
+  </div>
+)
+
 type SkillGroupProps = {
   group: SkillSection
 }
@@ -40,51 +88,9 @@ const SkillGroup = ({ group }: SkillGroupProps) => {
           'gap-x-2 gap-y-3 sm:gap-x-3',
           'sm:max-w-lg sm:translate-x-(--first-row-shift)'
         )}>
-        {group.rows.map((row) => {
-          // The label's line breaks are for the README's narrow column.
-          const label = row.label.replaceAll('\n', ' ')
-          return (
-            <div key={label} className="col-span-full grid grid-cols-subgrid">
-              <dt
-                data-testid="skill-label"
-                className={cn(
-                  'text-right text-xs text-ink-muted sm:text-sm',
-                  // Level with its first line of badges, a touch above center,
-                  // where it reads in line with their names.
-                  'pt-0.5 sm:pt-0.75'
-                )}>
-                {label}
-              </dt>
-              <dd
-                data-testid="skill-badges"
-                className={cn(
-                  'flex flex-wrap gap-1.5 sm:justify-center sm:gap-2',
-                  // Its badges' own height, not a two-line label's, which
-                  // would stretch them.
-                  'self-start'
-                )}>
-                {row.lines.flat().map((skill) => {
-                  const slug = skillIconSlug(skill)
-                  return (
-                    <Badge
-                      key={skill.alt}
-                      data-testid="skill-badge"
-                      // Smaller below sm, so more fit on a line.
-                      className="max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[13px]/[18px]">
-                      <BrandIcon
-                        slug={slug}
-                        color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
-                        size={14}
-                        className="size-3.5"
-                      />
-                      {skill.alt}
-                    </Badge>
-                  )
-                })}
-              </dd>
-            </div>
-          )
-        })}
+        {group.rows.map((row) => (
+          <SkillRow key={row.label} row={row} />
+        ))}
       </dl>
     </SubSection>
   )
