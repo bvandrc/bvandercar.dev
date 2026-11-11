@@ -3,7 +3,7 @@ import { useFocusVisibleOpen } from '@bvandrc/react-toolkit'
 import { Link } from '@/components/primitives/Link'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { sectionAnchor } from '@/lib/section-anchor'
-import { CountGlyphs } from './CountGlyphs'
+import { Counts } from './Counts'
 import { getProjectTotals } from './lib/project-totals'
 
 /**
@@ -29,7 +29,7 @@ export const ProjectTotals = () => {
       data-testid="project-totals-link">
       {/* Only drawn, so its name reads as the counts and words alone. */}
       <span aria-hidden>[</span>
-      <CountGlyphs
+      <Counts
         shown={shown}
         chartCount={chartCount}
         getCharts={(charts) => charts.getTotalCharts(repos, packages)}
@@ -37,7 +37,7 @@ export const ProjectTotals = () => {
         onOpenChange={setOpen}
         data-testid="project-totals">
         <span data-testid="project-totals-words">across projects</span>
-      </CountGlyphs>
+      </Counts>
       <span aria-hidden>]</span>
     </Link>
   )

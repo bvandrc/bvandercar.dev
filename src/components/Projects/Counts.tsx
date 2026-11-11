@@ -83,7 +83,7 @@ const ChartsPlaceholder = ({ count }: ChartsPlaceholderProps) => (
   </div>
 )
 
-export type CountGlyphsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
+export type CountsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
   Pick<ReturnType<typeof getProjectCounts>, 'shown' | 'chartCount'> & {
     /** Picks what the counts chart, once the charts' code has loaded; undefined for nothing */
     getCharts: (charts: LazyCharts) => CountsCharts | undefined
@@ -105,7 +105,7 @@ export type CountGlyphsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
  * elsewhere, and `children` for words after the glyphs that hover, or a tap,
  * opens it from too.
  */
-export const CountGlyphs = ({
+export const Counts = ({
   shown,
   chartCount,
   getCharts,
@@ -114,7 +114,7 @@ export const CountGlyphs = ({
   className,
   'data-testid': testId,
   children,
-}: CountGlyphsProps) => {
+}: CountsProps) => {
   // Its pointerdown handler reads the state before Radix's own closes an open
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
