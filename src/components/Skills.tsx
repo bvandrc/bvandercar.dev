@@ -23,17 +23,19 @@ export const Skills = () => (
             // The label's line breaks are for the README's narrow column.
             const label = row.label.replaceAll('\n', ' ')
             return (
-              // A label sits beside its skills. Below sm, the labels form a
-              // right-aligned column the skills wrap beside; from sm up, each
-              // row is centered as a whole.
+              // A label sits beside its skills, level with their first line.
+              // Below sm, the labels form a right-aligned column the skills
+              // wrap beside; from sm up, each row is centered as a whole.
               <div
                 key={label}
-                className="flex items-center gap-2 sm:justify-center sm:gap-3">
+                className="flex items-start gap-2 sm:justify-center sm:gap-3">
                 <dt
                   className={cn(
                     'shrink-0 text-ink-muted',
                     'w-16 text-right text-xs',
-                    'sm:w-auto sm:text-left sm:text-sm'
+                    'sm:w-auto sm:text-left sm:text-sm',
+                    // Centers its first line on the first line of badges.
+                    'pt-0.75 sm:pt-1.25'
                   )}>
                   {label}
                 </dt>
