@@ -28,15 +28,16 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
   // The label's line breaks are for the README's narrow column.
   const label = row.label.replaceAll('\n', ' ')
   return (
-    // Two columns: the labels, right-aligned, and the skills beside them.
-    // Below sm, the labels' column is the same width in every group.
-    <div className="flex items-start gap-2 sm:col-span-2 sm:grid sm:grid-cols-subgrid sm:gap-3">
+    // Two columns, on the group's grid: the label, right-aligned, and the
+    // skills beside it.
+    <div className="col-span-2 grid grid-cols-subgrid items-start">
       <dt
         className={cn(
-          'shrink-0 text-right text-ink-muted',
-          // Below sm, wide enough for every label but "Project Mgmt.", which
-          // takes two lines.
-          'w-16 text-xs sm:w-auto sm:text-sm',
+          'text-right text-ink-muted',
+          'text-xs sm:text-sm',
+          // Below sm, "Project Mgmt.", the longest, takes two lines, which
+          // leaves its skills room for two to a line.
+          'max-w-16 sm:max-w-none',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
           'pt-0.5 sm:pt-0.75'
@@ -81,18 +82,18 @@ type SkillsGroupProps = {
 /** A group's heading, and its rows below it. */
 const SkillsGroup = ({ group }: SkillsGroupProps) => {
   const listRef = useRef<HTMLDListElement>(null)
-  // From sm up, its first row's first line centers under the heading, with
-  // the labels to its left. Below sm, the list spans the section, so it stays.
+  // Its first row's first line centers under the heading, with the labels to
+  // its left.
   useCenterOnFirstLine(listRef, findFirstSkills)
   return (
     <SubSection icon={group.glyph} title={group.title}>
       <dl
         ref={listRef}
         className={cn(
-          'flex flex-col gap-3',
-          // From sm up, a grid only as wide as its widest row, up to 512px,
+          // A grid only as wide as its widest row, up to 512px from sm,
           // where a long row wraps, its labels' column as wide as its longest.
-          'sm:mx-auto sm:grid sm:w-fit sm:max-w-lg sm:grid-cols-[auto_1fr]'
+          'mx-auto grid w-fit max-w-full grid-cols-[auto_1fr] sm:max-w-lg',
+          'gap-x-2 gap-y-3 sm:gap-x-3'
         )}>
         {group.rows.map((row) => (
           <SkillsRow key={row.label} row={row} />
