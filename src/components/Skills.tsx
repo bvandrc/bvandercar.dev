@@ -8,9 +8,10 @@ import {
   type SkillRow,
   type SkillSection,
 } from '@/generated/profile/content/skills'
-import { useCenterOnFirstLine } from '@/hooks/useCenterOnFirstLine'
+import { type Span, useCenterSpan } from '@/hooks/useCenterSpan'
 import { useCenterWrappedLines } from '@/hooks/useCenterWrappedLines'
 import { cn } from '@/lib/cn'
+import { measureFlexLines } from '@/lib/flex-lines'
 import { skillIconSlug } from '@/lib/icons'
 import { sectionAnchor } from '@/lib/section-anchor'
 import { THEME_COLORS } from '@/lib/theme-colors'
@@ -36,10 +37,9 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
         className={cn(
           'text-right text-ink-muted',
           'text-xs sm:text-sm',
-          // Below sm, the same width in every group, so the groups as wide as
-          // the screen share one edge; "Project Mgmt.", the longest, takes two
-          // lines, which leaves its skills room for two to a line.
-          'w-16 sm:w-auto',
+          // Below sm, "Project Mgmt.", the longest, takes two lines, which
+          // leaves its skills room for two to a line.
+          'max-w-16 sm:max-w-none',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
           'pt-0.5 sm:pt-0.75'
@@ -73,9 +73,33 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
   )
 }
 
-// A group's first row of skills, whose first line it centers on.
-const findFirstSkills = (list: HTMLElement) =>
-  list.querySelector<HTMLElement>('dd')
+// The first line of a group's first row of skills.
+const measureFirstLine = (list: HTMLElement): Span | undefined => {
+  const skills = list.querySelector<HTMLElement>('dd')
+  return skills === null ? undefined : measureFlexLines(skills)[0]
+}
+
+// All a group shows: from its labels' text to its farthest badge.
+const measureContent = (list: HTMLElement): Span | undefined => {
+  const rects = [
+    // The text, not the label, which runs past a short one's start.
+    ...Array.from(list.querySelectorAll('dt'), (label) => {
+      const text = document.createRange()
+      text.selectNodeContents(label)
+      return text.getBoundingClientRect()
+    }),
+    ...Array.from(list.querySelectorAll('dd > *'), (badge) =>
+      badge.getBoundingClientRect()
+    ),
+  ]
+  if (rects.length === 0) {
+    return undefined
+  }
+  return {
+    left: Math.min(...rects.map(({ left }) => left)),
+    right: Math.max(...rects.map(({ right }) => right)),
+  }
+}
 
 type SkillsGroupProps = {
   group: SkillSection
@@ -85,10 +109,15 @@ type SkillsGroupProps = {
 const SkillsGroup = ({ group }: SkillsGroupProps) => {
   const listRef = useRef<HTMLDListElement>(null)
   // From sm up, its first row's first line centers under the heading, with
-  // the labels to its left. Below sm, the list centers as a whole, labels and
-  // all.
+  // the labels to its left. Below sm, all it shows centers, labels and all.
+  // Either way, all it shows stays on screen, though the list's empty edge
+  // may not.
   const isMobile = useIsMobile(TAILWIND_BREAKPOINTS.SM)
-  useCenterOnFirstLine(listRef, findFirstSkills, !isMobile)
+  useCenterSpan(
+    listRef,
+    isMobile ? measureContent : measureFirstLine,
+    measureContent
+  )
   return (
     <SubSection icon={group.glyph} title={group.title}>
       <dl
@@ -112,9 +141,13 @@ export const Skills = () => (
     glyph={SECTIONS.SKILLS.glyph}
     title={SECTIONS.SKILLS.title}
     id={sectionAnchor(SECTIONS.SKILLS.title)}
-    // Below sm, runs into the page's side padding, which is App's px-5, to
-    // fit more skills to a line.
-    className="-mx-5 sm:mx-0"
+    className={cn(
+      // Below sm, runs into the page's side padding, which is App's px-5, to
+      // fit more skills to a line.
+      '-mx-5 sm:mx-0',
+      // Hides the empty edge of a group shifted past its side.
+      'overflow-x-clip'
+    )}
     data-testid="skills">
     {SKILLS.map((group) => (
       <SkillsGroup key={group.title} group={group} />

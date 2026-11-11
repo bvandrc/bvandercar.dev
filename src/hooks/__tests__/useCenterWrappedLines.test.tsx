@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { mockResizeObserver } from '@bvandrc/react-toolkit/test-support'
-import { act, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 
 import {
   buildItemRects,
@@ -78,7 +78,7 @@ describe('useCenterWrappedLines', () => {
       { line: 0, left: 56, right: 120 },
       { line: 0, left: 126, right: 166 },
     ])
-    act(resize)
+    resize()
     expect(getOffset(2)).toBe('')
   })
 })
