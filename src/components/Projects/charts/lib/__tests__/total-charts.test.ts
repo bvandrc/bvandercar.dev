@@ -1,5 +1,6 @@
 import type { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
+import type { ActivityHistory } from '~/counts'
 import type { ProjectPackage } from '../project-charts'
 import { getTotalCharts } from '../total-charts'
 
@@ -22,6 +23,11 @@ const {
   NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
+
+// The account's own commits and PRs, unfetched unless a case mocks them.
+vi.mock('@/generated/account-activity', () => ({
+  ACCOUNT_ACTIVITY: undefined,
+}))
 
 vi.mock('@/generated/repo-activity', () => ({
   REPO_ACTIVITY: {
@@ -150,6 +156,31 @@ describe('getTotalCharts', () => {
     expect(getTotalCharts([LONG_REPO], [])).toMatchObject({
       span: { start: '2025-01-01', end: '2026-11-10' },
       initialSpan: { start: '2025-05-10', end: '2026-11-10' },
+    })
+  })
+
+  it("charts the account's own commits and PRs, in every repo, in place of the repos', where fetched", async () => {
+    // Two commits and a PR a day for three weeks from Mar 1.
+    const ACCOUNT_ACTIVITY = {
+      firstDay: '2026-03-01',
+      lastDay: '2026-03-21',
+      commits: buildDays(21, 2),
+      prs: buildDays(21, 1),
+    } satisfies ActivityHistory
+    // A fresh copy, reading the account's.
+    vi.resetModules()
+    vi.doMock('@/generated/account-activity', () => ({ ACCOUNT_ACTIVITY }))
+    onTestFinished(() => {
+      vi.doMock('@/generated/account-activity', () => ({
+        ACCOUNT_ACTIVITY: undefined,
+      }))
+    })
+    const { getTotalCharts: getFreshCharts } = await import('../total-charts')
+
+    expect(getFreshCharts([REPO, LATER_REPO], [])).toMatchObject({
+      activity: ACCOUNT_ACTIVITY,
+      prs: ACCOUNT_ACTIVITY,
+      span: { start: '2026-03-01', end: '2026-03-21' },
     })
   })
 

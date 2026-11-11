@@ -1,5 +1,6 @@
 import { isNotNil } from 'es-toolkit'
 
+import { ACCOUNT_ACTIVITY } from '@/generated/account-activity'
 import { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { ActivityHistory, DownloadHistory } from '~/counts'
@@ -80,9 +81,10 @@ const sumDownloads = (
 }
 
 /**
- * What every project's counts chart together: the repos' commits and merged
- * PRs, and the packages' downloads, each added up day by day, the dates they
- * span, and a sentence describing each chart for screen readers.
+ * What every project's counts chart together: the GitHub account's commits
+ * and merged PRs, or else the repos', and the packages' downloads, each added
+ * up day by day, the dates they span, and a sentence describing each chart
+ * for screen readers.
  *
  * The charts span from the first day any of them counts, or Jan 1, 2025 if
  * that's later, with each line starting at the total counted by then, and
@@ -91,8 +93,11 @@ const sumDownloads = (
  * history, or a stretch under two weeks.
  */
 export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
+  // The account's own, where fetched, in every repo it committed to.
   const activity = sumActivity(
-    repos.map((repo) => REPO_ACTIVITY[repo]).filter(isNotNil)
+    ACCOUNT_ACTIVITY
+      ? [ACCOUNT_ACTIVITY]
+      : repos.map((repo) => REPO_ACTIVITY[repo]).filter(isNotNil)
   )
   const downloads = sumDownloads(
     packages

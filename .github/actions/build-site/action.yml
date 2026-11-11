@@ -26,7 +26,7 @@ runs:
     # reuses only data fetched today, with these same scripts.
     - name: Get the fetched data's cache key
       id: key
-      run: echo "key=fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/*.ts', 'site.config.ts') }}-$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      run: echo "key=fetched-data-${{ hashFiles('scripts/fetch-git-activity.ts', 'scripts/fetch-account-activity.ts', 'scripts/fetch-downloads.ts', 'scripts/fetch-downloads/**', 'scripts/shared/**', 'shared/*.ts', 'site.config.ts') }}-$(date -u +%F)" >> "$GITHUB_OUTPUT"
       shell: bash
 
     # Today's data from a build that fetched it with these same scripts, which

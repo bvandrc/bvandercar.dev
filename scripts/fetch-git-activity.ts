@@ -17,45 +17,18 @@
  */
 
 import { countBy } from 'es-toolkit'
-import { Octokit } from 'octokit'
 
 import type { ActivityHistory, ActivityTotals } from '../shared/counts.ts'
 import { earlierDay, isoDate, listDays } from '../shared/dates.ts'
 import { GITHUB_OWNER } from '../shared/github.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
 import { exitIfReusing, writeGenerated } from './shared/generated.ts'
+import { octokit, token } from './shared/octokit.ts'
 import { findShortfall, getProjectValues } from './shared/projects.ts'
 import { reportSkipped } from './shared/skipped.ts'
 
 const TOTALS_FILE = `${GENERATED_DIR}/repo-activity-totals.ts`
 const HISTORY_FILE = `${GENERATED_DIR}/repo-activity.ts`
-// Actions sets this, to GitHub Enterprise's API on an Enterprise server.
-const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com'
-// Actions passes an unset secret as an empty string.
-const token = process.env.GITHUB_TOKEN || undefined
-
-// How many times a rate-limited request is retried, after waiting as long as
-// GitHub asks, before the repo's counts are left out.
-const MAX_RATE_LIMIT_RETRIES = 2
-
-/** Whether to retry a rate-limited request, as Octokit's throttling asks. */
-const shouldRetryRateLimit = (
-  _retryAfter: number,
-  _options: unknown,
-  _octokit: unknown,
-  retryCount: number
-) => retryCount < MAX_RATE_LIMIT_RETRIES
-
-const octokit = new Octokit({
-  auth: token,
-  baseUrl: API_URL,
-  userAgent: 'bvandercar.dev',
-  throttle: {
-    onRateLimit: shouldRetryRateLimit,
-    onSecondaryRateLimit: shouldRetryRateLimit,
-  },
-})
-
 /**
  * A repo's commits on its default branch, and its merged pull requests, each
  * counted in all, and by the day each commit was made and each pull request
