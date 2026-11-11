@@ -4,18 +4,25 @@
  *
  * Copies its src/content/ and src/generated/repo-counts.ts to
  * src/generated/profile/, and the screenshots the projects reference to
- * public/, each with WebP thumbnails beside it, all gitignored. Reads bvandrc's PROFILE_DEV_BRANCH while it exists,
+ * public/, each with WebP thumbnails, and a live preview's with posters, beside
+ * it, all gitignored. Reads bvandrc's PROFILE_DEV_BRANCH while it exists,
  * else main; PROFILE_REF, if set, reads that branch or commit instead.
  */
 
 import { execFileSync } from 'node:child_process'
-import { cp, mkdtemp, readFile, rm } from 'node:fs/promises'
+import { cp, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import sharp from 'sharp'
 
 import { GITHUB_OWNER, getRepoUrl } from '../shared/github.ts'
-import { getThumbnailPath, THUMBNAIL_WIDTHS } from '../shared/screenshots.ts'
+import {
+  DEFAULT_POSTER_HEIGHT,
+  getPosterPath,
+  getThumbnailPath,
+  POSTER_MIN_WIDTH,
+  THUMBNAIL_WIDTHS,
+} from '../shared/screenshots.ts'
 import { PROFILE_DIR } from './shared/constants.ts'
 
 // A GitHub profile's README comes from the repo named after its owner.
@@ -24,6 +31,33 @@ const REPO_URL = getRepoUrl(GITHUB_OWNER)
 // reaches every build here without merging to bvandrc's main first. Once it's
 // merged and deleted, builds read main.
 const PROFILE_DEV_BRANCH = 'feat/bvandercar-dev-content'
+
+/**
+ * Writes a live preview's poster of the screenshot at `source`: only the top
+ * a phone shows across its toggle, `posterHeight` px tall at its narrowest.
+ */
+const writePosters = async (
+  source: string,
+  screenshot: string,
+  posterHeight = DEFAULT_POSTER_HEIGHT
+) => {
+  const { width, height } = await sharp(source).metadata()
+  // The narrowest toggle scales the screenshot down to its own width, so this
+  // many of the screenshot's rows fill its height.
+  const top = Math.min(
+    height,
+    Math.ceil((posterHeight * width) / POSTER_MIN_WIDTH)
+  )
+  await Promise.all(
+    THUMBNAIL_WIDTHS.map((posterWidth) =>
+      sharp(source)
+        .extract({ left: 0, top: 0, width, height: top })
+        .resize({ width: posterWidth, withoutEnlargement: true })
+        .webp()
+        .toFile(join('public', getPosterPath(screenshot, posterWidth)))
+    )
+  )
+}
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8' }).trim()
@@ -65,19 +99,19 @@ try {
     join(PROFILE_DIR, 'repo-counts.ts')
   )
 
-  // Screenshot paths are repo-relative ('./project-screenshots/…'), which is
-  // also where public/ serves them from.
-  const projects = await readFile(
-    join(checkout, 'src/content/projects.ts'),
-    'utf8'
+  // Read from the copy, now it's here, rather than parsed out of its source.
+  const { PROJECTS } = await import(
+    '../src/generated/profile/content/projects.ts'
   )
-  const screenshots = [
-    ...projects.matchAll(/screenshot:\s*'\.\/([^']+)'/g),
-  ].map(([, path]) => path)
+  const pictured = PROJECTS.flatMap(({ projects }) => projects).flatMap(
+    ({ screenshot, embed }) => (screenshot ? [{ screenshot, embed }] : [])
+  )
   await Promise.all(
-    screenshots.map(async (path) => {
-      const source = join(checkout, path)
-      await cp(source, join('public', path))
+    pictured.map(async ({ screenshot, embed }) => {
+      // Screenshot paths are repo-relative ('./project-screenshots/…'), which
+      // is also where public/ serves them from.
+      const source = join(checkout, screenshot)
+      await cp(source, join('public', screenshot))
       // A card shows its screenshot as WebP, at the width it needs, where
       // the PNG would be several times the bytes.
       await Promise.all(
@@ -85,14 +119,17 @@ try {
           sharp(source)
             .resize({ width, withoutEnlargement: true })
             .webp()
-            .toFile(join('public', getThumbnailPath(path, width)))
+            .toFile(join('public', getThumbnailPath(screenshot, width)))
         )
       )
+      if (embed) {
+        await writePosters(source, screenshot, embed.posterHeight)
+      }
     })
   )
 
   console.log(
-    `profile: src/content and ${screenshots.length} screenshots, with thumbnails, from bvandrc@${ref} (${commit})`
+    `profile: src/content and ${pictured.length} screenshots, with thumbnails and posters, from bvandrc@${ref} (${commit})`
   )
 } finally {
   await rm(checkout, { recursive: true, force: true })

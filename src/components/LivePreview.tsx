@@ -9,6 +9,7 @@ import { Collapsible } from 'radix-ui'
 import type { RequireAllOrNone } from 'type-fest'
 
 import { cn } from '@/lib/cn'
+import { DEFAULT_POSTER_HEIGHT } from '~/screenshots'
 import { Icon } from './primitives/Icon'
 
 export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
@@ -33,9 +34,6 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
       height?: number
     }
   }
-
-/** How many px of its screenshot's top a poster shows, unless it says otherwise. */
-const DEFAULT_POSTER_HEIGHT = 64
 
 /** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
 const SCROLL_DELAY_MS = 50
