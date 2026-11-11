@@ -48,8 +48,10 @@ test('a URL naming a section opens on it', async ({ page }) => {
   const ids = await page
     .locator('section[id]')
     .evaluateAll((sections) => sections.map(({ id }) => id))
-  // Every project group, the sections around them, and the skills.
+  // Every section, and every group in one.
   expect(ids.length).toBeGreaterThan(1)
+  // Each from its title, so two titles alike would clash.
+  expect(new Set(ids).size, ids.join(', ')).toBe(ids.length)
 
   for (const id of ids) {
     // A fresh load, where going from one `#` to another wouldn't reload.
