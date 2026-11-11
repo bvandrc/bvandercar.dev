@@ -4,6 +4,8 @@ export const SELECTORS = {
     LOGO: 'header-logo',
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
+    INTRO_MORE: 'header-intro-more',
+    INTRO_TOGGLE: 'header-intro-toggle',
   },
   CONTENTS: {
     SELF: 'contents',
