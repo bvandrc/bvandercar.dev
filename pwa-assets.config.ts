@@ -4,7 +4,7 @@ import {
 } from '@vite-pwa/assets-generator/config'
 
 // Mirrors the canvas theme token in src/styles/index.css.
-const CANVAS_COLOR = '#06080d'
+const CANVAS_COLOR = '#090c13'
 
 /** Generates favicon.ico and the touch and manifest PNGs from the SVG favicon. */
 export default defineConfig({
