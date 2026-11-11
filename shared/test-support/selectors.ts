@@ -41,6 +41,13 @@ export const SELECTORS = {
   },
   SKILLS: {
     SELF: 'skills',
+    GROUP: {
+      SELF: 'skill-group',
+      ROWS: 'skill-group-rows',
+      LABEL: 'skill-label',
+      BADGES: 'skill-badges',
+      BADGE: 'skill-badge',
+    },
   },
   BEYOND_CODE: 'beyond-code',
   FOOTER: {
