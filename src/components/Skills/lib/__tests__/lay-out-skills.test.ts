@@ -14,7 +14,6 @@ type RowLayout = {
   badges: ItemLayout[]
 }
 
-const buildLabelTestId = (row: number) => `label-${row}`
 const buildTextTestId = (row: number) => `text-${row}`
 const buildSkillsTestId = (row: number) => `skills-${row}`
 const buildBadgeTestId = (row: number, badge: number) => `badge-${row}-${badge}`
@@ -32,7 +31,6 @@ const createList = (badgeCounts: number[]) => {
   list.dataset.testid = LIST_TEST_ID
   badgeCounts.forEach((count, row) => {
     const label = document.createElement('dt')
-    label.dataset.testid = buildLabelTestId(row)
     const text = document.createElement('span')
     text.dataset.testid = buildTextTestId(row)
     label.append(text)
@@ -82,10 +80,10 @@ const getShift = (testId: string) =>
   document.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.style
     .translate
 
-// From sm up, every line starts at the column: a first line from 100 to 300,
-// centered at 200, with one wrapped below from 100 to 180, centered at 140,
-// then a short row.
-const DESKTOP: RowLayout[] = [
+// Every line starting at the column: a first line from 100 to 300, centered
+// at 200, with one wrapped below from 100 to 180, centered at 140, then a
+// short row.
+const ROWS: RowLayout[] = [
   {
     text: { left: 40, right: 90 },
     badges: [
@@ -100,23 +98,6 @@ const DESKTOP: RowLayout[] = [
   },
 ]
 
-// Below sm, every line centers in the column, at 300: a first line from 200
-// to 400, with one wrapped below from 260 to 340, then a row from 270 to 330.
-const MOBILE: RowLayout[] = [
-  {
-    text: { left: 40, right: 90 },
-    badges: [
-      { line: 0, left: 200, right: 296 },
-      { line: 0, left: 302, right: 400 },
-      { line: 1, left: 260, right: 340 },
-    ],
-  },
-  {
-    text: { left: 60, right: 90 },
-    badges: [{ line: 0, left: 270, right: 330 }],
-  },
-]
-
 describe('layOutSkills', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -125,12 +106,12 @@ describe('layOutSkills', () => {
 
   describe('from sm up', () => {
     it('shifts the list to center its first row’s first line in the parent', () => {
-      layOut(DESKTOP, false)
+      layOut(ROWS, false)
       expect(getShift(LIST_TEST_ID)).toBe('100px')
     })
 
     it('centers each wrapped line on its row’s first line', () => {
-      layOut(DESKTOP, false)
+      layOut(ROWS, false)
       expect(getShift(buildBadgeTestId(0, 2))).toBe('60px')
     })
 
@@ -149,32 +130,20 @@ describe('layOutSkills', () => {
       )
       expect(getShift(buildBadgeTestId(0, 1))).toBe('')
     })
-
-    it('leaves the labels, already by their first lines, where they are', () => {
-      layOut(DESKTOP, false)
-      for (const row of [0, 1]) {
-        expect(getShift(buildLabelTestId(row)), `row ${row}`).toBe('')
-      }
-    })
   })
 
   describe('below sm', () => {
     it('shifts the list to center its labels and first lines together', () => {
-      // From the first label's text, at 40 plus its row's 100px indent, to
-      // the first line's end at 400, centered at 270.
-      layOut(MOBILE, true)
-      expect(getShift(LIST_TEST_ID)).toBe('30px')
-    })
-
-    it('shifts each label to sit by its row’s first line', () => {
-      layOut(MOBILE, true)
-      expect(getShift(buildLabelTestId(0))).toBe('100px')
-      expect(getShift(buildLabelTestId(1))).toBe('170px')
+      // From the first label's text, at 40, to the first line's end at 300,
+      // centered at 170.
+      layOut(ROWS, true)
+      expect(getShift(LIST_TEST_ID)).toBe('130px')
     })
 
     it('centers each wrapped line on the parent, after the list’s shift', () => {
-      layOut(MOBILE, true)
-      expect(getShift(buildBadgeTestId(0, 2))).toBe('-30px')
+      // Centered at 140, 270 once the list shifts, 30px left of the parent's.
+      layOut(ROWS, true)
+      expect(getShift(buildBadgeTestId(0, 2))).toBe('30px')
     })
   })
 
@@ -198,7 +167,7 @@ describe('layOutSkills', () => {
   })
 
   it('clears a shift from its last layout that this one has no need of', () => {
-    mockLayout(DESKTOP)
+    mockLayout(ROWS)
     const list = createList([3, 1])
     const firstBadge = list.querySelector<HTMLElement>('dd > *')
     if (firstBadge !== null) {

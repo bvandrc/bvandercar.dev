@@ -18,15 +18,15 @@ const findRows = (list: HTMLElement) =>
   })
 
 /**
- * Centers a group of skills under its heading, by shifting it, its labels,
- * and its badges sideways; none of them changes where a row wraps.
+ * Centers a group of skills under its heading, by shifting it and its
+ * wrapped lines of badges sideways; neither changes where a row wraps.
  *
  * `list` holds the group's rows, each a label (`dt`, its text in a child
- * element) and a wrapping flex box of badges (`dd`). Each label sits right by
- * its row's first line of badges. From sm up, the group centers on its first
- * row's first line, and each line a row wraps onto centers under that row's
- * first. Below sm, it centers on its labels and first lines together, and each
- * wrapped line centers on the page.
+ * element) and a wrapping flex box of badges (`dd`) whose lines start by it.
+ * From sm up, the group centers on its first row's first line, and each line
+ * a row wraps onto centers under that row's first. Below sm, it centers on
+ * its labels and first lines together, and each wrapped line centers on the
+ * page.
  */
 export const layOutSkills = (list: HTMLElement, isMobile: boolean) => {
   const area = list.parentElement?.getBoundingClientRect()
@@ -37,8 +37,7 @@ export const layOutSkills = (list: HTMLElement, isMobile: boolean) => {
   // Measures everything where its layout puts it, with no shifts of the
   // last call's.
   shift(list, 0)
-  for (const { label, skills } of rows) {
-    shift(label, 0)
+  for (const { skills } of rows) {
     for (const badge of skills.children) {
       if (badge instanceof HTMLElement) {
         shift(badge, 0)
@@ -48,19 +47,11 @@ export const layOutSkills = (list: HTMLElement, isMobile: boolean) => {
 
   const measured = rows.flatMap(({ label, skills }) => {
     const [first, ...wrapped] = measureFlexLines(skills)
-    const text = label.firstElementChild
-    if (first === undefined || text === null) {
-      return []
-    }
-    // How far the first line starts in from its column, as below sm, where
-    // the lines center in it.
-    const indent = Math.max(
-      Math.floor(first.left - skills.getBoundingClientRect().left),
-      0
-    )
     // The text, not the label, which runs past a short one's start.
-    const textLeft = text.getBoundingClientRect().left + indent
-    return [{ label, first, wrapped, indent, textLeft }]
+    const text = label.firstElementChild?.getBoundingClientRect()
+    return first === undefined || text === undefined
+      ? []
+      : [{ first, wrapped, textLeft: text.left }]
   })
   const [lead] = measured
   if (lead === undefined) {
@@ -81,11 +72,10 @@ export const layOutSkills = (list: HTMLElement, isMobile: boolean) => {
   )
   shift(list, listShift)
 
-  for (const { label, first, wrapped, indent } of measured) {
-    shift(label, indent)
+  for (const { first, wrapped } of measured) {
     for (const line of wrapped) {
       const offset = isMobile
-        ? // On the page, not the column, which the labels push right.
+        ? // On the page, not the first line, which the labels push right.
           center - listShift - centerOf(line)
         : // On the first line, or where it starts, for a line wider than it.
           Math.max(centerOf(first) - centerOf(line), first.left - line.left)

@@ -37,9 +37,7 @@ const SkillsRow = ({ row }: SkillsRowProps) => (
           breaks are for the README's narrow column. */}
       <span>{row.label.replaceAll('\n', ' ')}</span>
     </dt>
-    {/* Below sm, every line centers in the group's column of skills; from
-        sm, every line starts by the label. */}
-    <dd className="flex flex-wrap justify-center gap-1.5 sm:justify-start sm:gap-2">
+    <dd className="flex flex-wrap gap-1.5 sm:gap-2">
       {row.lines.flat().map((skill) => {
         const slug = skillIconSlug(skill)
         return (
