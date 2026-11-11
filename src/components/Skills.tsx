@@ -35,7 +35,7 @@ export const Skills = () => (
                     'w-16 text-right text-xs',
                     'sm:w-auto sm:text-left sm:text-sm',
                     // Centers its first line on the first line of badges.
-                    'pt-0.75 sm:pt-1.25'
+                    'pt-1 sm:pt-1.25'
                   )}>
                   {label}
                 </dt>
@@ -46,7 +46,7 @@ export const Skills = () => (
                       // Smaller below sm, to fit more skills to a line.
                       <Badge
                         key={skill.alt}
-                        className="gap-1 px-1.5 py-0.5 text-xs sm:gap-1.5 sm:px-2 sm:py-1 sm:text-sm">
+                        className="gap-1 px-1.5 py-0.5 text-[0.8125rem]/4.5 sm:gap-1.5 sm:px-2 sm:py-1 sm:text-sm">
                         <BrandIcon
                           slug={slug}
                           color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
