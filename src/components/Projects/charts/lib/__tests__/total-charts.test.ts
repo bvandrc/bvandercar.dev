@@ -8,10 +8,12 @@ const FIXTURES = vi.hoisted(() => ({
   REPO: 'some-repo',
   LATER_REPO: 'later-repo',
   ONE_DAY_REPO: 'one-day-repo',
+  OLD_REPO: 'old-repo',
   NPM_PACKAGE: 'some-package',
   PYPI_PACKAGE: 'some-python-package',
 }))
-const { REPO, LATER_REPO, ONE_DAY_REPO, NPM_PACKAGE, PYPI_PACKAGE } = FIXTURES
+const { REPO, LATER_REPO, ONE_DAY_REPO, OLD_REPO, NPM_PACKAGE, PYPI_PACKAGE } =
+  FIXTURES
 
 vi.mock('@/generated/repo-activity', () => ({
   REPO_ACTIVITY: {
@@ -28,6 +30,13 @@ vi.mock('@/generated/repo-activity', () => ({
       lastDay: '2026-03-20',
       commits: Array.from({ length: 11 }, () => 2),
       prs: Array.from({ length: 11 }, () => 1),
+    },
+    // A commit a day for 32 days from Dec 20, 2024, into 2025.
+    [FIXTURES.OLD_REPO]: {
+      firstDay: '2024-12-20',
+      lastDay: '2025-01-20',
+      commits: Array.from({ length: 32 }, () => 1),
+      prs: Array.from({ length: 32 }, () => 0),
     },
     [FIXTURES.ONE_DAY_REPO]: {
       firstDay: '2026-03-20',
@@ -108,6 +117,14 @@ describe('getTotalCharts', () => {
         expect.stringMatching(/^Weekly PRs /),
         expect.stringMatching(/^Weekly downloads /),
       ],
+    })
+  })
+
+  it('starts the charts no earlier than Jan 1, 2025, charting the whole history all the same', () => {
+    expect(getTotalCharts([OLD_REPO], [])).toMatchObject({
+      span: { start: '2025-01-01', end: '2025-01-20' },
+      // Its days before then still count toward where the line starts.
+      activity: { firstDay: '2024-12-20' },
     })
   })
 

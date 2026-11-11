@@ -9,6 +9,10 @@ import { getSpanMs, MIN_CHART_MS } from './spans'
 import { describeWeeklyActivity } from './weekly-activity'
 import { describeWeeklyDownloads } from './weekly-downloads'
 
+// The earliest the charts start, past years of a few commits a month that
+// would squeeze the rest into their right edge.
+const EARLIEST_START = '2025-01-01'
+
 /** The ISO dates a history counts from and through. */
 type HistoryDays = Pick<DownloadHistory, 'firstDay' | 'lastDay'>
 
@@ -78,9 +82,10 @@ const sumDownloads = (
  * PRs, and the packages' downloads, each added up day by day, the dates they
  * span, and a sentence describing each chart for screen readers.
  *
- * The charts span from the first day any of them counts, with no releases
- * marked, which would crowd them. Undefined for nothing to chart: no
- * history, or a stretch under two weeks.
+ * The charts span from the first day any of them counts, or Jan 1, 2025 if
+ * that's later, with each line starting at the total counted by then, and
+ * no releases marked, which would crowd them. Undefined for nothing to
+ * chart: no history, or a stretch under two weeks.
  */
 export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
   const activity = sumActivity(
@@ -96,7 +101,7 @@ export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
     return undefined
   }
   const { firstDay, lastDay } = getCombinedDays(charted)
-  const span = { start: firstDay, end: lastDay }
+  const span = { start: laterDay(firstDay, EARLIEST_START), end: lastDay }
   if (getSpanMs(span) < MIN_CHART_MS) {
     return undefined
   }
