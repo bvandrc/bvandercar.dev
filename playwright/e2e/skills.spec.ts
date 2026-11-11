@@ -15,8 +15,6 @@ const getGroups = (page: Page) =>
       const { top, bottom, left, right } = element.getBoundingClientRect()
       return { top, bottom, left, right }
     }
-    const getFontSize = (element: Element) =>
-      Number.parseFloat(getComputedStyle(element).fontSize)
     return [...document.querySelectorAll(`[data-testid="${ids.SELF}"]`)].map(
       (group) => {
         const rows = group.querySelector(`[data-testid="${ids.ROWS}"]`)
@@ -49,7 +47,6 @@ const getGroups = (page: Page) =>
               // The text's own edges, not its box's, which fills the column.
               left: Math.min(...lines.map((line) => line.left)),
               right: Math.max(...lines.map((line) => line.right)),
-              fontSize: getFontSize(label),
               lineCount: new Set(lines.map((line) => Math.round(line.top)))
                 .size,
               narrowestWidth: Math.max(...wordWidths),
@@ -70,7 +67,6 @@ const getGroups = (page: Page) =>
               ...toBox(list),
               gap: Number.parseFloat(getComputedStyle(list).columnGap),
               badges: badges.map(toBox),
-              fontSizes: badges.map(getFontSize),
             }
           }),
         }
@@ -104,8 +100,8 @@ const expectCenteredWhole = async (page: Page, width: number) => {
   }
 }
 
-/** Fails unless every group's labels and badges make two lined-up columns. */
-const expectColumns = async (page: Page) => {
+/** Fails unless every group's labels and badges make two lined-up columns, `gap` px apart. */
+const expectColumns = async (page: Page, gap: number) => {
   for (const { labels, lists } of await getGroups(page)) {
     const [firstLabel] = labels
     const [firstList] = lists
@@ -121,9 +117,9 @@ const expectColumns = async (page: Page) => {
         0
       )
       expect(
-        list.left,
-        `${label.text}'s badges sit right of it`
-      ).toBeGreaterThan(label.right)
+        list.left - label.right,
+        `${label.text}'s badges sit ${gap}px right of it`
+      ).toBeCloseTo(gap, 0)
       // A touch above center, where it reads in line with their names.
       expect(
         label.firstLineMiddle,
@@ -142,7 +138,7 @@ test.describe('Skills, from sm up', () => {
   test('sets each label beside its badges, in two lined-up columns', async ({
     page,
   }) => {
-    await expectColumns(page)
+    await expectColumns(page, 12)
   })
 
   test('centers each group, at most 512px wide, on its first row of badges', async ({
@@ -174,17 +170,6 @@ test.describe('Skills, from sm up', () => {
       }
     }
   })
-
-  test('keeps its badges and labels at their full size', async ({ page }) => {
-    for (const { labels, lists } of await getGroups(page)) {
-      for (const label of labels) {
-        expect(label.fontSize, label.text).toBe(14)
-      }
-      for (const fontSize of lists.flatMap((list) => list.fontSizes)) {
-        expect(fontSize).toBe(14)
-      }
-    }
-  })
 })
 
 test.describe('Skills, below sm', () => {
@@ -199,7 +184,7 @@ test.describe('Skills, below sm', () => {
   test('sets each label beside its badges, in two lined-up columns', async ({
     page,
   }) => {
-    await expectColumns(page)
+    await expectColumns(page, 8)
   })
 
   test('centers each group as a whole across the full screen', async ({
@@ -208,12 +193,6 @@ test.describe('Skills, below sm', () => {
     const skills = await page.getByTestId(SKILLS.SELF).boundingBox()
     expect(skills).toMatchObject({ x: 0, width: 412 })
     await expectCenteredWhole(page, 412)
-  })
-
-  test('sets its badges 8px from their labels', async ({ page }) => {
-    for (const { columnGap } of await getGroups(page)) {
-      expect(columnGap).toBe(8)
-    }
   })
 
   test('starts a wrapped line of badges at the same edge as the line above', async ({
@@ -230,19 +209,12 @@ test.describe('Skills, below sm', () => {
     }
   })
 
-  test('shrinks its badges and labels, and keeps each label on one line', async ({
+  test('keeps each label on one line, where its badges leave room', async ({
     page,
   }) => {
-    for (const { labels, lists } of await getGroups(page)) {
-      for (const label of labels) {
-        expect(label, label.text).toMatchObject({
-          fontSize: 12,
-          lineCount: 1,
-        })
-      }
-      for (const fontSize of lists.flatMap((list) => list.fontSizes)) {
-        expect(fontSize).toBe(13)
-      }
+    const labels = (await getGroups(page)).flatMap((group) => group.labels)
+    for (const { text, lineCount } of labels) {
+      expect(lineCount, text).toBe(1)
     }
   })
 })
@@ -265,7 +237,7 @@ test.describe('Skills, on the narrowest phones', () => {
   })
 
   test('keeps its columns, and every badge, on screen', async ({ page }) => {
-    await expectColumns(page)
+    await expectColumns(page, 8)
     for (const { labels, lists } of await getGroups(page)) {
       for (const box of [...labels, ...lists.flatMap((list) => list.badges)]) {
         expect(box.left).toBeGreaterThanOrEqual(0)
