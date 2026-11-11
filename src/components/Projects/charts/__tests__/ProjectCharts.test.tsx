@@ -123,6 +123,15 @@ describe('ProjectCharts', () => {
     expect(zoomed[1]).toEqual(zoomed[0])
   })
 
+  it('opens zoomed in on its initial span, and zooms back out to the full one', () => {
+    // Past the first release, so only the second is in view.
+    renderCharts({ initialSpan: { start: '2026-03-10', end: '2026-03-26' } })
+    expect(getReleaseXs().map((xs) => xs.length)).toEqual([1, 1])
+
+    turnWheel(getPlot(COMMITS_CHART), 100, 3000)
+    expect(getReleaseXs().map((xs) => xs.length)).toEqual([2, 2])
+  })
+
   it('pans both zoomed-in charts together', () => {
     renderCharts()
     turnWheel(getPlot(COMMITS_CHART), 100, -300)

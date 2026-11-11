@@ -3,7 +3,7 @@ import { isNotNil } from 'es-toolkit'
 import { PACKAGE_DOWNLOADS } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { ActivityHistory, DownloadHistory } from '~/counts'
-import { earlierDay, getDaysBetween, laterDay } from '~/dates'
+import { earlierDay, getDaysBetween, isoDate, laterDay } from '~/dates'
 import type { ProjectPackage } from './project-charts'
 import { getSpanMs, MIN_CHART_MS } from './spans'
 import { describeWeeklyActivity } from './weekly-activity'
@@ -12,6 +12,8 @@ import { describeWeeklyDownloads } from './weekly-downloads'
 // The earliest the charts start, past years of a few commits a month that
 // would squeeze the rest into their right edge.
 const EARLIEST_START = '2025-01-01'
+// How far back the charts open zoomed in to, from their last day.
+const INITIAL_ZOOM_MONTHS = 18
 
 /** The ISO dates a history counts from and through. */
 type HistoryDays = Pick<DownloadHistory, 'firstDay' | 'lastDay'>
@@ -84,8 +86,9 @@ const sumDownloads = (
  *
  * The charts span from the first day any of them counts, or Jan 1, 2025 if
  * that's later, with each line starting at the total counted by then, and
- * no releases marked, which would crowd them. Undefined for nothing to
- * chart: no history, or a stretch under two weeks.
+ * no releases marked, which would crowd them. Where they span longer, they
+ * open zoomed in on their last 18 months. Undefined for nothing to chart: no
+ * history, or a stretch under two weeks.
  */
 export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
   const activity = sumActivity(
@@ -105,6 +108,9 @@ export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
   if (getSpanMs(span) < MIN_CHART_MS) {
     return undefined
   }
+  const zoomStart = new Date(lastDay)
+  zoomStart.setUTCMonth(zoomStart.getUTCMonth() - INITIAL_ZOOM_MONTHS)
+  const initialStart = isoDate(zoomStart.getTime())
   return {
     activity,
     prs: activity,
@@ -112,6 +118,10 @@ export const getTotalCharts = (repos: string[], packages: ProjectPackage[]) => {
     downloads: downloads && { history: downloads },
     releases: undefined,
     span,
+    initialSpan:
+      initialStart > span.start
+        ? { start: initialStart, end: lastDay }
+        : undefined,
     descriptions: [
       activity && describeWeeklyActivity(activity, 'commits'),
       activity && describeWeeklyActivity(activity, 'prs'),

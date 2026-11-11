@@ -12,6 +12,8 @@ export type ProjectChartsProps = Pick<
 > & {
   /** The dates both charts span, zoomed all the way out */
   span: DaySpan
+  /** The dates both charts open zoomed in on, inside `span`; without it, they open zoomed all the way out */
+  initialSpan?: DaySpan
   /** The history whose commits it charts */
   activity?: ActivityHistory
   /** The history whose merged PRs it charts */
@@ -24,7 +26,8 @@ export type ProjectChartsProps = Pick<
  * A project's commits chart, merged PRs chart, then its package's downloads
  * chart, whichever it has, sharing one span, zoom, and set of releases.
  *
- * Mounted with the tooltip it sits in, so each opening starts zoomed out.
+ * Mounted with the tooltip it sits in, so each opening starts at
+ * `initialSpan`, or zoomed all the way out.
  * Loaded on its own, with the histories it charts, the first time a
  * project's counts are hovered, so neither the charts' code, gestures
  * included, nor their data is in the page's first load.
@@ -34,10 +37,11 @@ export const ProjectCharts = ({
   prs,
   downloads,
   span: fullSpan,
+  initialSpan,
   releases,
 }: ProjectChartsProps) => {
   // Shared by both charts, so a release stays lined up across them as they zoom.
-  const [zoomedSpan, setZoomedSpan] = useState<DaySpan>()
+  const [zoomedSpan, setZoomedSpan] = useState(initialSpan)
   // Each from the span before, so gestures landing in one frame build on
   // each other rather than all starting from the same one.
   /** Zooms both charts around a time under the pointer, scaling their width by `factor`. */

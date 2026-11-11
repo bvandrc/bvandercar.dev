@@ -9,11 +9,19 @@ const FIXTURES = vi.hoisted(() => ({
   LATER_REPO: 'later-repo',
   ONE_DAY_REPO: 'one-day-repo',
   OLD_REPO: 'old-repo',
+  LONG_REPO: 'long-repo',
   NPM_PACKAGE: 'some-package',
   PYPI_PACKAGE: 'some-python-package',
 }))
-const { REPO, LATER_REPO, ONE_DAY_REPO, OLD_REPO, NPM_PACKAGE, PYPI_PACKAGE } =
-  FIXTURES
+const {
+  REPO,
+  LATER_REPO,
+  ONE_DAY_REPO,
+  OLD_REPO,
+  LONG_REPO,
+  NPM_PACKAGE,
+  PYPI_PACKAGE,
+} = FIXTURES
 
 vi.mock('@/generated/repo-activity', () => ({
   REPO_ACTIVITY: {
@@ -37,6 +45,14 @@ vi.mock('@/generated/repo-activity', () => ({
       lastDay: '2025-01-20',
       commits: Array.from({ length: 32 }, () => 1),
       prs: Array.from({ length: 32 }, () => 0),
+    },
+    // A commit a day from Jun 1, 2024 to Nov 10, 2026: far longer than 18
+    // months.
+    [FIXTURES.LONG_REPO]: {
+      firstDay: '2024-06-01',
+      lastDay: '2026-11-10',
+      commits: Array.from({ length: 893 }, () => 1),
+      prs: Array.from({ length: 893 }, () => 0),
     },
     [FIXTURES.ONE_DAY_REPO]: {
       firstDay: '2026-03-20',
@@ -110,6 +126,8 @@ describe('getTotalCharts', () => {
   it('spans every chart from the earliest first day to the latest last one, marking no releases, and describes each', () => {
     expect(getTotalCharts([REPO, LATER_REPO], PACKAGES)).toMatchObject({
       span: { start: '2026-03-02', end: '2026-03-20' },
+      // Under 18 months, so they open zoomed all the way out.
+      initialSpan: undefined,
       releases: undefined,
       // Each chart's, in its order.
       descriptions: [
@@ -125,6 +143,13 @@ describe('getTotalCharts', () => {
       span: { start: '2025-01-01', end: '2025-01-20' },
       // Its days before then still count toward where the line starts.
       activity: { firstDay: '2024-12-20' },
+    })
+  })
+
+  it('opens charts spanning over 18 months zoomed in on their last 18', () => {
+    expect(getTotalCharts([LONG_REPO], [])).toMatchObject({
+      span: { start: '2025-01-01', end: '2026-11-10' },
+      initialSpan: { start: '2025-05-10', end: '2026-11-10' },
     })
   })
 
