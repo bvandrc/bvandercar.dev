@@ -25,8 +25,6 @@ export const Projects = () => {
   const [previewOpened, setPreviewOpened] = useState(false)
   return (
     <Section
-      // The footer's totals link here.
-      id={sectionAnchor(SECTIONS.PROJECTS.title)}
       glyph={SECTIONS.PROJECTS.glyph}
       title={SECTIONS.PROJECTS.title}
       data-testid="projects">
