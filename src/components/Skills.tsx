@@ -37,9 +37,6 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
         className={cn(
           'text-right text-ink-muted',
           'text-xs sm:text-sm',
-          // Below sm, "Project Mgmt.", the longest, takes two lines, which
-          // leaves its skills room for two to a line.
-          'max-w-16 sm:max-w-none',
           // Level with the first line of badges, a touch above center, where
           // it reads in line with their names.
           'pt-0.5 sm:pt-0.75'
@@ -124,8 +121,12 @@ const SkillsGroup = ({ group }: SkillsGroupProps) => {
         ref={listRef}
         className={cn(
           // A grid only as wide as its widest row, up to 512px from sm,
-          // where a long row wraps, its labels' column as wide as its longest.
-          'mx-auto grid w-fit max-w-full grid-cols-[auto_1fr] sm:max-w-lg',
+          // where a long row wraps.
+          'mx-auto grid w-fit max-w-full sm:max-w-lg',
+          // The skills' column takes the room first, and the labels' the
+          // rest, up to as wide as the longest, so a label wraps before its
+          // skills do.
+          'grid-cols-[minmax(min-content,1fr)_auto]',
           'gap-x-2 gap-y-3 sm:gap-x-3'
         )}>
         {group.rows.map((row) => (
