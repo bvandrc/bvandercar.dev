@@ -49,7 +49,7 @@ export const Skills = () => (
                       // Smaller below sm, to fit more skills to a line.
                       <Badge
                         key={skill.alt}
-                        className="gap-1 px-1.5 py-0.5 text-[0.8125rem]/4.5 sm:gap-1.5 sm:px-2 sm:py-1 sm:text-sm">
+                        className="px-1.5 py-0.5 text-[0.8125rem]/4.5 sm:px-2 sm:py-1 sm:text-sm">
                         <BrandIcon
                           slug={slug}
                           color={SKILL_ICON_COLORS[slug] ?? THEME_COLORS.INK}
