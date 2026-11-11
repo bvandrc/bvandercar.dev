@@ -43,6 +43,26 @@ test('each contents link scrolls its section into view', async ({ page }) => {
   }
 })
 
+test('a URL naming a section opens on it', async ({ page }) => {
+  await page.goto('/')
+  const ids = await page
+    .locator('section[id]')
+    .evaluateAll((sections) => sections.map(({ id }) => id))
+  // Every project group, the sections around them, and the skills.
+  expect(ids.length).toBeGreaterThan(1)
+
+  for (const id of ids) {
+    // A fresh load, where going from one `#` to another wouldn't reload.
+    await page.goto('about:blank')
+    await page.goto(`/#${id}`)
+    await expect(page.locator(`section#${id}`), id).toBeInViewport()
+    // Scrolled to it, rather than left at the top where the first is in view.
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY), { message: id })
+      .toBeGreaterThan(0)
+  }
+})
+
 test.describe('Contents bar', () => {
   // Jumps rather than glides, so a section has landed once its link is current.
   test.use({ reducedMotion: 'reduce' })

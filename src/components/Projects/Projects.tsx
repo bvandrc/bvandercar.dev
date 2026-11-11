@@ -28,6 +28,7 @@ export const Projects = () => {
     <Section
       glyph={SECTIONS.PROJECTS.glyph}
       title={SECTIONS.PROJECTS.title}
+      id={sectionAnchor(SECTIONS.PROJECTS.title)}
       data-testid="projects">
       {PROJECTS.map((group) => {
         const layout = getGridLayout(group)
