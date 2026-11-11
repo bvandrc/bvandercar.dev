@@ -1,7 +1,7 @@
 /**
  * Fetches each project repo's commits and merged pull requests in all, which
- * its counts' glyphs show, and its commits day by day, for the commits chart
- * in its counts' tooltip.
+ * its counts' glyphs show, and both day by day, for the commits chart in
+ * its counts' tooltip and the footer's charts of every project's together.
  *
  * Writes the totals to src/generated/repo-activity-totals.ts, and the daily
  * histories to src/generated/repo-activity.ts, which only the lazily loaded
@@ -19,7 +19,7 @@
 import { countBy } from 'es-toolkit'
 import { Octokit } from 'octokit'
 
-import type { ActivityTotals, CommitHistory } from '../shared/counts.ts'
+import type { ActivityHistory, ActivityTotals } from '../shared/counts.ts'
 import { earlierDay, isoDate, listDays } from '../shared/dates.ts'
 import { GITHUB_OWNER } from '../shared/github.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
@@ -58,10 +58,11 @@ const octokit = new Octokit({
 
 /**
  * A repo's commits on its default branch, and its merged pull requests, each
- * counted in all, and its commits by the day each was made, from the day of
- * its first commit or merged pull request through today.
+ * counted in all, and by the day each commit was made and each pull request
+ * merged, from the day of its first commit or merged pull request through
+ * today.
  *
- * Every commit is in a day, so the days sum to the commits' total.
+ * Every commit and pull request is in a day, so the days sum to the totals.
  */
 const fetchActivity = async (repo: string) => {
   const repoParams = { owner: GITHUB_OWNER, repo, per_page: 100 }
@@ -83,17 +84,30 @@ const fetchActivity = async (repo: string) => {
     )
   )
   // Ones closed unmerged, or still open, never landed, so don't count.
-  const merged = pulls.filter(({ merged_at }) => merged_at !== null)
+  const merged = pulls.flatMap(({ created_at, merged_at }) =>
+    merged_at === null ? [] : [{ created_at, merged_at }]
+  )
   const prDays = merged.map(({ created_at }) => isoDate(Date.parse(created_at)))
+  // A pull request counts on the day it merged, when it landed, or today's if
+  // it merged since today was read.
+  const mergeDays = merged.map(({ merged_at }) =>
+    earlierDay(isoDate(Date.parse(merged_at)), today)
+  )
   const firstDay = [today, ...commitDays, ...prDays].reduce(earlierDay)
-  const counts = countBy(commitDays, (day) => day)
+  const days = listDays(firstDay, today)
+  /** How many of `dated` fall on each of the history's days. */
+  const countDaily = (dated: string[]) => {
+    const counts = countBy(dated, (day) => day)
+    return days.map((day) => counts[day] ?? 0)
+  }
   return {
     commits: commits.length,
     prs: merged.length,
     history: {
       firstDay,
       lastDay: today,
-      commits: listDays(firstDay, today).map((day) => counts[day] ?? 0),
+      commits: countDaily(commitDays),
+      prs: countDaily(mergeDays),
     },
   }
 }
@@ -103,7 +117,7 @@ exitIfReusing('git activity', [TOTALS_FILE, HISTORY_FILE])
 const repos = getProjectValues('repo')
 
 const totals: Record<string, ActivityTotals> = {}
-const histories: Record<string, CommitHistory> = {}
+const histories: Record<string, ActivityHistory> = {}
 if (token === undefined) {
   reportSkipped("every repo's commits and PRs", 'GITHUB_TOKEN is not set')
 } else {
@@ -133,7 +147,7 @@ await writeGenerated(
   [
     {
       name: 'REPO_ACTIVITY_TOTALS',
-      doc: "Each project repo's commits on its default branch, and pull requests, in all, keyed by repo name.",
+      doc: "Each project repo's commits on its default branch, and merged pull requests, in all, keyed by repo name.",
       type: 'Record<string, ActivityTotals | undefined>',
       value: totals,
     },
@@ -142,12 +156,12 @@ await writeGenerated(
 await writeGenerated(
   HISTORY_FILE,
   'fetch:git-activity',
-  "import type { CommitHistory } from '~/counts'",
+  "import type { ActivityHistory } from '~/counts'",
   [
     {
       name: 'REPO_ACTIVITY',
-      doc: "Each project repo's commits per day, keyed by repo name.",
-      type: 'Record<string, CommitHistory | undefined>',
+      doc: "Each project repo's commits, and merged pull requests, per day, keyed by repo name.",
+      type: 'Record<string, ActivityHistory | undefined>',
       value: histories,
     },
   ]

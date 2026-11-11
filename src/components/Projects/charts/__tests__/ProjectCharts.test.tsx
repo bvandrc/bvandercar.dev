@@ -1,16 +1,17 @@
 import { render, screen, within } from '@testing-library/react'
 
 import { turnWheel } from '@/test-helpers/wheel'
-import type { CommitHistory, DownloadHistory, Release } from '~/counts'
+import type { ActivityHistory, DownloadHistory, Release } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import type { DaySpan } from '../lib/spans'
 import { ProjectCharts, type ProjectChartsProps } from '../ProjectCharts'
 
-const { ACTIVITY_CHART, DOWNLOADS_CHART, RUNNING_TOTAL_CHART } =
+const { COMMITS_CHART, PRS_CHART, DOWNLOADS_CHART, RUNNING_TOTAL_CHART } =
   SELECTORS.PROJECTS
 const { PLOT, RELEASE } = RUNNING_TOTAL_CHART
 
-// 3, 40, then 12 commits a week from Monday, Feb 23, then quiet to Mar 26.
+// 3, 40, then 12 commits a week from Monday, Feb 23, then quiet to Mar 26,
+// with a merged PR a week.
 const ACTIVITY = {
   firstDay: '2026-02-23',
   lastDay: '2026-03-26',
@@ -18,7 +19,11 @@ const ACTIVITY = {
     1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0,
   ],
-} satisfies CommitHistory
+  prs: [
+    1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+    0, 0, 0, 1, 0, 0, 0,
+  ],
+} satisfies ActivityHistory
 
 // 5, 1,200, then 12 downloads a week from Mar 4 to 24.
 const DOWNLOADS = {
@@ -55,7 +60,7 @@ const renderCharts = (props?: Partial<ProjectChartsProps>) =>
 
 /** Each chart's release lines' positions across it, the commits chart's first. */
 const getReleaseXs = () =>
-  [ACTIVITY_CHART, DOWNLOADS_CHART].map((chart) =>
+  [COMMITS_CHART, DOWNLOADS_CHART].map((chart) =>
     within(screen.getByTestId(chart))
       .queryAllByTestId(RELEASE)
       .map((line) => line.getAttribute('x1'))
@@ -69,7 +74,7 @@ describe('ProjectCharts', () => {
   it('shows the commits chart, then the downloads chart below it', () => {
     renderCharts()
 
-    const activity = screen.getByTestId(ACTIVITY_CHART)
+    const activity = screen.getByTestId(COMMITS_CHART)
     const downloads = screen.getByTestId(DOWNLOADS_CHART)
     expect(
       activity.compareDocumentPosition(downloads) &
@@ -77,10 +82,24 @@ describe('ProjectCharts', () => {
     ).toBeTruthy()
   })
 
+  it('shows the merged PRs chart between the commits and downloads charts', () => {
+    renderCharts({ prs: ACTIVITY })
+
+    const prs = screen.getByTestId(PRS_CHART)
+    expect(
+      screen.getByTestId(COMMITS_CHART).compareDocumentPosition(prs) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(
+      prs.compareDocumentPosition(screen.getByTestId(DOWNLOADS_CHART)) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
   it('shows only the charts it has a history for', () => {
     renderCharts({ activity: undefined })
 
-    expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
+    expect(screen.queryByTestId(COMMITS_CHART)).toBeNull()
     expect(screen.getByTestId(DOWNLOADS_CHART)).toBeDefined()
   })
 
@@ -104,13 +123,22 @@ describe('ProjectCharts', () => {
     expect(zoomed[1]).toEqual(zoomed[0])
   })
 
+  it('opens zoomed in on its initial span, and zooms back out to the full one', () => {
+    // Past the first release, so only the second is in view.
+    renderCharts({ initialSpan: { start: '2026-03-10', end: '2026-03-26' } })
+    expect(getReleaseXs().map((xs) => xs.length)).toEqual([1, 1])
+
+    turnWheel(getPlot(COMMITS_CHART), 100, 3000)
+    expect(getReleaseXs().map((xs) => xs.length)).toEqual([2, 2])
+  })
+
   it('pans both zoomed-in charts together', () => {
     renderCharts()
-    turnWheel(getPlot(ACTIVITY_CHART), 100, -300)
+    turnWheel(getPlot(COMMITS_CHART), 100, -300)
     const zoomed = getReleaseXs()
 
     // A sideways scroll pans rather than zooms.
-    turnWheel(getPlot(ACTIVITY_CHART), 100, 0, { deltaX: -40 })
+    turnWheel(getPlot(COMMITS_CHART), 100, 0, { deltaX: -40 })
     const panned = getReleaseXs()
     expect(panned).not.toEqual(zoomed)
     expect(panned[0]).not.toHaveLength(0)

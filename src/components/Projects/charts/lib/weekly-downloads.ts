@@ -24,13 +24,18 @@ export const getDownloadWeekEnds = ({ firstDay, lastDay }: DownloadHistory) =>
 export const getDownloadWeeks = (history: DownloadHistory) =>
   sumWeeks(history.firstDay, history.daily, getDownloadWeekEnds(history))
 
-/** The history in a sentence, like "Weekly npm downloads since Jul 2026, peaking at 1,010 in the week of Jul 28, 2026". */
+/**
+ * The history in a sentence, like "Weekly npm downloads since Jul 2026,
+ * peaking at 1,010 in the week of Jul 28, 2026".
+ *
+ * Without a registry, for downloads from more than one, it names none.
+ */
 export const describeWeeklyDownloads = (
   history: DownloadHistory,
-  registry: Registry
+  registry: Registry | undefined
 ) =>
   describeWeekly(
-    `${REGISTRY_NAMES[registry]} downloads`,
+    registry ? `${REGISTRY_NAMES[registry]} downloads` : 'downloads',
     history.firstDay,
     getDownloadWeeks(history)
   )

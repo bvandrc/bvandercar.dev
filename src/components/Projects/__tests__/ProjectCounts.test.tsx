@@ -14,7 +14,7 @@ import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
-const { COUNTS, ACTIVITY_CHART, DOWNLOADS_CHART, CHARTS_LOADING } =
+const { COUNTS, COMMITS_CHART, DOWNLOADS_CHART, CHARTS_LOADING } =
   SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
@@ -77,12 +77,16 @@ vi.mock('@/generated/repo-activity', () => ({
         1, 0, 0, 1, 0, 1, 0, 5, 10, 0, 5, 10, 5, 5, 3, 4, 0, 5, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0,
       ],
+      // No PRs merged.
+      prs: Array.from({ length: 32 }, () => 0),
     },
     // Too few days to chart.
     [FIXTURES.NEW_REPO]: {
       firstDay: '2026-03-16',
       lastDay: '2026-03-18',
       commits: [1, 0, 1],
+      // No PRs merged.
+      prs: Array.from({ length: 3 }, () => 0),
     },
   } satisfies typeof REPO_ACTIVITY,
 }))
@@ -165,7 +169,7 @@ describe('ProjectCounts', () => {
     )
     await hoverCounts()
     const CASES = [
-      [ACTIVITY_CHART, '55'],
+      [COMMITS_CHART, '55'],
       [DOWNLOADS_CHART, '1.2K'],
     ] as const
     for (const [chart, expected] of CASES) {
@@ -201,7 +205,7 @@ describe('ProjectCounts', () => {
     renderWithProviders(<ProjectCounts repo={REPO} />)
 
     const tooltip = await hoverCounts()
-    expect(tooltip.contains(screen.getByTestId(ACTIVITY_CHART))).toBe(true)
+    expect(tooltip.contains(screen.getByTestId(COMMITS_CHART))).toBe(true)
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
     expect(within(tooltip).queryByText(LABEL)).toBeNull()
     // The counts in words, then the commits chart's description.
@@ -243,7 +247,7 @@ describe('ProjectCounts', () => {
     const tooltip = await hoverCounts()
     // Its downloads come from this site's fetch, though too few days to chart.
     expect(tooltip.textContent).toBe('2 commits, 30 downloads')
-    expect(screen.queryByTestId(ACTIVITY_CHART)).toBeNull()
+    expect(screen.queryByTestId(COMMITS_CHART)).toBeNull()
     expect(screen.queryByTestId(DOWNLOADS_CHART)).toBeNull()
   })
 
@@ -251,7 +255,7 @@ describe('ProjectCounts', () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
     await hoverCounts()
-    const activity = within(screen.getByTestId(ACTIVITY_CHART))
+    const activity = within(screen.getByTestId(COMMITS_CHART))
     fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
     // The first release, Mar 4: 3 commits the first week, then 15 more by then.
     expect(activity.getByTestId(READOUT).textContent).toBe(
@@ -264,14 +268,14 @@ describe('ProjectCounts', () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
     /** The activity chart's release lines' positions. */
     const getReleaseXs = () =>
-      within(screen.getByTestId(ACTIVITY_CHART))
+      within(screen.getByTestId(COMMITS_CHART))
         .getAllByTestId(RELEASE)
         .map((line) => line.getAttribute('x1'))
 
     await hoverCounts()
     const unzoomed = getReleaseXs()
     turnWheel(
-      within(screen.getByTestId(ACTIVITY_CHART)).getByTestId(PLOT),
+      within(screen.getByTestId(COMMITS_CHART)).getByTestId(PLOT),
       100,
       -300
     )
@@ -296,7 +300,7 @@ describe('ProjectCounts', () => {
       <FreshCounts repo={REPO} open onOpenChange={changeOpen} />
     )
 
-    expect(await screen.findByTestId(ACTIVITY_CHART)).toBeTruthy()
+    expect(await screen.findByTestId(COMMITS_CHART)).toBeTruthy()
     await user.keyboard('{Escape}')
     expect(changeOpen).toHaveBeenLastCalledWith(false)
   })

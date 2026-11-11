@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test'
 import { SELECTORS } from '~/test-support/selectors'
 import { getChartedCounts } from '../support/charted-counts'
 
-const { ACTIVITY_CHART, DOWNLOADS_CHART, RUNNING_TOTAL_CHART } =
+const { COMMITS_CHART, DOWNLOADS_CHART, RUNNING_TOTAL_CHART } =
   SELECTORS.PROJECTS
 
 /** Moves the pointer onto the middle of a chart's plot. */
@@ -25,7 +25,7 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
   const counts = getChartedCounts(page)
   await counts.hover()
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
-  const activity = tooltip.getByTestId(ACTIVITY_CHART)
+  const activity = tooltip.getByTestId(COMMITS_CHART)
   const downloads = tooltip.getByTestId(DOWNLOADS_CHART)
   await expect(activity.getByTestId(RUNNING_TOTAL_CHART.READOUT)).toHaveText(
     'Commits'
@@ -63,7 +63,7 @@ test("the wheel zooms both of a project's charts around the pointer, without scr
   await expect(totals).toHaveCount(2)
   const scrollY = await page.evaluate(() => window.scrollY)
 
-  await hoverPlot(page, tooltip.getByTestId(ACTIVITY_CHART))
+  await hoverPlot(page, tooltip.getByTestId(COMMITS_CHART))
   await page.mouse.wheel(0, -600)
   // Zoomed in around the middle, short of the lines' ends and their totals.
   await expect(totals).toHaveCount(0)
@@ -79,7 +79,7 @@ test('a mouse drags a zoomed-in chart along its timeline', async ({ page }) => {
   await getChartedCounts(page).hover()
   const activity = page
     .getByTestId(SELECTORS.TOOLTIP)
-    .getByTestId(ACTIVITY_CHART)
+    .getByTestId(COMMITS_CHART)
   const plot = activity.getByTestId(RUNNING_TOTAL_CHART.PLOT)
   const readout = activity.getByTestId(RUNNING_TOTAL_CHART.READOUT)
   await hoverPlot(page, activity)

@@ -9,8 +9,8 @@ import {
 
 export type DownloadsChartProps = RunningTotalChartViewProps & {
   history: DownloadHistory
-  /** The registry the history is from, which the readout names */
-  registry: Registry
+  /** The registry the history is from, which the readout names; leave it out for downloads from more than one */
+  registry?: Registry
 }
 
 /**
@@ -37,7 +37,7 @@ export const DownloadsChart = ({
     noun="download"
     tone="DOWNLOADS"
     icon={COUNT_ICONS.downloads}
-    summary={`${REGISTRY_NAMES[registry]} downloads`}
+    summary={registry ? `${REGISTRY_NAMES[registry]} downloads` : 'Downloads'}
     data-testid="downloads-chart"
   />
 )

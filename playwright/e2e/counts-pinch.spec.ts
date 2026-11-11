@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import { SELECTORS } from '~/test-support/selectors'
 import { getChartedCounts } from '../support/charted-counts'
 
-const { ACTIVITY_CHART } = SELECTORS.PROJECTS
+const { COMMITS_CHART } = SELECTORS.PROJECTS
 
 test.use({ hasTouch: true })
 
@@ -19,7 +19,7 @@ test('on a touch screen, spreading two fingers on a chart zooms it, not the page
   )
   await expect(totals).toHaveCount(2)
   const box = await tooltip
-    .getByTestId(ACTIVITY_CHART)
+    .getByTestId(COMMITS_CHART)
     .getByTestId(SELECTORS.PROJECTS.RUNNING_TOTAL_CHART.PLOT)
     .boundingBox()
   if (!box) {

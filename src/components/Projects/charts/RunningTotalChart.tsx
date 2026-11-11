@@ -14,13 +14,18 @@ import type { DaySpan } from './lib/spans'
 import { formatLatestVersion, getRunningTotals } from './lib/weeks'
 
 /** What a chart counts, which picks its color, the same on every chart. */
-export type ChartTone = 'COMMITS' | 'DOWNLOADS'
+export type ChartTone = 'COMMITS' | 'PRS' | 'DOWNLOADS'
 
 const TONE_CLASSES = {
   COMMITS: {
     LINE: 'stroke-commits',
     AREA: 'fill-commits/10',
     DOT: 'fill-commits',
+  },
+  PRS: {
+    LINE: 'stroke-prs',
+    AREA: 'fill-prs/10',
+    DOT: 'fill-prs',
   },
   // Its own color, so the downloads chart never reads as another commits one.
   DOWNLOADS: {

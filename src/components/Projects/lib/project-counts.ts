@@ -24,8 +24,8 @@ const getPackage = (
 
 /**
  * A project's counts, those its glyphs show, in their order and with their
- * icons, the package they're for, and how many charts may show, one for each
- * history this site fetched.
+ * icons, the package they're for, which of its counts this site fetched, and
+ * how many charts may show, one for each history this site fetched.
  *
  * A count this site fetched wins over the profile's, which is older.
  */
@@ -53,6 +53,11 @@ export const getProjectCounts = ({
       return count === undefined ? [] : [{ key, icon, noun, count }]
     }),
     pkg,
+    // Its histories were fetched with them.
+    fetched: {
+      activity: activityTotals !== undefined,
+      downloads: downloadTotal !== undefined,
+    },
     // Only what this site fetched a history for can be charted.
     chartCount: [activityTotals, downloadTotal].filter(isNotNil).length,
   }

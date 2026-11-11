@@ -40,18 +40,23 @@ vi.mock('@/generated/repo-activity', () => ({
         1, 0, 0, 1, 0, 1, 0, 11, 1, 4, 5, 10, 5, 4, 3, 4, 0, 5, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0,
       ],
+      // No PRs merged.
+      prs: Array.from({ length: 32 }, () => 0),
     },
     // 12 commits over 15 days: over two weeks, but fewer than 20 commits.
     [FIXTURES.SMALL_REPO]: {
       firstDay: '2026-03-02',
       lastDay: '2026-03-16',
       commits: [1, 1, 1, 1, 1, 0, 0, 2, 2, 2, 1, 0, 0, 0, 0],
+      // No PRs merged.
+      prs: Array.from({ length: 15 }, () => 0),
     },
     // A single day.
     [FIXTURES.NEW_REPO]: {
       firstDay: '2026-03-18',
       lastDay: '2026-03-18',
       commits: [2],
+      prs: [0],
     },
   } satisfies typeof REPO_ACTIVITY,
 }))

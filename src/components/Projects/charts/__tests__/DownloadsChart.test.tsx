@@ -26,6 +26,12 @@ describe('DownloadsChart', () => {
     )
   })
 
+  it('captions itself as downloads alone without a registry, for downloads from more than one', () => {
+    render(<DownloadsChart history={HISTORY} />)
+
+    expect(screen.getByTestId(READOUT).textContent).toBe('Downloads')
+  })
+
   it('reads out day by day across a span under 50 days', () => {
     render(
       <DownloadsChart
