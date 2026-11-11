@@ -11,6 +11,7 @@ import {
 import { useAlignToFirstLine } from '@/hooks/useAlignToFirstLine'
 import { type Span, useCenterSpan } from '@/hooks/useCenterSpan'
 import { useCenterWrappedLines } from '@/hooks/useCenterWrappedLines'
+import { useCenterWrappedLinesOnParent } from '@/hooks/useCenterWrappedLinesOnParent'
 import { cn } from '@/lib/cn'
 import { measureFlexLines } from '@/lib/flex-lines'
 import { skillIconSlug } from '@/lib/icons'
@@ -83,7 +84,12 @@ const measureFirstLine = (list: HTMLElement): Span | undefined => {
   return skills === null ? undefined : measureFlexLines(skills)[0]
 }
 
-// All a group shows: from its labels' text to its farthest badge.
+// A group's rows of skills.
+const findSkills = (list: HTMLElement) =>
+  list.querySelectorAll<HTMLElement>('dd')
+
+// All a group shows: from its labels' text to the end of its farthest first
+// line of badges.
 const measureContent = (list: HTMLElement): Span | undefined => {
   const rects = [
     // The text, not the label, which runs past a short one's start.
@@ -92,10 +98,10 @@ const measureContent = (list: HTMLElement): Span | undefined => {
       text.selectNodeContents(label)
       return text.getBoundingClientRect()
     }),
-    ...Array.from(list.querySelectorAll('dd > *'), (badge) =>
-      badge.getBoundingClientRect()
-    ),
-  ]
+    // First lines alone, since below sm the lines that wrap center on the
+    // section once the group has, and never run past them.
+    ...Array.from(findSkills(list), (skills) => measureFlexLines(skills)[0]),
+  ].filter((rect) => rect !== undefined)
   if (rects.length === 0) {
     return undefined
   }
@@ -122,6 +128,10 @@ const SkillsGroup = ({ group }: SkillsGroupProps) => {
     isMobile ? measureContent : measureFirstLine,
     measureContent
   )
+  // Below sm, the lines its rows wrap onto center on the section, not their
+  // column, which the labels push right. After the group's own shift, which
+  // it measures from.
+  useCenterWrappedLinesOnParent(listRef, findSkills, isMobile)
   return (
     <SubSection icon={group.glyph} title={group.title}>
       <dl
