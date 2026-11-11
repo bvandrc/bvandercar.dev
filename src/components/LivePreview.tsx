@@ -37,13 +37,13 @@ export type LivePreviewProps = Pick<React.ComponentProps<'div'>, 'className'> &
 /** How many px of its screenshot's top a poster shows, unless it says otherwise. */
 const DEFAULT_POSTER_HEIGHT = 64
 
+/** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
+const SCROLL_DELAY_MS = 50
+
 // Rounds a poster, and its fade, into the toggle's corners, inside its 1px
 // border. Where the toggle clipped them instead, it would clip its pulse's
 // glow too.
 const POSTER_ROUNDING = 'rounded-[calc(var(--radius-md)-1px)]'
-
-/** How long after opening finishes to wait before scrolling the preview on screen, in ms. */
-const SCROLL_DELAY_MS = 50
 
 /**
  * A live page in an iframe, collapsed behind a toggle until asked for.
