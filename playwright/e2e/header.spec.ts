@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+import { INTRO_LINES } from '@/generated/profile/content/about'
 import { SELECTORS } from '~/test-support/selectors'
 
-const { INTRO_MORE, INTRO_TOGGLE } = SELECTORS.HEADER
+const { TAGLINE, INTRO_MORE, INTRO_TOGGLE } = SELECTORS.HEADER
 
 test.describe('Header intro, below sm', () => {
   // A Pixel 7's width.
@@ -24,6 +25,16 @@ test.describe('Header intro, below sm', () => {
 
     await toggle.click()
     await expect(more).toBeHidden()
+  })
+
+  test('keeps every line in the page while collapsed, for search engines', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    await expect(page.getByTestId(INTRO_MORE)).toBeHidden()
+    // Text content, which a hidden line still has, rather than what's shown.
+    await expect(page.getByTestId(TAGLINE).locator('p')).toHaveText(INTRO_LINES)
   })
 })
 
