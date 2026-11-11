@@ -1,43 +1,25 @@
 import { useIsomorphicLayoutEffect } from 'usehooks-ts'
 
-type Line = {
-  items: HTMLElement[]
-  left: number
-  right: number
-  bottom: number
-}
+import { measureFlexLines } from '@/lib/flex-lines'
 
 const centerWrappedLines = (box: HTMLElement) => {
-  const items = Array.from(box.children).filter(
-    (item) => item instanceof HTMLElement
-  )
   // Measures the lines as they wrap with no offsets of the last measure's.
-  for (const item of items) {
-    item.style.marginInlineStart = ''
-  }
-  const lines: Line[] = []
-  for (const item of items) {
-    const { top, left, right, bottom } = item.getBoundingClientRect()
-    const line = lines.at(-1)
-    // An item that starts above the line's bottom is on that line.
-    if (line !== undefined && top < line.bottom) {
-      line.items.push(item)
-      line.right = right
-    } else {
-      lines.push({ items: [item], left, right, bottom })
+  for (const item of box.children) {
+    if (item instanceof HTMLElement) {
+      item.style.marginInlineStart = ''
     }
   }
-  const [first, ...wrapped] = lines
+  const [first, ...wrapped] = measureFlexLines(box)
   if (first === undefined) {
     return
   }
   const firstWidth = first.right - first.left
-  for (const { items: lineItems, left, right } of wrapped) {
+  for (const { items, left, right } of wrapped) {
     // Rounded down, so the offset never pushes the line's last item onto the
     // next.
     const offset = Math.floor((firstWidth - (right - left)) / 2)
     if (offset > 0) {
-      lineItems[0].style.marginInlineStart = `${offset}px`
+      items[0].style.marginInlineStart = `${offset}px`
     }
   }
 }

@@ -2,30 +2,15 @@ import { useRef } from 'react'
 import { mockResizeObserver } from '@bvandrc/react-toolkit/test-support'
 import { act, render, screen } from '@testing-library/react'
 
+import {
+  buildItemRects,
+  buildItemTestId,
+  type ItemLayout,
+  mockRects,
+} from '@/test-helpers/layout'
 import { useCenterWrappedLines } from '../useCenterWrappedLines'
 
-const LINE_HEIGHT = 20
-const LINE_GAP = 6
-
-/** Where an item sits: its line, counting from 0, and its left and right edges. */
-type ItemLayout = { line: number; left: number; right: number }
-
-const buildRect = ({ line, left, right }: ItemLayout) =>
-  new DOMRect(left, line * (LINE_HEIGHT + LINE_GAP), right - left, LINE_HEIGHT)
-
-const buildItemTestId = (index: number) => `item-${index}`
-
-/** Lays out the items, by test id, as `layouts` places them, until called again. */
-const mockLayout = (layouts: ItemLayout[]) => {
-  const rects = new Map(
-    layouts.map((layout, index) => [buildItemTestId(index), buildRect(layout)])
-  )
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
-    function (this: HTMLElement) {
-      return rects.get(this.dataset.testid ?? '') ?? new DOMRect()
-    }
-  )
-}
+const mockLayout = (layouts: ItemLayout[]) => mockRects(buildItemRects(layouts))
 
 const Lines = ({ count }: { count: number }) => {
   const ref = useRef<HTMLDivElement>(null)

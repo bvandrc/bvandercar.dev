@@ -2,7 +2,12 @@ import { useRef } from 'react'
 import { SKILL_ICON_COLORS } from 'virtual:icons'
 
 import { SECTIONS } from '@/generated/profile/content/sections'
-import { SKILLS, type SkillRow } from '@/generated/profile/content/skills'
+import {
+  SKILLS,
+  type SkillRow,
+  type SkillSection,
+} from '@/generated/profile/content/skills'
+import { useCenterOnFirstLine } from '@/hooks/useCenterOnFirstLine'
 import { useCenterWrappedLines } from '@/hooks/useCenterWrappedLines'
 import { cn } from '@/lib/cn'
 import { skillIconSlug } from '@/lib/icons'
@@ -65,6 +70,38 @@ const SkillsRow = ({ row }: SkillsRowProps) => {
   )
 }
 
+// A group's first row of skills, whose first line it centers on.
+const findFirstSkills = (list: HTMLElement) =>
+  list.querySelector<HTMLElement>('dd')
+
+type SkillsGroupProps = {
+  group: SkillSection
+}
+
+/** A group's heading, and its rows below it. */
+const SkillsGroup = ({ group }: SkillsGroupProps) => {
+  const listRef = useRef<HTMLDListElement>(null)
+  // From sm up, its first row's first line centers under the heading, with
+  // the labels to its left. Below sm, the list spans the section, so it stays.
+  useCenterOnFirstLine(listRef, findFirstSkills)
+  return (
+    <SubSection icon={group.glyph} title={group.title}>
+      <dl
+        ref={listRef}
+        className={cn(
+          'flex flex-col gap-3',
+          // From sm up, a grid only as wide as its widest row, up to 512px,
+          // where a long row wraps, its labels' column as wide as its longest.
+          'sm:mx-auto sm:grid sm:w-fit sm:max-w-lg sm:grid-cols-[auto_1fr]'
+        )}>
+        {group.rows.map((row) => (
+          <SkillsRow key={row.label} row={row} />
+        ))}
+      </dl>
+    </SubSection>
+  )
+}
+
 export const Skills = () => (
   <Section
     glyph={SECTIONS.SKILLS.glyph}
@@ -75,20 +112,7 @@ export const Skills = () => (
     className="-mx-5 sm:mx-0"
     data-testid="skills">
     {SKILLS.map((group) => (
-      <SubSection key={group.title} icon={group.glyph} title={group.title}>
-        <dl
-          className={cn(
-            'flex flex-col gap-3',
-            // From sm up, a grid only as wide as its widest row, up to 512px,
-            // where a long row wraps, centered under its heading, its labels'
-            // column as wide as its longest.
-            'sm:mx-auto sm:grid sm:w-fit sm:max-w-lg sm:grid-cols-[auto_1fr]'
-          )}>
-          {group.rows.map((row) => (
-            <SkillsRow key={row.label} row={row} />
-          ))}
-        </dl>
-      </SubSection>
+      <SkillsGroup key={group.title} group={group} />
     ))}
   </Section>
 )
