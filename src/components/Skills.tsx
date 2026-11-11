@@ -24,9 +24,10 @@ export const Skills = () => (
         <dl
           className={cn(
             'flex flex-col gap-3',
-            // From sm up, a grid only as wide as its widest row, centered
-            // under its heading, its labels' column as wide as its longest.
-            'sm:mx-auto sm:grid sm:w-fit sm:grid-cols-[auto_1fr]'
+            // From sm up, a grid only as wide as its widest row, up to 512px,
+            // where a long row wraps, centered under its heading, its labels'
+            // column as wide as its longest.
+            'sm:mx-auto sm:grid sm:w-fit sm:max-w-lg sm:grid-cols-[auto_1fr]'
           )}>
           {group.rows.map((row) => {
             // The label's line breaks are for the README's narrow column.
