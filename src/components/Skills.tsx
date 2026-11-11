@@ -15,6 +15,9 @@ export const Skills = () => (
     glyph={SECTIONS.SKILLS.glyph}
     title={SECTIONS.SKILLS.title}
     id={sectionAnchor(SECTIONS.SKILLS.title)}
+    // Below sm, runs into the page's side padding, which is App's px-5, to
+    // fit more skills to a line.
+    className="-mx-5 sm:mx-0"
     data-testid="skills">
     {SKILLS.map((group) => (
       <SubSection key={group.title} icon={group.glyph} title={group.title}>
