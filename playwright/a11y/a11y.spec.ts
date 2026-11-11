@@ -27,6 +27,16 @@ test.describe('Accessibility', () => {
     await checkA11y(page)
   })
 
+  test('Expanded intro', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'The intro only collapses below sm')
+    await page.goto('/')
+
+    await page.getByTestId(HEADER.INTRO_TOGGLE).click()
+    await expect(page.getByTestId(HEADER.INTRO_MORE)).toBeVisible()
+
+    await checkA11y(page)
+  })
+
   test('Contents bar', async ({ page }) => {
     await page.goto('/')
 
