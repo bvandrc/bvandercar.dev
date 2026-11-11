@@ -1,7 +1,7 @@
 /**
- * Fetches every commit and merged pull request the GitHub account made, in
- * any repo, its own and others', in all and day by day, for the footer's
- * totals and their charts.
+ * The account's side of `pnpm fetch:git-activity`: every commit and merged
+ * pull request the GitHub account made, in any repo, its own and others', in
+ * all and day by day, for the footer's totals and their charts.
  *
  * Commits come from GitHub's commit search, which reads every repo's default
  * branch but no fork's, so each of the account's public forks is read branch
@@ -9,42 +9,26 @@
  * than once, as in a fork of a repo it landed in, counts once. Pull requests
  * come from GitHub's issue search, each on the day it merged. Search reads a
  * private repo only where `GITHUB_TOKEN` can.
- *
- * Writes the totals to src/generated/account-activity-totals.ts, and the
- * daily history to src/generated/account-activity.ts, which only the lazily
- * loaded charts import; both gitignored. Without a token, or where a request
- * fails, both are left undefined with a warning, and the projects' own
- * counts, added up, stand in, unless `REQUIRE_FETCHED_DATA=true`, as the
- * deploy sets it. With `REUSE_FETCHED_DATA=true`, it keeps the files where
- * they already exist, as a preview build does with recent data it restored.
- * With `SKIP_ACCOUNT_ACTIVITY=true`, it leaves both undefined without asking
- * GitHub at all.
  */
 
-import { countBy, uniqBy } from 'es-toolkit'
+import { setTimeout } from 'node:timers/promises'
+import { uniqBy } from 'es-toolkit'
 
-import type { ActivityHistory, ActivityTotals } from '../shared/counts.ts'
-import {
-  addDays,
-  earlierDay,
-  getDaysBetween,
-  isoDate,
-  listDays,
-} from '../shared/dates.ts'
-import { GITHUB_OWNER } from '../shared/github.ts'
-import { GENERATED_DIR } from './shared/constants.ts'
-import { exitIfReusing, writeGenerated } from './shared/generated.ts'
-import { octokit, token } from './shared/octokit.ts'
-import { reportSkipped } from './shared/skipped.ts'
-
-const TOTALS_FILE = `${GENERATED_DIR}/account-activity-totals.ts`
-const HISTORY_FILE = `${GENERATED_DIR}/account-activity.ts`
+import { addDays, getDaysBetween, isoDate } from '../../shared/dates.ts'
+import { GITHUB_OWNER } from '../../shared/github.ts'
+import { octokit, token } from '../shared/octokit.ts'
+import { reportSkipped } from '../shared/skipped.ts'
+import { buildActivityHistory, toDay } from './history.ts'
 
 // The most results GitHub's search gives for one query, past which a query
 // is split into shorter stretches of dates.
 const SEARCH_MAX_RESULTS = 1000
 // The most results a search gives a page.
 const SEARCH_PAGE_SIZE = 100
+// How many times a page that search gave up early on is asked for, and how
+// long to wait before the first retry, longer before each after.
+const SEARCH_ATTEMPTS = 3
+const SEARCH_RETRY_MS = 2000
 // Before GitHub launched, so every search starts before anything it holds.
 const SEARCH_START = '2008-01-01'
 
@@ -68,7 +52,7 @@ type DatedSearch = {
  * Every result of `search` dated from `from` through `to`, ISO dates.
  *
  * Splits the dates in two wherever they hold more than search gives, and
- * fails where search gave up early, rather than undercount.
+ * fails where search keeps giving up early, rather than undercount.
  */
 const searchDated = async (
   search: DatedSearch,
@@ -76,13 +60,20 @@ const searchDated = async (
   to: string
 ): Promise<Dated[]> => {
   const q = `${search.query} ${search.qualifier}:${from}..${to}`
-  /** The `page`th page of what `q` finds, failing where search gave up early. */
+  /** The `page`th page of what `q` finds, asked again where search gave up early, and failing where it keeps doing so. */
   const getPage = async (page: number) => {
-    const result = await search.getPage(q, page)
-    if (result.incomplete) {
-      throw new Error(`GitHub's search gave up early on "${q}"`)
+    for (let attempt = 1; attempt <= SEARCH_ATTEMPTS; attempt++) {
+      const result = await search.getPage(q, page)
+      if (!result.incomplete) {
+        return result
+      }
+      // A search that runs out of time on one try usually finishes on the
+      // next.
+      await setTimeout(SEARCH_RETRY_MS * attempt)
     }
-    return result
+    throw new Error(
+      `GitHub's search gave up early on "${q}", ${SEARCH_ATTEMPTS} times`
+    )
   }
   // The first page says how many there are in all.
   const first = await getPage(1)
@@ -198,7 +189,7 @@ const fetchForkCommits = async (): Promise<Dated[]> => {
  *
  * A commit found more than once counts once, so the days sum to the totals.
  */
-const fetchAccountActivity = async () => {
+const fetchActivity = async () => {
   const today = isoDate(Date.now())
   const commits = uniqBy(
     [
@@ -211,81 +202,43 @@ const fetchAccountActivity = async () => {
     await searchDated(PULL_SEARCH, SEARCH_START, today),
     ({ id }) => id
   )
-  // One dated ahead, by a skewed clock, counts as today's, so the days still
-  // sum to the totals.
-  const commitDays = commits.map(({ time }) =>
-    earlierDay(isoDate(Date.parse(time)), today)
-  )
-  const pullDays = pulls.map(({ time }) =>
-    earlierDay(isoDate(Date.parse(time)), today)
-  )
-  const firstDay = [today, ...commitDays, ...pullDays].reduce(earlierDay)
-  const days = listDays(firstDay, today)
-  /** How many of `dated` fall on each of the history's days. */
-  const countDaily = (dated: string[]) => {
-    const counts = countBy(dated, (day) => day)
-    return days.map((day) => counts[day] ?? 0)
-  }
   return {
     totals: { commits: commits.length, prs: pulls.length },
-    history: {
-      firstDay,
-      lastDay: today,
-      commits: countDaily(commitDays),
-      prs: countDaily(pullDays),
-    },
+    history: buildActivityHistory(
+      {
+        commitDays: commits.map(({ time }) => toDay(time, today)),
+        prDays: pulls.map(({ time }) => toDay(time, today)),
+      },
+      today
+    ),
   }
 }
 
-exitIfReusing('account activity', [TOTALS_FILE, HISTORY_FILE])
-
-const WHAT = "the account's commits and PRs"
-const STAND_IN = "the projects' own, added up,"
-
-let totals: ActivityTotals | undefined
-let history: ActivityHistory | undefined
-if (process.env.SKIP_ACCOUNT_ACTIVITY === 'true') {
-  console.log('account activity: skipped, as SKIP_ACCOUNT_ACTIVITY asks')
-} else if (token === undefined) {
-  reportSkipped(WHAT, 'GITHUB_TOKEN is not set', STAND_IN)
-} else {
+/**
+ * The account's commits and merged pull requests, in all and by day, or
+ * undefined where they weren't fetched.
+ *
+ * Without a token, or where a request fails, it reports them left out, so
+ * the projects' own, added up, stand in. With `SKIP_ACCOUNT_ACTIVITY=true`,
+ * it asks GitHub nothing.
+ */
+export const fetchAccountActivity = async () => {
+  const what = "the account's commits and PRs"
+  const standIn = "the projects' own, added up,"
+  if (process.env.SKIP_ACCOUNT_ACTIVITY === 'true') {
+    console.log(
+      'git activity: skipped the account, as SKIP_ACCOUNT_ACTIVITY asks'
+    )
+    return undefined
+  }
+  if (token === undefined) {
+    reportSkipped(what, 'GITHUB_TOKEN is not set', standIn)
+    return undefined
+  }
   try {
-    const activity = await fetchAccountActivity()
-    totals = activity.totals
-    history = activity.history
+    return await fetchActivity()
   } catch (error) {
-    reportSkipped(WHAT, error, STAND_IN)
+    reportSkipped(what, error, standIn)
+    return undefined
   }
 }
-
-await writeGenerated(
-  TOTALS_FILE,
-  'fetch:account-activity',
-  "import type { ActivityTotals } from '~/counts'",
-  [
-    {
-      name: 'ACCOUNT_ACTIVITY_TOTALS',
-      doc: "The GitHub account's commits, and merged pull requests, in all, in any repo, its own and others'; undefined where they couldn't be fetched.",
-      type: 'ActivityTotals | undefined',
-      value: totals,
-    },
-  ]
-)
-await writeGenerated(
-  HISTORY_FILE,
-  'fetch:account-activity',
-  "import type { ActivityHistory } from '~/counts'",
-  [
-    {
-      name: 'ACCOUNT_ACTIVITY',
-      doc: "The GitHub account's commits, and merged pull requests, per day, in any repo; undefined where they couldn't be fetched.",
-      type: 'ActivityHistory | undefined',
-      value: history,
-    },
-  ]
-)
-console.log(
-  totals
-    ? `account activity: ${totals.commits} commits and ${totals.prs} merged PRs`
-    : 'account activity: none fetched'
-)
