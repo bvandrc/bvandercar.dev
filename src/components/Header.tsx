@@ -93,13 +93,7 @@ export const Header = () => (
       </h1>
     </div>
     <Intro />
-    <div
-      className={cn(
-        'flex flex-wrap items-center justify-center gap-x-6 gap-y-2',
-        // 24px below the intro, with the header's gap: the same as below, to
-        // the contents, so they sit midway.
-        'mt-3'
-      )}>
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
       <SocialLinks />
     </div>
   </header>
