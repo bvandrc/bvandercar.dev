@@ -12,6 +12,7 @@ export const SELECTORS = {
     LINK: 'contents-link',
     BAR: {
       SELF: 'contents-bar',
+      SCROLLER: 'contents-bar-scroller',
       LINK: 'contents-bar-link',
       MENU_TOGGLE: 'contents-bar-menu-toggle',
       MENU: {

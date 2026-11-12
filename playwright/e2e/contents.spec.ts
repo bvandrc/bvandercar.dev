@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
 
-const { CONTENTS } = SELECTORS
+const { CONTENTS, PROJECTS, SKILLS } = SELECTORS
 const { BAR } = CONTENTS
 
 const scrollToTop = (page: Page) =>
@@ -28,6 +28,21 @@ const scrollPastContents = (page: Page) =>
       behavior: 'instant',
     })
   )
+
+/** The href of every section the contents link to: each project group, then the skills. */
+const getSectionHrefs = async (page: Page) => [
+  ...(await page
+    .getByTestId(PROJECTS.SELF)
+    .locator('section[id]')
+    .evaluateAll((sections) => sections.map(({ id }) => `#${id}`))),
+  `#${await page.getByTestId(SKILLS.SELF).getAttribute('id')}`,
+]
+
+/** The href of each of the page's own contents chips. */
+const getChipHrefs = (page: Page) =>
+  page
+    .getByTestId(CONTENTS.LINK)
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')))
 
 test('each contents link scrolls its section into view', async ({ page }) => {
   await page.goto('/')
@@ -114,6 +129,41 @@ test.describe('Contents bar', () => {
     }
   })
 
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 800 } })
+
+    test('fades only an edge with more chips past it', async ({ page }) => {
+      await page.goto('/')
+      await scrollPastContents(page)
+      const scroller = page.getByTestId(BAR.SCROLLER)
+      /** Which of its edges fade: its mask's gradient runs out toward each. */
+      const getFadedEdges = () =>
+        scroller.evaluate((element) => {
+          const { maskImage } = getComputedStyle(element)
+          return {
+            left: maskImage.includes('to left'),
+            right: maskImage.includes('to right'),
+          }
+        })
+
+      const CASES = [
+        ['start', 0, { left: false, right: true }],
+        ['middle', 0.5, { left: true, right: true }],
+        ['end', 1, { left: true, right: false }],
+      ] as const
+      for (const [name, fraction, fadedEdges] of CASES) {
+        await scroller.evaluate((element, scrolledFraction) => {
+          element.scrollTo({
+            left:
+              (element.scrollWidth - element.clientWidth) * scrolledFraction,
+            behavior: 'instant',
+          })
+        }, fraction)
+        await expect.poll(getFadedEdges, { message: name }).toEqual(fadedEdges)
+      }
+    })
+  })
+
   test.describe('menu', () => {
     const { MENU_TOGGLE, MENU } = BAR
 
@@ -130,7 +180,8 @@ test.describe('Contents bar', () => {
       const menu = page.getByTestId(MENU.SELF)
       await expect(menu).toBeVisible()
       const links = menu.getByTestId(MENU.LINK)
-      await expect(links).toHaveCount(await contentsLinks.count())
+      // Every section, whether or not it has a chip.
+      await expect(links).toHaveCount((await getSectionHrefs(page)).length)
       await expect(menu.locator('[aria-current]')).toHaveAttribute('href', href)
 
       const lastLink = links.last()
@@ -162,6 +213,55 @@ test.describe('Contents bar', () => {
       await page.keyboard.press('Escape')
       await expect(page.getByTestId(MENU.SELF)).toBeHidden()
       await expect(toggle).toBeFocused()
+    })
+  })
+})
+
+test.describe('Contents chips', () => {
+  test('give every section a chip from 900px wide', async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 800 })
+    await page.goto('/')
+    expect(await getChipHrefs(page)).toEqual(await getSectionHrefs(page))
+  })
+
+  test.describe('below 900px wide', () => {
+    // Jumps rather than glides, so a section has landed once its link is current.
+    test.use({ viewport: { width: 899, height: 800 }, reducedMotion: 'reduce' })
+
+    test('light the chip above a group that has none, and its own link in the menu', async ({
+      page,
+    }) => {
+      await page.goto('/')
+      const sectionHrefs = await getSectionHrefs(page)
+      const chipHrefs = await getChipHrefs(page)
+      const chiplessHrefs = sectionHrefs.filter(
+        (href) => !chipHrefs.includes(href)
+      )
+      // DJ / Music and Hardware, today.
+      expect(chiplessHrefs.length).toBeGreaterThan(0)
+      const bar = page.getByTestId(BAR.SELF)
+      const menu = page.getByTestId(BAR.MENU.SELF)
+
+      for (const href of chiplessHrefs) {
+        const chipHref = sectionHrefs
+          .slice(0, sectionHrefs.indexOf(href))
+          .findLast((sectionHref) => chipHrefs.includes(sectionHref))
+        await scrollPastContents(page)
+        await page.getByTestId(BAR.MENU_TOGGLE).click()
+        await menu.locator(`[href="${href}"]`).click()
+        await expect(page.locator(`section${href}`), href).toBeInViewport()
+
+        await expect(
+          bar.getByTestId(BAR.LINK).and(page.locator('[aria-current]')),
+          href
+        ).toHaveAttribute('href', chipHref ?? '')
+        await page.getByTestId(BAR.MENU_TOGGLE).click()
+        await expect(menu.locator('[aria-current]'), href).toHaveAttribute(
+          'href',
+          href
+        )
+        await page.keyboard.press('Escape')
+      }
     })
   })
 })
