@@ -35,12 +35,12 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
     sectionId: sectionAnchor(SECTIONS.SKILLS.title),
     title: SECTIONS.SKILLS.title,
     inReducedContents: true,
-    // Yellow, not the orange of every top-level section's heading: among the
+    // Gold, not the orange of every top-level section's heading: among the
     // project groups' own colors, an orange Skills reads as the odd one out.
     icon: (
       <SectionIcon
         glyph={SECTIONS.SKILLS.glyph}
-        className="size-4 text-yellow-400"
+        className="size-4 text-amber-400"
       />
     ),
   },
