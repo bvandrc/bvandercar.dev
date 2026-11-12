@@ -10,6 +10,8 @@ import {
   ContentsLink,
 } from './ContentsLink'
 import { ContentsMenu } from './ContentsMenu'
+import { useContentsChips } from './hooks/useContentsChips'
+import { getChipSectionId } from './lib/chip-section'
 
 /**
  * How near a section's heading must scroll to where its contents link lands
@@ -41,18 +43,25 @@ type ContentsBarProps = {
 }
 
 /**
- * The contents again, pinned to the top of the screen, with the link to the
- * section in view lit up, and a chevron that lists them all.
+ * The contents again, pinned to the top of the screen, with the chip for the
+ * section in view lit up, and a chevron that lists every section.
+ *
+ * In a section with no chip, on a narrow screen, the chip above it lights up,
+ * while the menu lights the section's own link.
  *
  * On a narrow screen, the links scroll sideways, keeping the lit one in view.
  */
 export const ContentsBar = ({ shown }: ContentsBarProps) => {
   const activeId = useActiveSection(CONTENTS_SECTION_IDS, ACTIVE_SLACK)
+  const chips = useContentsChips()
+  const activeChipId = getChipSectionId(CONTENTS_ENTRIES, chips, activeId)
   const scrollerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const scroller = scrollerRef.current
-    const link = scroller?.querySelector<HTMLElement>(`[href="#${activeId}"]`)
+    const link = scroller?.querySelector<HTMLElement>(
+      `[href="#${activeChipId}"]`
+    )
     if (!scroller || !link) {
       return
     }
@@ -61,7 +70,7 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
     scroller.scrollTo({
       left: link.offsetLeft - (scroller.clientWidth - link.offsetWidth) / 2,
     })
-  }, [activeId])
+  }, [activeChipId])
 
   return (
     <nav
@@ -82,11 +91,11 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
           )}>
           {/* Centered while they fit, and from the start once they don't. */}
           <List className="mx-auto flex w-max gap-2">
-            {CONTENTS_ENTRIES.map((entry) => (
+            {chips.map((entry) => (
               <ContentsLink
                 key={entry.title}
                 {...entry}
-                current={entry.sectionId === activeId}
+                current={entry.sectionId === activeChipId}
                 data-testid="contents-bar-link"
               />
             ))}
