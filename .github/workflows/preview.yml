@@ -18,8 +18,9 @@ on:
 permissions:
   contents: read
 
+# Shared with preview-cleanup.yml, which cancels an upload when the PR closes.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
