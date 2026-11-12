@@ -22,7 +22,7 @@ export const App = () => {
         )}>
         <Header />
         <Contents />
-        <main className="flex flex-col gap-10" data-testid="main">
+        <main className="flex flex-col gap-8" data-testid="main">
           <Projects />
           <Skills />
           <BeyondCode />

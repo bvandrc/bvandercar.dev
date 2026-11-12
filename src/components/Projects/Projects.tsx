@@ -5,6 +5,7 @@ import { Section, SubSection } from '@/components/Section'
 import type { ProjectSection } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
+import { cn } from '@/lib/cn'
 import { ProjectCard } from './ProjectCard'
 
 type GridLayout = 'PREVIEW' | 'PAIRS'
@@ -37,7 +38,15 @@ export const Projects = () => {
             icon={group.glyph ?? group.icon}
             title={group.title}>
             {group.intro && (
-              <p className="font-semibold text-ink-muted">{group.intro}</p>
+              <p
+                className={cn(
+                  'font-semibold text-ink-muted',
+                  // A size down on a phone, like the page's own intro, so it
+                  // reads below its heading rather than as another.
+                  'text-sm sm:text-base'
+                )}>
+                {group.intro}
+              </p>
             )}
             <List className={GRID_CLASSES[layout]}>
               {group.projects.map((project) => (
