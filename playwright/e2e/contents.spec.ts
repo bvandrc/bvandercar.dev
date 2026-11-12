@@ -129,6 +129,41 @@ test.describe('Contents bar', () => {
     }
   })
 
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 800 } })
+
+    test('fades only an edge with more chips past it', async ({ page }) => {
+      await page.goto('/')
+      await scrollPastContents(page)
+      const scroller = page.getByTestId(BAR.SCROLLER)
+      /** Which of its edges fade: its mask's gradient runs out toward each. */
+      const getFadedEdges = () =>
+        scroller.evaluate((element) => {
+          const { maskImage } = getComputedStyle(element)
+          return {
+            left: maskImage.includes('to left'),
+            right: maskImage.includes('to right'),
+          }
+        })
+
+      const CASES = [
+        ['start', 0, { left: false, right: true }],
+        ['middle', 0.5, { left: true, right: true }],
+        ['end', 1, { left: true, right: false }],
+      ] as const
+      for (const [name, fraction, fadedEdges] of CASES) {
+        await scroller.evaluate((element, scrolledFraction) => {
+          element.scrollTo({
+            left:
+              (element.scrollWidth - element.clientWidth) * scrolledFraction,
+            behavior: 'instant',
+          })
+        }, fraction)
+        await expect.poll(getFadedEdges, { message: name }).toEqual(fadedEdges)
+      }
+    })
+  })
+
   test.describe('menu', () => {
     const { MENU_TOGGLE, MENU } = BAR
 

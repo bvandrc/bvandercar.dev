@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { cva } from 'class-variance-authority'
 
 import { useActiveSection } from '@/hooks/useActiveSection'
+import { useScrollEdges } from '@/hooks/useScrollEdges'
 import { cn } from '@/lib/cn'
 import { List } from '../primitives/List'
 import {
@@ -37,6 +38,15 @@ const barVariants = cva(
   }
 )
 
+// Fades the chips out at an edge with more past it, so the fade shows there's
+// more, and leaves an edge the scroll has reached clear.
+const scrollerFadeVariants = cva('', {
+  variants: {
+    fadeStart: { true: 'mask-l-from-[calc(100%-1rem)]', false: '' },
+    fadeEnd: { true: 'mask-r-from-[calc(100%-1rem)]', false: '' },
+  },
+})
+
 type ContentsBarProps = {
   /** Whether it's on screen, once the page's own contents have scrolled away. */
   shown: boolean
@@ -56,6 +66,7 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
   const chips = useContentsChips()
   const activeChipId = getChipSectionId(CONTENTS_ENTRIES, chips, activeId)
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const { atStart, atEnd } = useScrollEdges(scrollerRef)
 
   useEffect(() => {
     const scroller = scrollerRef.current
@@ -86,9 +97,11 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
             'relative min-w-0 flex-1 overflow-x-auto scroll-smooth',
             // Room for a link's focus ring, which the scroll would clip.
             'p-1',
-            // No scrollbar: the link faded out at the edge shows there's more.
-            '[scrollbar-width:none] mask-x-from-[calc(100%-1rem)]'
-          )}>
+            // No scrollbar: the fade at an edge with more past it shows there's more.
+            '[scrollbar-width:none]',
+            scrollerFadeVariants({ fadeStart: !atStart, fadeEnd: !atEnd })
+          )}
+          data-testid="contents-bar-scroller">
           {/* Centered while they fit, and from the start once they don't. */}
           <List className="mx-auto flex w-max gap-2">
             {chips.map((entry) => (
