@@ -20,9 +20,13 @@ export const App = () => {
           // The same space below the footer's links as between them and its rule.
           'pb-3'
         )}>
-        <Header />
-        <Contents />
-        <main className="flex flex-col gap-10" data-testid="main">
+        {/* The contents as near the social links as the links are to the
+            intro, in the header's own gap. */}
+        <div className="flex flex-col gap-3">
+          <Header />
+          <Contents />
+        </div>
+        <main className="flex flex-col gap-8" data-testid="main">
           <Projects />
           <Skills />
           <BeyondCode />
