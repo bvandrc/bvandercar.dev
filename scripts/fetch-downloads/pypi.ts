@@ -8,7 +8,6 @@
  * deploy.
  */
 
-import { mkdir, writeFile } from 'node:fs/promises'
 import { BigQuery } from '@google-cloud/bigquery'
 import { explain } from '@renovatebot/pep440'
 
@@ -21,16 +20,12 @@ import {
   listDays,
   listWindows,
 } from '../../shared/dates.ts'
-import { SITE_URL } from '../../site.config.ts'
 import { getErrorMessage } from '../shared/errors.ts'
 import { fetchJson } from '../shared/http.ts'
+import { readPublished, writePublished } from '../shared/published.ts'
 import { reportSkipped } from '../shared/skipped.ts'
 import { byDay, type DailyDownloads, type RegistryHistory } from './common.ts'
 
-// Copied into the built site, gitignored. The site never loads them; only the
-// next build does, from the live site, where they last as long as the deploy,
-// unlike an Actions cache, which GitHub drops after a week unused.
-const PUBLISHED_DIR = 'public/data'
 const DAILY_FILE = 'pypi-downloads.json'
 const FIRST_DAYS_FILE = 'pypi-first-days.json'
 // The latest cached days a run queries again, since the dataset can still be
@@ -58,18 +53,6 @@ type DailyCache = Record<string, Record<string, number> | undefined>
 
 /** Each package's first upload day, by package. */
 type FirstDaysCache = Record<string, string | undefined>
-
-/** What the live site published as `file`, or nothing where it has none or can't be reached. */
-const readPublished = async <T extends object>(file: string): Promise<T> => {
-  try {
-    return await fetchJson<T>(`${SITE_URL}data/${file}`)
-  } catch (error) {
-    console.log(
-      `PyPI downloads: starting without the live site's ${file}: ${getErrorMessage(error)}`
-    )
-    return {} as T
-  }
-}
 
 /**
  * A PyPI package's releases, oldest first, leaving out pre-releases and
@@ -245,12 +228,6 @@ const fetchPypiDailyDownloads = async (
   )
 }
 
-/** Writes `data` as `file`, to publish with the site for the next run, even after a query that failed partway, so it picks up where this one left off. */
-const writePublished = async (file: string, data: object) => {
-  await mkdir(PUBLISHED_DIR, { recursive: true })
-  await writeFile(`${PUBLISHED_DIR}/${file}`, JSON.stringify(data))
-}
-
 /**
  * Each of the PyPI `packages`' downloads per day since its first upload, and
  * its releases, leaving out, and reporting, any that can't be read.
@@ -272,8 +249,11 @@ export const fetchPypiHistory = async (
     return history
   }
   try {
-    const firstDaysCache = await readPublished<FirstDaysCache>(FIRST_DAYS_FILE)
-    const cache = await readPublished<DailyCache>(DAILY_FILE)
+    const firstDaysCache = await readPublished<FirstDaysCache>(
+      'PyPI downloads',
+      FIRST_DAYS_FILE
+    )
+    const cache = await readPublished<DailyCache>('PyPI downloads', DAILY_FILE)
     try {
       const firstDays = await getFirstDays(packages, firstDaysCache)
       for (const pkg of packages) {
