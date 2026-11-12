@@ -26,6 +26,7 @@ export const UI_ICON_NAMES = [
   'chevron-right',
   'code-xml',
   'external-link',
+  'mail',
   'simple-icons:github',
   'simple-icons:linkedin',
 ] as const

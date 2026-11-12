@@ -21,6 +21,9 @@ export const SELECTORS = {
       },
     },
   },
+  SOCIAL_LINKS: {
+    EMAIL: 'social-links-email',
+  },
   MAIN: 'main',
   PROJECTS: {
     SELF: 'projects',
