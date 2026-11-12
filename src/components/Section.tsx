@@ -100,7 +100,7 @@ export const Section = ({ glyph, className, ...props }: SectionProps) => (
       "after:h-0.5 after:w-14 after:rounded-full after:bg-orange-700 after:content-['']"
     )}
     icon={<SectionIcon glyph={glyph} />}
-    className={cn('flex flex-col gap-4', className)}
+    className={cn('flex flex-col gap-3', className)}
     {...props}
   />
 )
