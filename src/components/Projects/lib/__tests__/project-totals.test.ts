@@ -5,6 +5,7 @@ import type {
 } from '@/generated/profile/content/projects'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
+import type { ActivityTotals } from '~/counts'
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const FIXTURES = vi.hoisted(() => ({
@@ -58,6 +59,23 @@ vi.mock('@/generated/package-download-totals', () => ({
     pypi: { [FIXTURES.PYPI_PACKAGE]: 300 },
   } satisfies typeof PACKAGE_DOWNLOAD_TOTALS,
 }))
+
+// The account's own commits and PRs, unfetched unless a case mocks them.
+vi.mock('@/generated/account-activity-totals', () => ({
+  ACCOUNT_ACTIVITY_TOTALS: undefined,
+}))
+
+/** Mocks the account's own commits and PRs, in every repo, for the rest of the case. */
+const mockAccountTotals = (totals: ActivityTotals) => {
+  vi.doMock('@/generated/account-activity-totals', () => ({
+    ACCOUNT_ACTIVITY_TOTALS: totals,
+  }))
+  onTestFinished(() => {
+    vi.doMock('@/generated/account-activity-totals', () => ({
+      ACCOUNT_ACTIVITY_TOTALS: undefined,
+    }))
+  })
+}
 
 /** A project for `repo`, publishing any of `packages`. */
 const buildProject = (
@@ -157,6 +175,26 @@ describe('getProjectTotals', () => {
       ],
       packages: [],
       chartCount: 2,
+    })
+  })
+
+  it("counts the account's own commits and PRs, in every repo, in place of the projects', where fetched, and charts them", async () => {
+    mockAccountTotals({ commits: 2600, prs: 1573 })
+    // One repo's counts the profile's alone, which would leave the projects'
+    // uncharted.
+    const totals = await getProjectTotals([
+      ...FETCHED_PROJECTS,
+      buildProject(PROFILE_ONLY_REPO),
+    ])
+
+    expect(totals).toMatchObject({
+      shown: [
+        expect.objectContaining({ key: 'commits', count: 2600 }),
+        expect.objectContaining({ key: 'prs', count: 1573 }),
+        // Still the projects' packages', added up.
+        expect.objectContaining({ key: 'downloads', count: 1517 }),
+      ],
+      chartCount: 3,
     })
   })
 

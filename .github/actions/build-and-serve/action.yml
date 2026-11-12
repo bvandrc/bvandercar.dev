@@ -21,6 +21,10 @@ runs:
       env:
         # Reads the public repos' activity, so the browser suites see its counts and charts.
         GITHUB_TOKEN: ${{ github.token }}
+        # The suites' token can't search the private repos, and the suites
+        # building at once would wait out search's rate limit, so the footer
+        # adds up the projects' own counts in place of the account's.
+        SKIP_ACCOUNT_ACTIVITY: 'true'
 
     - name: Start server
       run: pnpm preview:ci &

@@ -1,6 +1,7 @@
 /**
- * The day-by-day history `pnpm fetch:git-activity` writes: commits and merged
- * pull requests, counted on the day each was made, or merged.
+ * The day-by-day history both of `pnpm fetch:git-activity`'s sources write:
+ * commits and merged pull requests, counted on the day each was made, or
+ * merged.
  */
 
 import { countBy } from 'es-toolkit'

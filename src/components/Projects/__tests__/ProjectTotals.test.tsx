@@ -56,6 +56,12 @@ vi.mock('@/generated/profile/content/projects', async (importOriginal) => ({
   ] satisfies ProjectSection[],
 }))
 
+// The account's own commits and PRs, unfetched, so the projects' add up.
+vi.mock('@/generated/account-activity-totals', () => ({
+  ACCOUNT_ACTIVITY_TOTALS: undefined,
+}))
+vi.mock('@/generated/account-activity', () => ({ ACCOUNT_ACTIVITY: undefined }))
+
 vi.mock('@/generated/profile/repo-counts', () => ({
   // Older than this site's fetches, which differ from them as they would.
   REPO_COUNTS: {
