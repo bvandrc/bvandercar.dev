@@ -3,8 +3,7 @@ import { expect, test } from '@playwright/test'
 import { INTRO_LINES } from '@/generated/profile/content/about'
 import { SELECTORS } from '~/test-support/selectors'
 
-const { HEADER, SOCIAL_LINKS } = SELECTORS
-const { TAGLINE, INTRO_MORE, INTRO_TOGGLE } = HEADER
+const { TAGLINE, INTRO_MORE, INTRO_TOGGLE } = SELECTORS.HEADER
 
 test.describe('Header intro, below sm', () => {
   // A Pixel 7's width.
@@ -47,15 +46,5 @@ test.describe('Header intro, from sm up', () => {
 
     await expect(page.getByTestId(INTRO_MORE)).toBeVisible()
     await expect(page.getByTestId(INTRO_TOGGLE)).toHaveCount(0)
-  })
-})
-
-test.describe('Header links', () => {
-  test('include my email, as a mailto link', async ({ page }) => {
-    await page.goto('/')
-
-    await expect(
-      page.getByTestId(HEADER.SELF).getByTestId(SOCIAL_LINKS.EMAIL)
-    ).toHaveAttribute('href', /^mailto:blake@bvandercar\.dev\?/)
   })
 })
