@@ -9,8 +9,12 @@
   },
   // Attaches the domain on deploy, creating its DNS record and certificate.
   "routes": [{ "pattern": "bvandercar.dev", "custom_domain": true }],
-  // The live site is only on the custom domain, but each uploaded version
-  // gets a workers.dev preview URL; .github/workflows/preview.yml uses these.
+  // The live site is only on the custom domain, but each Worker Preview gets
+  // a workers.dev URL; .github/workflows/preview.yml uses these.
   "workers_dev": false,
-  "preview_urls": true
+  "preview_urls": true,
+  // Required by `wrangler preview`, which preview.yml runs. Empty because a
+  // static site has no bindings a Preview would need kept apart from
+  // production.
+  "previews": {}
 }

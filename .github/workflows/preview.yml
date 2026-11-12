@@ -1,8 +1,9 @@
 name: Preview
 
-# Uploads each PR's build as a Cloudflare version, without deploying it, and
-# links its preview URL from the PR's "View deployment" button, which posts no
-# comment. The `pr-<number>` alias keeps one stable URL per PR across pushes.
+# Uploads each PR's build as a Cloudflare Worker Preview named `pr-<number>`,
+# without deploying it, and links its URL from the PR's "View deployment"
+# button, which posts no comment. Each push updates that Preview, so its URL,
+# `pr-<number>-bvandercar-dev.bvandrc.workers.dev`, stays the same.
 #
 # The data the build fetches from GitHub, npm, and BigQuery is reused from a
 # preview or deploy that fetched it the same UTC day, with the same scripts, so
@@ -52,7 +53,7 @@ jobs:
           bigquery-credentials: ${{ secrets.BIGQUERY_CREDENTIALS }}
           reuse-fetched-data: ${{ !contains(github.event.pull_request.labels.*.name, 'refresh-data') }}
 
-      - name: Upload preview version
+      - name: Upload preview
         id: upload
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -60,8 +61,8 @@ jobs:
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          pnpm exec wrangler versions upload --preview-alias "pr-$PR_NUMBER"
-          url=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // empty' "$WRANGLER_OUTPUT_FILE_PATH")
+          pnpm exec wrangler preview --name "pr-$PR_NUMBER"
+          url=$(jq -r 'select(.type == "preview") | .preview_urls[]? | select(test("\\.workers\\.dev"))' "$WRANGLER_OUTPUT_FILE_PATH" | head -1)
           # Cloudflare only returns a preview URL once a deploy has applied
           # `preview_urls: true` to the Worker, and the account has a
           # workers.dev subdomain.
