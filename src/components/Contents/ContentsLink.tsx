@@ -35,7 +35,14 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
     sectionId: sectionAnchor(SECTIONS.SKILLS.title),
     title: SECTIONS.SKILLS.title,
     inReducedContents: true,
-    icon: <SectionIcon glyph={SECTIONS.SKILLS.glyph} className="size-4" />,
+    // Yellow, in place of the Skills heading's orange: amber, a gold, reads too
+    // near Other Tools' tan beside it.
+    icon: (
+      <SectionIcon
+        glyph={SECTIONS.SKILLS.glyph}
+        className="size-4 text-yellow-400"
+      />
+    ),
   },
 ]
 
