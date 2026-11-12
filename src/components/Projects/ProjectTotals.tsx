@@ -36,7 +36,7 @@ export const ProjectTotals = () => {
         open={open}
         onOpenChange={setOpen}
         data-testid="project-totals">
-        <span data-testid="project-totals-words">across projects</span>
+        <span data-testid="project-totals-words">all-time</span>
       </Counts>
       <span aria-hidden>]</span>
     </Link>
