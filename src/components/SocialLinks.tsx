@@ -1,7 +1,7 @@
 import { buildMailtoHref } from '@bvandrc/react-toolkit'
 
 import type { UiIconName } from '@/lib/icons'
-import { GITHUB_OWNER, GITHUB_PROFILE_URL } from '~/github'
+import { GITHUB_PROFILE_URL } from '~/github'
 import { Icon } from './primitives/Icon'
 import { Link, type LinkProps } from './primitives/Link'
 import { Tooltip } from './primitives/Tooltip'
@@ -49,7 +49,7 @@ export const SocialLinks = ({ tone }: SocialLinksProps) => (
       newTab
       tooltip="GitHub Profile"
       icon="simple-icons:github">
-      github.com/{GITHUB_OWNER}
+      GitHub
     </SocialLink>
     <SocialLink
       href="https://www.linkedin.com/in/blake-vandercar"
