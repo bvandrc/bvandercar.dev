@@ -6,9 +6,15 @@ import { Badge } from '../primitives/Badge'
 import { Link, type LinkProps } from '../primitives/Link'
 import { SectionIcon, SubSectionIcon } from '../Section'
 
-type ContentsEntry = {
+export type ContentsEntry = {
   /** The id of the section it goes to. */
   sectionId: string
+  /**
+   * Whether it keeps its chip in the reduced contents, on a narrow screen.
+   * Without one there, the bar's menu, which lists every section, still links
+   * to it.
+   */
+  inReducedContents: boolean
   /** The title of the section it goes to. */
   title: string
   /** The section heading's own icon, and decorative. */
@@ -20,6 +26,7 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
   ...PROJECTS.map((group) => ({
     sectionId: sectionAnchor(group.title),
     title: group.title,
+    inReducedContents: group.inReducedContents ?? true,
     icon: (
       <SubSectionIcon icon={group.glyph ?? group.icon} className="size-4" />
     ),
@@ -27,7 +34,15 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
   {
     sectionId: sectionAnchor(SECTIONS.SKILLS.title),
     title: SECTIONS.SKILLS.title,
-    icon: <SectionIcon glyph={SECTIONS.SKILLS.glyph} className="size-4" />,
+    inReducedContents: true,
+    // Gold, not the orange of every top-level section's heading: among the
+    // project groups' own colors, an orange Skills reads as the odd one out.
+    icon: (
+      <SectionIcon
+        glyph={SECTIONS.SKILLS.glyph}
+        className="size-4 text-amber-400"
+      />
+    ),
   },
 ]
 
@@ -36,7 +51,7 @@ export const CONTENTS_SECTION_IDS = CONTENTS_ENTRIES.map(
   ({ sectionId }) => sectionId
 )
 
-type ContentsLinkProps = ContentsEntry &
+type ContentsLinkProps = Omit<ContentsEntry, 'inReducedContents'> &
   Pick<LinkProps, 'onClick'> & {
     /** Marks it as the section the reader is in now. */
     current?: boolean

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { cva } from 'class-variance-authority'
 
 import { useActiveSection } from '@/hooks/useActiveSection'
+import { useScrollEdges } from '@/hooks/useScrollEdges'
 import { cn } from '@/lib/cn'
 import { List } from '../primitives/List'
 import {
@@ -10,6 +11,8 @@ import {
   ContentsLink,
 } from './ContentsLink'
 import { ContentsMenu } from './ContentsMenu'
+import { useContentsChips } from './hooks/useContentsChips'
+import { getChipSectionId } from './lib/chip-section'
 
 /**
  * How near a section's heading must scroll to where its contents link lands
@@ -35,24 +38,41 @@ const barVariants = cva(
   }
 )
 
+// Fades the chips out at an edge with more past it, so the fade shows there's
+// more, and leaves an edge the scroll has reached clear.
+const scrollerFadeVariants = cva('', {
+  variants: {
+    fadeStart: { true: 'mask-l-from-[calc(100%-1rem)]', false: '' },
+    fadeEnd: { true: 'mask-r-from-[calc(100%-1rem)]', false: '' },
+  },
+})
+
 type ContentsBarProps = {
   /** Whether it's on screen, once the page's own contents have scrolled away. */
   shown: boolean
 }
 
 /**
- * The contents again, pinned to the top of the screen, with the link to the
- * section in view lit up, and a chevron that lists them all.
+ * The contents again, pinned to the top of the screen, with the chip for the
+ * section in view lit up, and a chevron that lists every section.
+ *
+ * In a section with no chip, on a narrow screen, the chip above it lights up,
+ * while the menu lights the section's own link.
  *
  * On a narrow screen, the links scroll sideways, keeping the lit one in view.
  */
 export const ContentsBar = ({ shown }: ContentsBarProps) => {
   const activeId = useActiveSection(CONTENTS_SECTION_IDS, ACTIVE_SLACK)
+  const chips = useContentsChips()
+  const activeChipId = getChipSectionId(CONTENTS_ENTRIES, chips, activeId)
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const { atStart, atEnd } = useScrollEdges(scrollerRef)
 
   useEffect(() => {
     const scroller = scrollerRef.current
-    const link = scroller?.querySelector<HTMLElement>(`[href="#${activeId}"]`)
+    const link = scroller?.querySelector<HTMLElement>(
+      `[href="#${activeChipId}"]`
+    )
     if (!scroller || !link) {
       return
     }
@@ -61,7 +81,7 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
     scroller.scrollTo({
       left: link.offsetLeft - (scroller.clientWidth - link.offsetWidth) / 2,
     })
-  }, [activeId])
+  }, [activeChipId])
 
   return (
     <nav
@@ -77,16 +97,18 @@ export const ContentsBar = ({ shown }: ContentsBarProps) => {
             'relative min-w-0 flex-1 overflow-x-auto scroll-smooth',
             // Room for a link's focus ring, which the scroll would clip.
             'p-1',
-            // No scrollbar: the link faded out at the edge shows there's more.
-            '[scrollbar-width:none] mask-x-from-[calc(100%-1rem)]'
-          )}>
+            // No scrollbar: the fade at an edge with more past it shows there's more.
+            '[scrollbar-width:none]',
+            scrollerFadeVariants({ fadeStart: !atStart, fadeEnd: !atEnd })
+          )}
+          data-testid="contents-bar-scroller">
           {/* Centered while they fit, and from the start once they don't. */}
           <List className="mx-auto flex w-max gap-2">
-            {CONTENTS_ENTRIES.map((entry) => (
+            {chips.map((entry) => (
               <ContentsLink
                 key={entry.title}
                 {...entry}
-                current={entry.sectionId === activeId}
+                current={entry.sectionId === activeChipId}
                 data-testid="contents-bar-link"
               />
             ))}
