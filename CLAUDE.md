@@ -1,6 +1,6 @@
 ## Project
 
-Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to Cloudflare (Workers static assets, configured in `wrangler.jsonc`) by `.github/workflows/deploy.yml`. Every PR also gets a preview URL, linked from its "View deployment" button by `.github/workflows/preview.yml`. Both build through `.github/actions/build-site`.
+Blake Vandercar's personal developer site — skills, projects, and a short "about me" — deployed to Cloudflare (Workers static assets, configured in `wrangler.jsonc`) by `.github/workflows/deploy.yml`. Every PR also gets a preview URL, linked from its "View deployment" button by `.github/workflows/preview.yml`. Both build through `.github/actions/build-site`. Each preview is a Cloudflare Worker Preview named `pr-<number>`, which `.github/workflows/preview-cleanup.yml` deletes once the PR closes.
 
 - **Stack**: React 19 + Vite + TypeScript, Tailwind v4, Radix UI primitives (`radix-ui`, wrapped in `src/components/primitives/`), Biome, Vitest + Testing Library for unit/component tests, Playwright for e2e/a11y/Lighthouse.
 - **Layout**: `src/` is the app, with unit tests in `__tests__/` folders beside the modules they cover; `playwright/` is the browser suites; `shared/` (alias `~/*`) holds what more than one of them imports: `counts.ts`, the project fields the counts are read for, the package registries, and the types of what the counts' fetches generate, `dates.ts`, the day helpers, which the app and the fetch scripts share, `github.ts`, the GitHub owner every repo URL is built from, and `screenshots.ts`, where the profile fetch writes each screenshot's thumbnails and posters and how wide, and `test-support/`, test helpers either suite can import, like the test-id registry in `selectors.ts`.
@@ -47,6 +47,6 @@ Conventions live outside this file, synced from https://github.com/bvandrc/bvand
 ## Repo conventions
 
 - **Package manager**: pnpm. `npm install` writes a competing `package-lock.json` that CI ignores.
-- **PR descriptions**: Open every PR description with a link to its preview, `https://pr-<number>-bvandercar-dev.bvandrc.workers.dev`. The `pr-<number>` alias `preview.yml` uploads under keeps that URL fixed across pushes, so it's known before the preview builds: once the PR is created and has its number, edit the link into its body.
+- **PR descriptions**: Open every PR description with a link to its preview, `https://pr-<number>-bvandercar-dev.bvandrc.workers.dev`. The `pr-<number>` Preview `preview.yml` uploads keeps that URL fixed across pushes, so it's known before the preview builds: once the PR is created and has its number, edit the link into its body.
 - **package.json**: Linted in CI by `bvandrc/lint-package-json`, which enforces top-level key order, alphabetical `dependencies` and `devDependencies`, and exact-semver `version`. Adding a field in the wrong place, or a dependency out of order, fails the lint job.
 - **Convention files**: `conventions/` is synced from https://github.com/bvandrc/bvandrc-conventions and overwritten on every sync. Edit a rule upstream, never in that directory.

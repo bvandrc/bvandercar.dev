@@ -1,0 +1,48 @@
+name: Preview Cleanup
+
+# Deletes the Worker Preview preview.yml uploaded for a PR once it closes, so
+# its `pr-<number>` URL stops serving.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+# Shares preview.yml's group, so closing a PR cancels a preview still
+# uploading, which would otherwise outlive the cleanup.
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  cleanup:
+    name: Delete preview
+    runs-on: ubuntu-latest
+    # A fork PR never got a preview to delete.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Delete preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if output=$(pnpm exec wrangler preview delete --name "pr-$PR_NUMBER" --skip-confirmation 2>&1); then
+            echo "$output"
+          # Cloudflare's code for a Preview that doesn't exist, as for a PR
+          # closed before its preview finished uploading.
+          elif grep -q 'code: 10025' <<< "$output"; then
+            echo "No preview named pr-$PR_NUMBER to delete."
+          else
+            echo "$output"
+            exit 1
+          fi

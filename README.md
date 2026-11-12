@@ -88,5 +88,6 @@ index.html        HTML entry point (title, meta, og tags)
 - **CI** — lint, type check, unit tests, and the three Playwright suites on every push and PR, and weekly so the site redeploys with fresh profile content
 - **PR CI** — pull-request-only jobs: the changed-line count, written to the run's job summary
 - **Deploy** — once CI passes on the default branch, build and publish `dist` to Cloudflare with Wrangler
-- **Preview** — on every PR, upload the build as a Cloudflare version (not deployed) and link its preview URL from the PR's "View deployment" button, stable per PR as `pr-<number>`. It reuses the data the build fetches from a preview or deploy that fetched it the same UTC day; add the `refresh-data` label to fetch it fresh
+- **Preview** — on every PR, upload the build as a Cloudflare Worker Preview named `pr-<number>` (not deployed) and link its URL from the PR's "View deployment" button, stable per PR. It reuses the data the build fetches from a preview or deploy that fetched it the same UTC day; add the `refresh-data` label to fetch it fresh
+- **Preview Cleanup** — once a PR closes, delete its Worker Preview so its `pr-<number>` URL stops serving
 - **Production Lighthouse** — audits the live site 15 minutes after each deploy
