@@ -48,6 +48,10 @@ jobs:
           github-token: ${{ secrets.PROJECT_REPOS_TOKEN }}
           bigquery-credentials: ${{ secrets.BIGQUERY_CREDENTIALS }}
           require-fetched-data: true
+          # Set the repo variable to true for one deploy where the account's
+          # commits or PRs really did go down, as after a repo it committed
+          # to is deleted, then unset it.
+          allow-account-activity-drop: ${{ vars.ALLOW_ACCOUNT_ACTIVITY_DROP == 'true' }}
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
