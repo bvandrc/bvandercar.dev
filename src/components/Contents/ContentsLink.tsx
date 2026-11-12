@@ -10,10 +10,11 @@ export type ContentsEntry = {
   /** The id of the section it goes to. */
   sectionId: string
   /**
-   * Whether it keeps its chip on a narrow screen. Without one there, the bar's
-   * menu, which lists every section, still links to it.
+   * Whether it keeps its chip in the reduced contents, on a narrow screen.
+   * Without one there, the bar's menu, which lists every section, still links
+   * to it.
    */
-  narrowChip: boolean
+  inReducedContents: boolean
   /** The title of the section it goes to. */
   title: string
   /** The section heading's own icon, and decorative. */
@@ -25,7 +26,7 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
   ...PROJECTS.map((group) => ({
     sectionId: sectionAnchor(group.title),
     title: group.title,
-    narrowChip: group.inContents ?? true,
+    inReducedContents: group.inReducedContents ?? true,
     icon: (
       <SubSectionIcon icon={group.glyph ?? group.icon} className="size-4" />
     ),
@@ -33,7 +34,7 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
   {
     sectionId: sectionAnchor(SECTIONS.SKILLS.title),
     title: SECTIONS.SKILLS.title,
-    narrowChip: true,
+    inReducedContents: true,
     icon: <SectionIcon glyph={SECTIONS.SKILLS.glyph} className="size-4" />,
   },
 ]
@@ -43,7 +44,7 @@ export const CONTENTS_SECTION_IDS = CONTENTS_ENTRIES.map(
   ({ sectionId }) => sectionId
 )
 
-type ContentsLinkProps = Omit<ContentsEntry, 'narrowChip'> &
+type ContentsLinkProps = Omit<ContentsEntry, 'inReducedContents'> &
   Pick<LinkProps, 'onClick'> & {
     /** Marks it as the section the reader is in now. */
     current?: boolean
