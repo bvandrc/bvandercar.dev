@@ -1,7 +1,7 @@
 /**
  * PyPI's side of `pnpm fetch:downloads`: a package's first upload day, and its
- * downloads per day, from Google BigQuery's public PyPI dataset, and its
- * releases, from PyPI's JSON API.
+ * downloads of each version per day, from Google BigQuery's public PyPI
+ * dataset, and its releases, from PyPI's JSON API.
  *
  * Its first days and daily counts are published with the site, which the next
  * run reads them back from, so a run queries only the days since the last
@@ -10,6 +10,7 @@
 
 import { BigQuery } from '@google-cloud/bigquery'
 import { explain } from '@renovatebot/pep440'
+import { sum } from 'es-toolkit'
 
 import type { Release } from '../../shared/counts.ts'
 import {
@@ -26,7 +27,9 @@ import { readPublished, writePublished } from '../shared/published.ts'
 import { reportSkipped } from '../shared/skipped.ts'
 import { byDay, type DailyDownloads, type RegistryHistory } from './common.ts'
 
-const DAILY_FILE = 'pypi-downloads.json'
+// Named apart from pypi-downloads.json, the totals per day it replaced, so a
+// run never reads that as counts with no versions.
+const DAILY_FILE = 'pypi-version-downloads.json'
 const FIRST_DAYS_FILE = 'pypi-first-days.json'
 // The latest cached days a run queries again, since the dataset can still be
 // filling them in.
@@ -48,8 +51,11 @@ const MAX_BYTES_BILLED = String(50 * 1000 ** 3)
 // because looking for credentials elsewhere can wait on a metadata server.
 const hasGoogleCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS)
 
-/** Each package's downloads, by package, then ISO date. */
-type DailyCache = Record<string, Record<string, number> | undefined>
+/** A package's downloads on one day, by version, leaving out a version with none. */
+type VersionCounts = Record<string, number>
+
+/** Each package's downloads, by package, then ISO date, then version. */
+type DailyCache = Record<string, Record<string, VersionCounts> | undefined>
 
 /** Each package's first upload day, by package. */
 type FirstDaysCache = Record<string, string | undefined>
@@ -143,8 +149,8 @@ const getFirstDays = async (packages: string[], cache: FirstDaysCache) => {
 }
 
 /**
- * Each package's downloads on each day from `from` through `to`, by
- * `"<package> <day>"`, in one BigQuery query.
+ * Each package's downloads of each version on each day from `from` through
+ * `to`, by `"<package> <day>"`, in one BigQuery query.
  */
 const queryPypiDownloads = async (
   packages: string[],
@@ -154,28 +160,50 @@ const queryPypiDownloads = async (
   const rows = await runQuery<{
     project: string
     day: string
+    version: string
     downloads: number
   }>(
     // The table is partitioned by `timestamp` and clustered by project, so
     // bounding both keeps the scan to these packages' days.
     `
-      SELECT file.project AS project, FORMAT_DATE('%F', DATE(timestamp)) AS day, COUNT(*) AS downloads
+      SELECT file.project AS project, FORMAT_DATE('%F', DATE(timestamp)) AS day, file.version AS version, COUNT(*) AS downloads
       FROM \`bigquery-public-data.pypi.file_downloads\`
       WHERE file.project IN UNNEST(@packages)
         AND timestamp >= TIMESTAMP(@from)
         AND timestamp < TIMESTAMP_ADD(TIMESTAMP(@to), INTERVAL 1 DAY)
-      GROUP BY project, day`,
+      GROUP BY project, day, version`,
     { packages, from, to },
     `${from} to ${to}`
   )
-  return new Map(
-    rows.map(({ project, day, downloads }) => [`${project} ${day}`, downloads])
-  )
+  const counts = new Map<string, VersionCounts>()
+  for (const { project, day, version, downloads } of rows) {
+    const key = `${project} ${day}`
+    counts.set(key, { ...counts.get(key), [version]: downloads })
+  }
+  return counts
+}
+
+/**
+ * Each version's downloads per day, by version, from the first day it was
+ * downloaded through the last of `days`, which run oldest first.
+ */
+const splitByVersion = (days: { day: string; counts: VersionCounts }[]) => {
+  const versions: Record<string, DailyDownloads[]> = {}
+  for (const { day, counts } of days) {
+    for (const version of Object.keys(counts)) {
+      versions[version] ??= []
+    }
+    // Every version downloaded by now gets the day, 0 where it had none.
+    for (const [version, versionDays] of Object.entries(versions)) {
+      versionDays.push({ day, downloads: counts[version] ?? 0 })
+    }
+  }
+  return versions
 }
 
 /**
  * Each PyPI package's downloads for each day from its first upload through
- * two days ago.
+ * two days ago, in all and by version.
  *
  * Only the days `cache` doesn't have yet are queried, plus its latest few,
  * and the counts are added to it as each query returns, so a run that fails
@@ -213,24 +241,36 @@ const fetchPypiDailyDownloads = async (
     )
     for (const { pkg, firstDay } of packages) {
       const days = cache[pkg] ?? {}
-      // A queried day without downloads has no row, so it's set to 0 rather
-      // than left at whatever an earlier run counted.
+      // A queried day without downloads has no row, so it's set to none
+      // rather than left at whatever an earlier run counted.
       for (const day of listDays(laterDay(from, firstDay), to)) {
-        days[day] = counts.get(`${pkg} ${day}`) ?? 0
+        days[day] = counts.get(`${pkg} ${day}`) ?? {}
       }
       cache[pkg] = days
     }
   }
-  return packages.map(({ pkg, firstDay }) =>
-    listDays(firstDay, lastDay).map(
-      (day): DailyDownloads => ({ day, downloads: cache[pkg]?.[day] ?? 0 })
-    )
-  )
+  return packages.map(({ pkg, firstDay }) => {
+    const days = listDays(firstDay, lastDay).map((day) => ({
+      day,
+      counts: cache[pkg]?.[day] ?? {},
+    }))
+    return {
+      // Summed from the versions, so the versions always add up to it.
+      days: days.map(
+        ({ day, counts }): DailyDownloads => ({
+          day,
+          downloads: sum(Object.values(counts)),
+        })
+      ),
+      versions: splitByVersion(days),
+    }
+  })
 }
 
 /**
- * Each of the PyPI `packages`' downloads per day since its first upload, and
- * its releases, leaving out, and reporting, any that can't be read.
+ * Each of the PyPI `packages`' downloads per day since its first upload, in
+ * all and by version, and its releases, leaving out, and reporting, any that
+ * can't be read.
  *
  * Without `GOOGLE_APPLICATION_CREDENTIALS`, it reads none.
  */
@@ -265,7 +305,7 @@ export const fetchPypiHistory = async (
       const releasesRead = Promise.allSettled(
         firstDays.map(({ pkg }) => fetchPypiReleases(pkg))
       )
-      const days = await fetchPypiDailyDownloads(firstDays, cache)
+      const downloads = await fetchPypiDailyDownloads(firstDays, cache)
       const releases = await releasesRead
       firstDays.forEach(({ pkg }, index) => {
         const result = releases[index]
@@ -278,7 +318,7 @@ export const fetchPypiHistory = async (
         }
         history.push({
           pkg,
-          days: days[index],
+          ...downloads[index],
           releases: result.status === 'fulfilled' ? result.value : [],
         })
       })

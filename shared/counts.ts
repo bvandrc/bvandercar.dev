@@ -36,9 +36,9 @@ export type ActivityHistory = {
   prs: number[]
 }
 
-/** A package's downloads per day since its first publish. */
+/** A package's downloads per day since its first publish, or one version's since its first download. */
 export type DownloadHistory = {
-  /** ISO date of the first day counted, the package's first publish */
+  /** ISO date of the first day counted: the package's first publish, or the version's first download */
   firstDay: string
   /** ISO date of the last day counted */
   lastDay: string
