@@ -46,5 +46,23 @@ export type DownloadHistory = {
   daily: number[]
 }
 
+/**
+ * The stretches a package's downloads by minor version are counted over, by
+ * how many of its latest days each counts.
+ *
+ * `ALL` counts every day since its first publish.
+ */
+export const VERSION_PERIOD_DAYS = {
+  ALL: undefined,
+  LAST_30_DAYS: 30,
+  LAST_90_DAYS: 90,
+} as const satisfies Record<string, number | undefined>
+
+/** A stretch a package's downloads by minor version are counted over. */
+export type VersionPeriod = keyof typeof VERSION_PERIOD_DAYS
+
+/** A package's downloads of each minor version, like "4.0", over each period, by period, then minor version. */
+export type VersionDownloads = Record<VersionPeriod, Record<string, number>>
+
 /** A package's release: its version, and the ISO date it was published. */
 export type Release = { version: string; day: string }

@@ -47,6 +47,7 @@ export const SELECTORS = {
       ROW: 'version-downloads-chart-row',
       BAR: 'version-downloads-chart-bar',
       SHARE: 'version-downloads-chart-share',
+      PERIOD: 'version-downloads-chart-period',
     },
     RUNNING_TOTAL_CHART: {
       PLOT: 'running-total-chart-plot',

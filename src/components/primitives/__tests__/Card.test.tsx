@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { createPortal } from 'react-dom'
 
 import { Card } from '../Card'
 
@@ -61,6 +62,19 @@ describe('Card', () => {
       { keys: '[/MouseLeft]' },
     ])
     expect(window.getSelection()?.toString()).toBe('Some')
+    expect(onSurfaceClick).not.toHaveBeenCalled()
+  })
+
+  it('ignores a click in a portal it renders, like a tooltip, outside it', async () => {
+    const user = userEvent.setup()
+    const onSurfaceClick = vi.fn()
+    render(
+      <Card onSurfaceClick={onSurfaceClick} data-testid={SELF}>
+        {createPortal(<p data-testid={TEXT}>Some text</p>, document.body)}
+      </Card>
+    )
+
+    await user.click(screen.getByTestId(TEXT))
     expect(onSurfaceClick).not.toHaveBeenCalled()
   })
 

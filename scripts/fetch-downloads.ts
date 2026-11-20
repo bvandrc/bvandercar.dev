@@ -95,7 +95,7 @@ await writeGenerated(
 await writeGenerated(
   HISTORY_FILE,
   'fetch:downloads',
-  "import type { DownloadHistory, Registry, Release } from '~/counts'",
+  "import type { DownloadHistory, Registry, Release, VersionDownloads } from '~/counts'",
   [
     {
       name: 'PACKAGE_DOWNLOADS',
@@ -118,8 +118,8 @@ await writeGenerated(
     },
     {
       name: 'PACKAGE_VERSION_DOWNLOADS',
-      doc: "Each package's downloads of each version since its first publish, by registry, package name, then version; npm's API gives only the last week's, so npm has none.",
-      type: 'Record<Registry, Record<string, Record<string, number> | undefined>>',
+      doc: `Each package's downloads of each minor version, like "4.0", over each period, by registry, package name, period, then minor version; npm's API gives only the last week's, so npm has none.`,
+      type: 'Record<Registry, Record<string, VersionDownloads | undefined>>',
       value: mapValues(kept, (entries) =>
         Object.fromEntries(
           entries.flatMap(({ pkg, versions }) =>

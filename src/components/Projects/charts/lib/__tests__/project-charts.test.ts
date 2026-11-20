@@ -121,9 +121,17 @@ vi.mock('@/generated/package-downloads', () => ({
   PACKAGE_VERSION_DOWNLOADS: {
     npm: {},
     pypi: {
-      [FIXTURES.PYPI_PACKAGE]: { '1.0.0': 7, '1.1.0': 1210 },
-      // One version alone, with nothing to compare it to.
-      [FIXTURES.ONE_VERSION_PACKAGE]: { '1.0.0': 1217 },
+      [FIXTURES.PYPI_PACKAGE]: {
+        ALL: { '1.0': 7, '1.1': 1210 },
+        LAST_30_DAYS: { '1.1': 30 },
+        LAST_90_DAYS: { '1.1': 90 },
+      },
+      // One minor version alone, with nothing to compare it to.
+      [FIXTURES.ONE_VERSION_PACKAGE]: {
+        ALL: { '1.0': 1217 },
+        LAST_30_DAYS: {},
+        LAST_90_DAYS: {},
+      },
     },
   } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
@@ -154,12 +162,13 @@ describe('getProjectCharts', () => {
     ).toMatchObject({
       downloads: {
         registry: 'pypi',
-        versionDownloads: { '1.0.0': 7, '1.1.0': 1210 },
+        versionDownloads: { ALL: { '1.0': 7, '1.1': 1210 } },
       },
       descriptions: [
         expect.stringMatching(/^Weekly commits /),
         expect.stringMatching(/^Weekly PyPI downloads /),
-        'Most downloaded versions: v1.1.0 with 1,210 and v1.0.0 with 7',
+        // In all, which the chart opens on.
+        'Most downloaded minor versions: v1.1.x with 1,210 and v1.0.x with 7',
       ],
     })
     // npm's API gives only the last week's.

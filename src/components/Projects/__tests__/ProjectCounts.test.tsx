@@ -138,7 +138,13 @@ vi.mock('@/generated/package-downloads', () => ({
   } satisfies typeof PACKAGE_RELEASES,
   PACKAGE_VERSION_DOWNLOADS: {
     npm: {},
-    pypi: { [FIXTURES.PYPI_PACKAGE]: { '1.0.0': 7, '2.0.0': 1210 } },
+    pypi: {
+      [FIXTURES.PYPI_PACKAGE]: {
+        ALL: { '1.0': 7, '2.0': 1210 },
+        LAST_30_DAYS: { '2.0': 30 },
+        LAST_90_DAYS: { '2.0': 90 },
+      },
+    },
   } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
 
@@ -251,9 +257,9 @@ describe('ProjectCounts', () => {
       screen
         .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
         .map((row) => row.firstChild?.textContent)
-    ).toEqual(['v2.0.0', 'v1.0.0'])
+    ).toEqual(['v2.0.x', 'v1.0.x'])
     expect(getTooltipSentences()?.at(-1)).toBe(
-      'Most downloaded versions: v2.0.0 with 1,210 and v1.0.0 with 7'
+      'Most downloaded minor versions: v2.0.x with 1,210 and v1.0.x with 7'
     )
   })
 

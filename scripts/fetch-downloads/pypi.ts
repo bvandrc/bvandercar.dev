@@ -10,9 +10,9 @@
 
 import { BigQuery } from '@google-cloud/bigquery'
 import { explain } from '@renovatebot/pep440'
-import { sum } from 'es-toolkit'
+import { mapValues, sum } from 'es-toolkit'
 
-import type { Release } from '../../shared/counts.ts'
+import { type Release, VERSION_PERIOD_DAYS } from '../../shared/counts.ts'
 import {
   addDays,
   earlierDay,
@@ -183,15 +183,26 @@ const queryPypiDownloads = async (
   return counts
 }
 
-/** Each version's downloads across `days`, by version. */
-const sumByVersion = (days: VersionCounts[]) => {
-  const versions: VersionCounts = {}
+/**
+ * A version's minor line, like "4.0" for 4.0.3, 4.0b1, or 4.0.post1.
+ *
+ * A version PEP 440 can't read is its own line.
+ */
+const getMinorVersion = (version: string) => {
+  const release = explain(version)?.release
+  return release ? `${release[0]}.${release[1] ?? 0}` : version
+}
+
+/** Each minor version's downloads across `days`, by minor version, like "4.0". */
+const sumByMinorVersion = (days: VersionCounts[]) => {
+  const minors: VersionCounts = {}
   for (const counts of days) {
     for (const [version, downloads] of Object.entries(counts)) {
-      versions[version] = (versions[version] ?? 0) + downloads
+      const minor = getMinorVersion(version)
+      minors[minor] = (minors[minor] ?? 0) + downloads
     }
   }
-  return versions
+  return minors
 }
 
 /**
@@ -255,7 +266,13 @@ const fetchPypiDailyDownloads = async (
           downloads: sum(Object.values(counts)),
         })
       ),
-      versions: sumByVersion(days.map(({ counts }) => counts)),
+      versions: mapValues(VERSION_PERIOD_DAYS, (periodDays) =>
+        sumByMinorVersion(
+          (periodDays === undefined ? days : days.slice(-periodDays)).map(
+            ({ counts }) => counts
+          )
+        )
+      ),
     }
   })
 }
