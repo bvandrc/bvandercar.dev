@@ -41,7 +41,7 @@ Conventions live outside this file, synced from https://github.com/bvandrc/bvand
 - `pnpm dev` — dev server on port 5000. `pnpm build`, `pnpm preview`.
 - `pnpm format` — Biome check/fix. `pnpm check` — the full gate: format plus `tsc` for the app and for `playwright/tsconfig.json`. Run before every commit; it's what CI runs.
 - `pnpm test` — Vitest unit tests over `src/`. `pnpm test:watch` to re-run on a change; CI runs `pnpm test:unit`.
-- `pnpm preview:ci` — build and serve on port 4173. All three Playwright suites expect this server to already be running.
+- `pnpm preview:ci` — serve the last build on port 4173, without building, so run `pnpm build` first; `--strictPort` makes it fail where the port is taken, rather than move to another. All three Playwright suites expect this server to already be running.
 - `pnpm test:e2e`, `pnpm test:a11y`, `pnpm test:lighthouse` — the three Playwright projects. `pnpm pw:open` for the UI runner.
 
 ## Repo conventions
