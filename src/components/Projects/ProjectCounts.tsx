@@ -4,7 +4,7 @@ import { Counts, type CountsProps } from './Counts'
 import { getProjectCounts } from './lib/project-counts'
 
 export type ProjectCountsProps = Pick<Project, CountsField> &
-  Pick<CountsProps, 'open' | 'onOpenChange'>
+  Pick<CountsProps, 'open' | 'onOpenChange' | 'focusable'>
 
 /**
  * A repo's counts as glyphs with shortened numbers, in full as alt text, and
@@ -17,12 +17,14 @@ export type ProjectCountsProps = Pick<Project, CountsField> &
  * time the tooltip opens.
  * On a touch screen, which has no hover, a tap opens and closes the tooltip
  * instead, rather than following a link the counts sit in. Pass `open` and
- * `onOpenChange` to also open it from elsewhere.
+ * `onOpenChange` to also open it from elsewhere, or `focusable` for counts
+ * no link holds, to open it from their own keyboard focus.
  */
 export const ProjectCounts = ({
   repo,
   open,
   onOpenChange,
+  focusable,
   ...packages
 }: ProjectCountsProps) => {
   const { shown, pkg, chartCount } = getProjectCounts({ repo, ...packages })
@@ -33,6 +35,7 @@ export const ProjectCounts = ({
       getCharts={(charts) => charts.getProjectCharts(repo, pkg)}
       open={open}
       onOpenChange={onOpenChange}
+      focusable={focusable}
       // Takes the room its gaps need at their tightest, then grows them back
       // as room allows, so they close up before "repo" wraps below.
       className="max-w-max grow basis-0"

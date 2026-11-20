@@ -176,9 +176,10 @@ export const ProjectCard = ({
                 centered && 'md:col-start-3'
               )}>
               {/* A private repo would 404 for a visitor, so its counts link
-                  nowhere, and there's no "repo" to follow. */}
+                  nowhere, and there's no "repo" to follow. They're a tab stop
+                  still, so the keyboard can open their charts. */}
               {project.privateRepo ? (
-                <ProjectCounts {...countsFields} />
+                <ProjectCounts {...countsFields} focusable />
               ) : (
                 <RepoLink {...countsFields} nameId={nameId} />
               )}

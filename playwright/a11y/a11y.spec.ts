@@ -74,6 +74,22 @@ test.describe('Accessibility', () => {
     await checkA11y(page, { disableRules: ['region'] })
   })
 
+  test("Open tooltip from a private repo's counts", async ({ page }) => {
+    await page.goto('/')
+
+    // Its counts sit in no link, so they're the tab stop themselves.
+    await page
+      .getByTestId(PROJECTS.CARD)
+      .filter({ hasNot: page.getByTestId(PROJECTS.REPO_LINK) })
+      .first()
+      .getByTestId(PROJECTS.COUNTS)
+      .focus()
+    await expect(page.getByTestId(TOOLTIP)).toBeVisible()
+
+    // Portaled outside every landmark, like any tooltip.
+    await checkA11y(page, { disableRules: ['region'] })
+  })
+
   test('Open counts charts', async ({ page }) => {
     await page.goto('/')
 
