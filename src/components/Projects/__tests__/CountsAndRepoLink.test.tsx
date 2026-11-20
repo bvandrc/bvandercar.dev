@@ -5,7 +5,7 @@ import { objectKeys } from 'ts-extras'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
-import { RepoLink } from '../RepoLink'
+import { CountsAndRepoLink } from '../CountsAndRepoLink'
 
 const { REPO_LINK, COUNTS } = SELECTORS.PROJECTS
 
@@ -14,14 +14,14 @@ const REPO = objectKeys(REPO_COUNTS)[0]
 
 /** Renders the link, and returns it. */
 const renderLink = () => {
-  renderWithProviders(<RepoLink repo={REPO} nameId="project-name" />)
+  renderWithProviders(<CountsAndRepoLink repo={REPO} nameId="project-name" />)
   const link = screen.getByTestId(REPO_LINK)
   // jsdom can't open a link's new tab, so keep it from trying.
   link.addEventListener('click', (event) => event.preventDefault())
   return link
 }
 
-describe('RepoLink', () => {
+describe('CountsAndRepoLink', () => {
   it("holds the repo's counts, so they're no tab stop of their own", () => {
     const link = renderLink()
     expect(within(link).getByTestId(COUNTS)).toBeDefined()
@@ -41,5 +41,35 @@ describe('RepoLink', () => {
         within(link).getByTestId(COUNTS).getAttribute('aria-describedby')
       ).toBe(screen.getByRole('tooltip').id)
     )
+  })
+
+  describe('for a private repo', () => {
+    /** Renders a private repo's counts, and returns them. */
+    const renderPrivateCounts = () => {
+      renderWithProviders(
+        <CountsAndRepoLink repo={REPO} privateRepo nameId="project-name" />
+      )
+      return screen.getByTestId(COUNTS)
+    }
+
+    it('shows its counts in no link, with no repo to follow', () => {
+      const counts = renderPrivateCounts()
+      expect(screen.queryByTestId(REPO_LINK)).toBeNull()
+      // Still shown, just in no link that would 404.
+      expect(counts.closest('a')).toBeNull()
+    })
+
+    it("opens the counts' tooltip on their own keyboard focus, as the link's would", async () => {
+      const user = userEvent.setup()
+      const counts = renderPrivateCounts()
+
+      await user.tab()
+      expect(document.activeElement).toBe(counts)
+      await waitFor(() =>
+        expect(counts.getAttribute('aria-describedby')).toBe(
+          screen.getByRole('tooltip').id
+        )
+      )
+    })
   })
 })
