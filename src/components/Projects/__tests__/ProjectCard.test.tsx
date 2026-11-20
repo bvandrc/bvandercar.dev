@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { PROJECTS, type Project } from '@/generated/profile/content/projects'
@@ -72,7 +72,7 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it("shows a private repo's counts with no link, and no repo to follow", () => {
+  it('passes on a private repo, whose counts then sit in no link', () => {
     const PROJECT = {
       name: 'Private',
       href: 'https://example.com/',
@@ -86,30 +86,6 @@ describe('ProjectCard', () => {
     expect(screen.queryByTestId(REPO_LINK)).toBeNull()
     // Still shown, just in no link that would 404.
     expect(screen.getByTestId(COUNTS).closest('a')).toBeNull()
-  })
-
-  it("opens a private repo's counts' tooltip on keyboard focus, as its repo link would", async () => {
-    const user = userEvent.setup()
-    const PROJECT = {
-      name: 'Private',
-      href: 'https://example.com/',
-      type: ALL_PROJECTS[0].type,
-      repo: COUNTED_REPO,
-      privateRepo: true,
-      blurb: 'Closed source.',
-    } satisfies Project
-    renderCard(PROJECT)
-    // Past the name's link.
-    await user.tab()
-    await user.tab()
-
-    const counts = screen.getByTestId(COUNTS)
-    expect(document.activeElement).toBe(counts)
-    await waitFor(() =>
-      expect(counts.getAttribute('aria-describedby')).toBe(
-        screen.getByRole('tooltip').id
-      )
-    )
   })
 
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {

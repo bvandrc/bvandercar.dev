@@ -18,9 +18,8 @@ import {
   THUMBNAIL_WIDTHS,
   type ThumbnailWidth,
 } from '~/screenshots'
+import { CountsAndRepoLink } from './CountsAndRepoLink'
 import { getProjectCounts } from './lib/project-counts'
-import { ProjectCounts } from './ProjectCounts'
-import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
 // on its line.
@@ -47,7 +46,7 @@ export type ProjectCardProps = {
   onPreviewOpen: () => void
 }
 
-/** A project's name, type, blurb, repo link, and live preview or screenshot; a private repo's card shows its counts without the link. */
+/** A project's name, type, blurb, counts and repo link, and live preview or screenshot. */
 export const ProjectCard = ({
   project,
   centered,
@@ -170,19 +169,13 @@ export const ProjectCard = ({
                 // the name's 24px one; with "repo" wrapped below, the pair
                 // outgrows it and starts 2px down.
                 'mt-0.5 min-h-5 items-center',
-                // A repo link's color, which the link sets on its own, for a
-                // private repo's counts, which sit in none.
-                'text-link-subtle',
                 centered && 'md:col-start-3'
               )}>
-              {/* A private repo would 404 for a visitor, so its counts link
-                  nowhere, and there's no "repo" to follow. They're a tab stop
-                  still, so the keyboard can open their charts. */}
-              {project.privateRepo ? (
-                <ProjectCounts {...countsFields} focusable />
-              ) : (
-                <RepoLink {...countsFields} nameId={nameId} />
-              )}
+              <CountsAndRepoLink
+                {...countsFields}
+                privateRepo={project.privateRepo}
+                nameId={nameId}
+              />
             </p>
           </div>
           <p
