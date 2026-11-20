@@ -175,20 +175,28 @@ export const RunningTotalChart = ({
     (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
   )
   const shownSpan = span ?? { start: firstDay, end: lastDay }
-  const { startTime, endTime, msPerPx, toX, toY, getTimeAtX } = getPlotScale(
-    shownSpan,
-    total
-  )
-  const lastX = toX(lastDay)
   // The line starts on the first day, at what was counted before it, or at a
   // span's later start, at what was counted by then.
   const lineStart =
-    Date.parse(firstDay) < startTime ? shownSpan.start : firstDay
+    Date.parse(firstDay) < Date.parse(shownSpan.start)
+      ? shownSpan.start
+      : firstDay
   const lineStartTime = Date.parse(lineStart)
-  const startX = toX(lineStart)
   const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
+  const lastShown = days.findLastIndex(
+    (day) => Date.parse(day) <= Date.parse(shownSpan.end)
+  )
+  // The height spans what the shown stretch counts, from where the line
+  // starts to the last day in view, so a short one's rise fills it too.
+  const lineStartTotal = dayTotals[firstShown - 1] ?? 0
+  const { startTime, endTime, msPerPx, toX, toY, getTimeAtX } = getPlotScale(
+    shownSpan,
+    { low: lineStartTotal, high: dayTotals[lastShown] ?? lineStartTotal }
+  )
+  const lastX = toX(lastDay)
+  const startX = toX(lineStart)
   // Through every day, whichever periods it reads out.
-  const line = `M${startX},${toY(dayTotals[firstShown - 1] ?? 0)}${dayTotals
+  const line = `M${startX},${toY(lineStartTotal)}${dayTotals
     .map((count, index) => [count, days[index]] as const)
     .slice(firstShown)
     .map(([count, day]) => `L${toX(day)},${toY(count)}`)
