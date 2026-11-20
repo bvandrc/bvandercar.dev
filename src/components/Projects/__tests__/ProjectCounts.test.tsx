@@ -250,8 +250,8 @@ describe('ProjectCounts', () => {
     expect(
       screen
         .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
-        .map((row) => row.textContent)
-    ).toEqual(['v2.0.01.2K', 'v1.0.07'])
+        .map((row) => row.firstChild?.textContent)
+    ).toEqual(['v2.0.0', 'v1.0.0'])
     expect(getTooltipSentences()?.at(-1)).toBe(
       'Most downloaded versions: v2.0.0 with 1,210 and v1.0.0 with 7'
     )
