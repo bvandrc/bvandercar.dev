@@ -61,15 +61,13 @@ export const getVersionBars = (
   ]
 }
 
-/** A bar's name: its minor version, like "v1.2.x", or the rest's count, like "12 other minor versions". */
+/** A bar's name: its minor version, like "v1.2", or the rest's count, like "12 other minor versions". */
 export const formatVersionBar = ({ version, versionCount }: VersionBar) =>
-  version === undefined
-    ? `${versionCount} other minor versions`
-    : `v${version}.x`
+  version === undefined ? `${versionCount} other minor versions` : `v${version}`
 
 /**
- * The bars in a sentence, like "Most downloaded minor versions: v1.2.x with
- * 1,210, v1.1.x with 800, and 3 other minor versions with 40".
+ * The bars in a sentence, like "Most downloaded minor versions: v1.2 with
+ * 1,210, v1.1 with 800, and 3 other minor versions with 40".
  */
 export const describeVersionDownloads = (bars: VersionBar[]) => {
   const parts = bars.map(

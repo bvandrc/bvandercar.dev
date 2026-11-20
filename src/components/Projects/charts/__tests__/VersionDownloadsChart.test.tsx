@@ -52,12 +52,12 @@ describe('VersionDownloadsChart', () => {
       screen.getAllByTestId(PERIOD).map((period) => period.textContent)
     ).toEqual(['All time', 'Last 30 days', 'Last 90 days'])
     expect(getRowCells()).toEqual([
-      ['v1.6.x', '12.4K', '62%'],
-      ['v1.5.x', '6K', '30%'],
-      ['v1.4.x', '1.5K', '8%'],
-      ['v1.3.x', '120', '1%'],
+      ['v1.6', '12.4K', '62%'],
+      ['v1.5', '6K', '30%'],
+      ['v1.4', '1.5K', '8%'],
+      ['v1.3', '120', '1%'],
       // 20 of 20,000, which rounds to no percent at all.
-      ['v1.2.x', '20', '<1%'],
+      ['v1.2', '20', '<1%'],
       ['2 other minor versions · 3', '<1%'],
     ])
     expect(screen.getAllByTestId(SHARE)).toHaveLength(6)
@@ -79,8 +79,8 @@ describe('VersionDownloadsChart', () => {
 
     await clickPeriod('Last 90 days')
     expect(getRowCells()).toEqual([
-      ['v1.6.x', '300', '75%'],
-      ['v1.5.x', '100', '25%'],
+      ['v1.6', '300', '75%'],
+      ['v1.5', '100', '25%'],
     ])
     await clickPeriod('Last 30 days')
     expect(getRowCells()).toEqual([])

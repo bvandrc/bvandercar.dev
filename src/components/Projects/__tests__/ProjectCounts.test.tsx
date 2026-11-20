@@ -257,9 +257,9 @@ describe('ProjectCounts', () => {
       screen
         .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
         .map((row) => row.firstChild?.textContent)
-    ).toEqual(['v2.0.x', 'v1.0.x'])
+    ).toEqual(['v2.0', 'v1.0'])
     expect(getTooltipSentences()?.at(-1)).toBe(
-      'Most downloaded minor versions: v2.0.x with 1,210 and v1.0.x with 7'
+      'Most downloaded minor versions: v2.0 with 1,210 and v1.0 with 7'
     )
   })
 

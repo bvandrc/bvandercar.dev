@@ -58,7 +58,7 @@ describe('formatVersionBar', () => {
         downloads: 1,
         share: 1,
       })
-    ).toBe('v1.2.x')
+    ).toBe('v1.2')
     expect(formatVersionBar({ versionCount: 12, downloads: 1, share: 1 })).toBe(
       '12 other minor versions'
     )
@@ -69,13 +69,11 @@ describe('describeVersionDownloads', () => {
   it('lists every bar with its downloads in full, in order', () => {
     expect(
       describeVersionDownloads(getVersionBars({ '1.0': 7, '1.1': 1210 }))
-    ).toBe(
-      'Most downloaded minor versions: v1.1.x with 1,210 and v1.0.x with 7'
-    )
+    ).toBe('Most downloaded minor versions: v1.1 with 1,210 and v1.0 with 7')
     expect(
       describeVersionDownloads(getVersionBars(buildVersionDownloads(8)))
     ).toBe(
-      'Most downloaded minor versions: v1.7.x with 8, v1.6.x with 7, v1.5.x with 6, v1.4.x with 5, v1.3.x with 4, and 3 other minor versions with 6'
+      'Most downloaded minor versions: v1.7 with 8, v1.6 with 7, v1.5 with 6, v1.4 with 5, v1.3 with 4, and 3 other minor versions with 6'
     )
   })
 })

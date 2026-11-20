@@ -168,7 +168,7 @@ describe('getProjectCharts', () => {
         expect.stringMatching(/^Weekly commits /),
         expect.stringMatching(/^Weekly PyPI downloads /),
         // In all, which the chart opens on.
-        'Most downloaded minor versions: v1.1.x with 1,210 and v1.0.x with 7',
+        'Most downloaded minor versions: v1.1 with 1,210 and v1.0 with 7',
       ],
     })
     // npm's API gives only the last week's.
