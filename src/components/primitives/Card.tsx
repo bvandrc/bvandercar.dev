@@ -8,7 +8,8 @@ export type CardProps = React.ComponentProps<'div'> & {
    * Called for a click on the card's own surface.
    *
    * Not for one on a link, button, or other control inside it, nor one that
-   * ends a text selection, nor one in a portal, like a tooltip, it renders. The cursor stays as is, so it suits a shortcut to
+   * ends a text selection, nor one in a portal, like a tooltip, it renders,
+   * nor one something inside it cancelled, as handled. The cursor stays as is, so it suits a shortcut to
    * something a control in the card also does, not the only way to do it.
    */
   onSurfaceClick?: () => void
@@ -29,6 +30,9 @@ export const Card = ({
         event.target instanceof Element ? event.target.closest(CONTROLS) : null
       if (
         onSurfaceClick &&
+        // Something inside already handled it, like a tap that opens a
+        // tooltip.
+        !event.defaultPrevented &&
         // React passes up a click in a portal, like a tooltip's, from outside
         // the card, which isn't on its surface.
         event.target instanceof Node &&

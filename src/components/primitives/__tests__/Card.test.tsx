@@ -65,6 +65,22 @@ describe('Card', () => {
     expect(onSurfaceClick).not.toHaveBeenCalled()
   })
 
+  it('ignores a click something inside it cancelled, as handled, like a tap that opens a tooltip', async () => {
+    const user = userEvent.setup()
+    const onSurfaceClick = vi.fn()
+    render(
+      <Card onSurfaceClick={onSurfaceClick} data-testid={SELF}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: a stand-in for a trigger that handles a tap itself. */}
+        <span onClick={(event) => event.preventDefault()} data-testid={TEXT}>
+          Some text
+        </span>
+      </Card>
+    )
+
+    await user.click(screen.getByTestId(TEXT))
+    expect(onSurfaceClick).not.toHaveBeenCalled()
+  })
+
   it('ignores a click in a portal it renders, like a tooltip, outside it', async () => {
     const user = userEvent.setup()
     const onSurfaceClick = vi.fn()
