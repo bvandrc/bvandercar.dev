@@ -42,6 +42,12 @@ export const SELECTORS = {
     COMMITS_CHART: 'commits-chart',
     PRS_CHART: 'prs-chart',
     DOWNLOADS_CHART: 'downloads-chart',
+    VERSION_DOWNLOADS_CHART: {
+      SELF: 'version-downloads-chart',
+      READOUT: 'version-downloads-chart-readout',
+      ROW: 'version-downloads-chart-row',
+      BAR: 'version-downloads-chart-bar',
+    },
     RUNNING_TOTAL_CHART: {
       PLOT: 'running-total-chart-plot',
       READOUT: 'running-total-chart-readout',

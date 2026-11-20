@@ -11,14 +11,11 @@ export type DownloadsChartProps = RunningTotalChartViewProps & {
   history: DownloadHistory
   /** The registry the history is from, which the readout names; leave it out for downloads from more than one */
   registry?: Registry
-  /** Each version's downloads in all, by version, which a hovered release reads out; leave it out where the registry doesn't count them */
-  versionDownloads?: Record<string, number>
 }
 
 /**
  * A package's downloads as a running total, day by day, on a small shaded
- * line chart, reading out the total through the week under the pointer, or a
- * release's version, with its downloads where they're counted.
+ * line chart, reading out the total through the week under the pointer.
  *
  * Across a span under 50 days, it reads out each day instead. Pair it with
  * `describeWeeklyDownloads` for screen readers. Needs two days or more.
@@ -26,7 +23,6 @@ export type DownloadsChartProps = RunningTotalChartViewProps & {
 export const DownloadsChart = ({
   history,
   registry,
-  versionDownloads,
   ...chartProps
 }: DownloadsChartProps) => (
   <RunningTotalChart
@@ -39,7 +35,6 @@ export const DownloadsChart = ({
       chartProps.span
     )}
     noun="download"
-    releaseCounts={versionDownloads}
     tone="DOWNLOADS"
     icon={COUNT_ICONS.downloads}
     summary={registry ? `${REGISTRY_NAMES[registry]} downloads` : 'Downloads'}

@@ -5,6 +5,10 @@ import { ActivityChart } from './ActivityChart'
 import { DownloadsChart, type DownloadsChartProps } from './DownloadsChart'
 import { type DaySpan, panSpan, zoomSpan } from './lib/spans'
 import type { RunningTotalChartViewProps } from './RunningTotalChart'
+import {
+  VersionDownloadsChart,
+  type VersionDownloadsChartProps,
+} from './VersionDownloadsChart'
 
 export type ProjectChartsProps = Pick<
   RunningTotalChartViewProps,
@@ -18,16 +22,15 @@ export type ProjectChartsProps = Pick<
   activity?: ActivityHistory
   /** The history whose merged PRs it charts */
   prs?: ActivityHistory
-  /** The downloads it charts, the registry they're from, if only one, and each version's, where counted */
-  downloads?: Pick<
-    DownloadsChartProps,
-    'history' | 'registry' | 'versionDownloads'
-  >
+  /** The downloads it charts, the registry they're from, if only one, and each version's, where counted for two or more */
+  downloads?: Pick<DownloadsChartProps, 'history' | 'registry'> &
+    Partial<VersionDownloadsChartProps>
 }
 
 /**
  * A project's commits chart, merged PRs chart, then its package's downloads
- * chart, whichever it has, sharing one span, zoom, and set of releases.
+ * chart, whichever it has, sharing one span, zoom, and set of releases, and
+ * last its package's downloads by version, where counted.
  *
  * Mounted with the tooltip it sits in, so each opening starts at
  * `initialSpan`, or zoomed all the way out.
@@ -68,7 +71,16 @@ export const ProjectCharts = ({
         <ActivityChart activity={activity} kind="commits" {...shared} />
       )}
       {prs && <ActivityChart activity={prs} kind="prs" {...shared} />}
-      {downloads && <DownloadsChart {...downloads} {...shared} />}
+      {downloads && (
+        <DownloadsChart
+          history={downloads.history}
+          registry={downloads.registry}
+          {...shared}
+        />
+      )}
+      {downloads?.versionDownloads && (
+        <VersionDownloadsChart versionDownloads={downloads.versionDownloads} />
+      )}
     </div>
   )
 }

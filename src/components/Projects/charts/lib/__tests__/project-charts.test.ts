@@ -16,6 +16,7 @@ const FIXTURES = vi.hoisted(() => ({
   UNRELEASED_PACKAGE: 'unreleased-package',
   ONE_DAY_PACKAGE: 'one-day-package',
   PYPI_PACKAGE: 'some-pypi-package',
+  ONE_VERSION_PACKAGE: 'one-version-package',
   // Each day's downloads from Mar 4 to 24.
   DAILY_DOWNLOADS: [
     1, 1, 1, 1, 1, 0, 0, 200, 300, 100, 200, 100, 200, 100, 2, 2, 2, 2, 2, 1, 1,
@@ -30,6 +31,7 @@ const {
   UNRELEASED_PACKAGE,
   ONE_DAY_PACKAGE,
   PYPI_PACKAGE,
+  ONE_VERSION_PACKAGE,
 } = FIXTURES
 
 vi.mock('@/generated/repo-activity', () => ({
@@ -95,6 +97,11 @@ vi.mock('@/generated/package-downloads', () => ({
         lastDay: '2026-03-24',
         daily: FIXTURES.DAILY_DOWNLOADS,
       },
+      [FIXTURES.ONE_VERSION_PACKAGE]: {
+        firstDay: '2026-03-04',
+        lastDay: '2026-03-24',
+        daily: FIXTURES.DAILY_DOWNLOADS,
+      },
     },
   } satisfies typeof PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES: {
@@ -113,7 +120,11 @@ vi.mock('@/generated/package-downloads', () => ({
   } satisfies typeof PACKAGE_RELEASES,
   PACKAGE_VERSION_DOWNLOADS: {
     npm: {},
-    pypi: { [FIXTURES.PYPI_PACKAGE]: { '1.0.0': 1017 } },
+    pypi: {
+      [FIXTURES.PYPI_PACKAGE]: { '1.0.0': 7, '1.1.0': 1210 },
+      // One version alone, with nothing to compare it to.
+      [FIXTURES.ONE_VERSION_PACKAGE]: { '1.0.0': 1217 },
+    },
   } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
 
@@ -137,16 +148,33 @@ describe('getProjectCharts', () => {
     })
   })
 
-  it("charts a package's downloads with each version's, where its registry counts them", () => {
+  it("charts a package's downloads by version, and describes them last, where its registry counts two or more", () => {
     expect(
       getProjectCharts(REPO, { registry: 'pypi', name: PYPI_PACKAGE })
     ).toMatchObject({
-      downloads: { registry: 'pypi', versionDownloads: { '1.0.0': 1017 } },
+      downloads: {
+        registry: 'pypi',
+        versionDownloads: { '1.0.0': 7, '1.1.0': 1210 },
+      },
+      descriptions: [
+        expect.stringMatching(/^Weekly commits /),
+        expect.stringMatching(/^Weekly PyPI downloads /),
+        'Most downloaded versions: v1.1.0 with 1,210 and v1.0.0 with 7',
+      ],
     })
     // npm's API gives only the last week's.
     expect(
       getProjectCharts(REPO, buildNpmPackage(NPM_PACKAGE))?.downloads
     ).toHaveProperty('versionDownloads', undefined)
+    expect(
+      getProjectCharts(REPO, { registry: 'pypi', name: ONE_VERSION_PACKAGE })
+    ).toMatchObject({
+      downloads: { versionDownloads: undefined },
+      descriptions: [
+        expect.stringMatching(/^Weekly commits /),
+        expect.stringMatching(/^Weekly PyPI downloads /),
+      ],
+    })
   })
 
   it('starts a repo with no package on the day its commits reach 15', () => {

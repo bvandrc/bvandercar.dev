@@ -1,7 +1,7 @@
 import { addDays } from '~/dates'
 import {
   describeWeekly,
-  getLatestVersion,
+  formatLatestVersion,
   getPeakWeek,
   getRunningTotals,
   sumWeeks,
@@ -47,10 +47,10 @@ describe('getPeakWeek', () => {
   })
 })
 
-describe('getLatestVersion', () => {
-  it('picks the latest of several, by their numbers rather than their order', () => {
+describe('formatLatestVersion', () => {
+  it('names only the latest of several, by their numbers rather than their order', () => {
     // 1.10.0 sorts before 1.9.0 as text.
-    expect(getLatestVersion(['1.9.0', '1.10.0', '1.0.5'])).toBe('1.10.0')
+    expect(formatLatestVersion(['1.9.0', '1.10.0', '1.0.5'])).toBe('v1.10.0')
   })
 })
 

@@ -11,7 +11,7 @@ import { addDays, DAY_MS, getDaysBetween } from '~/dates'
 import { usePlotInput } from './hooks/usePlotInput'
 import { getPlotScale, PLOT } from './lib/plot'
 import type { DaySpan } from './lib/spans'
-import { getLatestVersion, getRunningTotals } from './lib/weeks'
+import { formatLatestVersion, getRunningTotals } from './lib/weeks'
 
 /** What a chart counts, which picks its color, the same on every chart. */
 export type ChartTone = 'COMMITS' | 'PRS' | 'DOWNLOADS'
@@ -86,8 +86,6 @@ export type RunningTotalChartProps = {
   onPan?: (delta: number) => void
   /** Marked with a grey line on each day there was one, naming its latest version on hover */
   releases?: Release[]
-  /** Each version's count in all, by version, which a hovered release reads out for the version it names */
-  releaseCounts?: Record<string, number>
   'data-testid': string
 }
 
@@ -155,9 +153,8 @@ const ChartReadout = ({ icon, isSummary, children }: ChartReadoutProps) => (
  * It's captioned in its top-left corner, behind the count's glyph, with a
  * summary, or the total through the period under the pointer, like its week.
  * A release gets a grey line on its day, which names its latest version while
- * hovered, with that version's count, where it was counted. Drawn for
- * sighted pointer users only: pair it with the counts in words for everyone
- * else.
+ * hovered. Drawn for sighted pointer users only: pair it with the counts in
+ * words for everyone else.
  */
 export const RunningTotalChart = ({
   firstDay,
@@ -172,7 +169,6 @@ export const RunningTotalChart = ({
   onZoom,
   onPan,
   releases = [],
-  releaseCounts = {},
   'data-testid': testId,
 }: RunningTotalChartProps) => {
   const plotRef = useRef<SVGSVGElement>(null)
@@ -250,19 +246,10 @@ export const RunningTotalChart = ({
   /** What the caption says: the hovered release, or period, or else the summary. */
   const getReadout = () => {
     if (activeRelease) {
-      const version = getLatestVersion(
-        releases
-          .filter(({ day }) => day === activeRelease)
-          .map((release) => release.version)
-      )
-      const released = `v${version} released ${formatDay(activeRelease)}`
-      // Only where it was counted, like a PyPI version's downloads. Shortened
-      // like the glyphs, behind the readout's own glyph, so it fits the plot's
-      // width.
-      const count = version === undefined ? undefined : releaseCounts[version]
-      return count === undefined
-        ? released
-        : `${released} · ${formatCompactCount(count)}`
+      const versions = releases
+        .filter(({ day }) => day === activeRelease)
+        .map(({ version }) => version)
+      return `${formatLatestVersion(versions)} released ${formatDay(activeRelease)}`
     }
     if (activePeriod !== undefined) {
       return `Through ${formatDay(periodEnds[activePeriod])}: ${formatCount(periodTotals[activePeriod], noun)}`

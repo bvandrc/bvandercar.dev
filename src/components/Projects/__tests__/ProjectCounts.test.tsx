@@ -15,8 +15,13 @@ import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
-const { COUNTS, COMMITS_CHART, DOWNLOADS_CHART, CHARTS_LOADING } =
-  SELECTORS.PROJECTS
+const {
+  COUNTS,
+  COMMITS_CHART,
+  DOWNLOADS_CHART,
+  VERSION_DOWNLOADS_CHART,
+  CHARTS_LOADING,
+} = SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
@@ -129,13 +134,11 @@ vi.mock('@/generated/package-downloads', () => ({
         { version: '1.1.0', day: '2026-03-12' },
       ],
     },
-    pypi: {
-      [FIXTURES.PYPI_PACKAGE]: [{ version: '2.0.0', day: '2026-03-12' }],
-    },
+    pypi: {},
   } satisfies typeof PACKAGE_RELEASES,
   PACKAGE_VERSION_DOWNLOADS: {
     npm: {},
-    pypi: { [FIXTURES.PYPI_PACKAGE]: { '2.0.0': 1210 } },
+    pypi: { [FIXTURES.PYPI_PACKAGE]: { '1.0.0': 7, '2.0.0': 1210 } },
   } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
 
@@ -234,19 +237,24 @@ describe('ProjectCounts', () => {
     ])
   })
 
-  it("charts its PyPI package's downloads too, named as PyPI's, with each release's downloads", async () => {
+  it("charts its PyPI package's downloads too, named as PyPI's, then by version, and describes them", async () => {
     renderWithProviders(
       <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
     )
 
     await hoverCounts()
-    const downloads = within(screen.getByTestId(DOWNLOADS_CHART))
-    const readout = downloads.getByTestId(READOUT)
-    expect(readout.textContent).toBe('PyPI downloads')
-    fireEvent.pointerMove(downloads.getByTestId(PLOT), {
-      clientX: Number(downloads.getByTestId(RELEASE).getAttribute('x1')),
-    })
-    expect(readout.textContent).toBe('v2.0.0 released Mar 12, 2026 · 1.2K')
+    expect(
+      within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
+        .textContent
+    ).toBe('PyPI downloads')
+    expect(
+      screen
+        .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
+        .map((row) => row.textContent)
+    ).toEqual(['v2.0.01.2K', 'v1.0.07'])
+    expect(getTooltipSentences()?.at(-1)).toBe(
+      'Most downloaded versions: v2.0.0 with 1,210 and v1.0.0 with 7'
+    )
   })
 
   it('leaves the counts in words where there is nothing to chart', async () => {
