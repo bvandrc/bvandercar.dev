@@ -170,6 +170,9 @@ export const ProjectCard = ({
                 // the name's 24px one; with "repo" wrapped below, the pair
                 // outgrows it and starts 2px down.
                 'mt-0.5 min-h-5 items-center',
+                // A repo link's color, which the link sets on its own, for a
+                // private repo's counts, which sit in none.
+                'text-link-subtle',
                 centered && 'md:col-start-3'
               )}>
               {/* A private repo would 404 for a visitor, so its counts link
