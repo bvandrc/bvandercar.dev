@@ -11,7 +11,7 @@ export const byDay = (a: Release, b: Release) => a.day.localeCompare(b.day)
  * releases, for the packages it could.
  *
  * `versions` totals the days by minor version, like "4.0", over each of
- * `VERSION_PERIOD_DAYS`, where the registry gives each version's whole
+ * `CHART_PERIOD_DAYS`, where the registry gives each version's whole
  * history; npm's gives only the last week.
  */
 export type RegistryHistory = {

@@ -1,6 +1,6 @@
 import { clamp } from 'es-toolkit'
 
-import { DAY_MS } from '~/dates'
+import { addDays, DAY_MS } from '~/dates'
 
 /** The dates a chart runs from and to, as ISO dates or times. */
 export type DaySpan = { start: string; end: string }
@@ -21,6 +21,20 @@ const toSpan = (start: number, width: number): DaySpan => ({
   start: new Date(start).toISOString(),
   end: new Date(start + width).toISOString(),
 })
+
+/**
+ * The last `days` of `full`, or undefined for all of it: for no `days`, or
+ * more than it spans.
+ */
+export const getLastDaysSpan = (full: DaySpan, days: number | undefined) => {
+  if (days === undefined) {
+    return undefined
+  }
+  const start = addDays(full.end, -days)
+  return Date.parse(start) > Date.parse(full.start)
+    ? { start, end: full.end }
+    : undefined
+}
 
 /** How long a span is, in milliseconds. */
 export const getSpanMs = (span: DaySpan) => {

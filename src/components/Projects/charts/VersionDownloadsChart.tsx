@@ -1,9 +1,5 @@
-import { useState } from 'react'
-import { objectKeys } from 'ts-extras'
-
-import { cn } from '@/lib/cn'
 import { formatCompactCount } from '@/lib/format-count'
-import type { VersionDownloads, VersionPeriod } from '~/counts'
+import type { ChartPeriod, VersionDownloads } from '~/counts'
 import {
   formatVersionBar,
   getVersionBars,
@@ -20,19 +16,6 @@ const PERCENT_FORMAT = new Intl.NumberFormat('en-US', {
 const formatShare = (share: number) =>
   share > 0 && share < 0.005 ? '<1%' : PERCENT_FORMAT.format(share)
 
-// What each period's button says, in the order they sit.
-const PERIOD_LABELS = {
-  ALL: 'All time',
-  LAST_30_DAYS: 'Last 30 days',
-  LAST_90_DAYS: 'Last 90 days',
-} as const satisfies Record<VersionPeriod, string>
-
-// The chosen period's button stands out from the others.
-const PERIOD_BUTTON_CLASSES = {
-  CHOSEN: 'bg-ink-muted/20 text-ink',
-  IDLE: 'text-ink-muted hover:text-ink',
-} as const
-
 type ShareProps = Pick<VersionBar, 'share'>
 
 /** A row's share of the downloads, in the column down the chart's right side. */
@@ -47,6 +30,8 @@ const Share = ({ share }: ShareProps) => (
 export type VersionDownloadsChartProps = {
   /** Each minor version's downloads over each period, two or more in all */
   versionDownloads: VersionDownloads
+  /** The period whose downloads it bars */
+  period: ChartPeriod
 }
 
 /**
@@ -54,15 +39,15 @@ export type VersionDownloadsChartProps = {
  * downloads at its tip, shortened like the glyphs, then the rest's together,
  * in words, each row's share of them all down the right side.
  *
- * Buttons above switch between its downloads in all, which it opens on, and
- * over its last 30 or 90 days. The rest get no bar, since added up they
- * could dwarf the versions'. Drawn for sighted pointer users only: pair it
- * with `describeVersionDownloads` for everyone else.
+ * Bars the downloads over `period`, saying so where it had none. The rest
+ * get no bar, since added up they could dwarf the versions'. Drawn for
+ * sighted users only: pair it with `describeVersionDownloads` for everyone
+ * else.
  */
 export const VersionDownloadsChart = ({
   versionDownloads,
+  period,
 }: VersionDownloadsChartProps) => {
-  const [period, setPeriod] = useState<VersionPeriod>('ALL')
   const bars = getVersionBars(versionDownloads[period])
   const versionBars = bars.filter(({ version }) => version !== undefined)
   const restBar = bars.find(({ version }) => version === undefined)
@@ -71,26 +56,8 @@ export const VersionDownloadsChart = ({
   return (
     <div
       aria-hidden
-      className="flex w-82 flex-col gap-2 text-xs"
+      className="w-82 text-xs"
       data-testid="version-downloads-chart">
-      <div className="flex gap-1">
-        {objectKeys(PERIOD_LABELS).map((key) => (
-          <button
-            key={key}
-            type="button"
-            // Out of the tab order, like the rest of the chart, which only
-            // sighted pointer users see.
-            tabIndex={-1}
-            onClick={() => setPeriod(key)}
-            className={cn(
-              'rounded-md px-2 py-0.5',
-              PERIOD_BUTTON_CLASSES[key === period ? 'CHOSEN' : 'IDLE']
-            )}
-            data-testid="version-downloads-chart-period">
-            {PERIOD_LABELS[key]}
-          </button>
-        ))}
-      </div>
       {bars.length === 0 ? (
         <p className="text-ink-muted">No downloads in this period</p>
       ) : (

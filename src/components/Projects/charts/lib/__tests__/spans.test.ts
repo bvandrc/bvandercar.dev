@@ -1,5 +1,5 @@
 import { DAY_MS } from '~/dates'
-import { getSpanMs, panSpan, zoomSpan } from '../spans'
+import { getLastDaysSpan, getSpanMs, panSpan, zoomSpan } from '../spans'
 
 describe('getSpanMs', () => {
   it('measures a span of ISO dates or times', () => {
@@ -82,5 +82,23 @@ describe('panSpan', () => {
 
   it("leaves a span that isn't zoomed in where it is", () => {
     expect(panSpan(undefined, FULL, 7 * DAY_MS)).toBeUndefined()
+  })
+})
+
+describe('getLastDaysSpan', () => {
+  const FULL = { start: '2026-01-01', end: '2026-06-30' }
+
+  it('spans the last days of the full span, to its end', () => {
+    expect(getLastDaysSpan(FULL, 30)).toEqual({
+      start: '2026-05-31',
+      end: '2026-06-30',
+    })
+  })
+
+  it('is undefined for all of it: for no days, or more than it spans', () => {
+    expect(getLastDaysSpan(FULL, undefined)).toBeUndefined()
+    // Jan 1 to Jun 30 is 180 days.
+    expect(getLastDaysSpan(FULL, 180)).toBeUndefined()
+    expect(getLastDaysSpan(FULL, 365)).toBeUndefined()
   })
 })

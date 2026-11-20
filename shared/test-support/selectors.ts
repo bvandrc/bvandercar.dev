@@ -39,6 +39,7 @@ export const SELECTORS = {
       WORDS: 'project-totals-words',
     },
     CHARTS_LOADING: 'project-charts-loading',
+    CHART_PERIOD: 'chart-period',
     COMMITS_CHART: 'commits-chart',
     PRS_CHART: 'prs-chart',
     DOWNLOADS_CHART: 'downloads-chart',
@@ -47,7 +48,6 @@ export const SELECTORS = {
       ROW: 'version-downloads-chart-row',
       BAR: 'version-downloads-chart-bar',
       SHARE: 'version-downloads-chart-share',
-      PERIOD: 'version-downloads-chart-period',
     },
     RUNNING_TOTAL_CHART: {
       PLOT: 'running-total-chart-plot',

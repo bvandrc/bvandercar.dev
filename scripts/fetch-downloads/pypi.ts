@@ -12,7 +12,7 @@ import { BigQuery } from '@google-cloud/bigquery'
 import { explain } from '@renovatebot/pep440'
 import { mapValues, sum } from 'es-toolkit'
 
-import { type Release, VERSION_PERIOD_DAYS } from '../../shared/counts.ts'
+import { CHART_PERIOD_DAYS, type Release } from '../../shared/counts.ts'
 import {
   addDays,
   earlierDay,
@@ -266,7 +266,7 @@ const fetchPypiDailyDownloads = async (
           downloads: sum(Object.values(counts)),
         })
       ),
-      versions: mapValues(VERSION_PERIOD_DAYS, (periodDays) =>
+      versions: mapValues(CHART_PERIOD_DAYS, (periodDays) =>
         sumByMinorVersion(
           (periodDays === undefined ? days : days.slice(-periodDays)).map(
             ({ counts }) => counts

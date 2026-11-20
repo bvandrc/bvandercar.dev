@@ -1,12 +1,10 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
-import type { VersionDownloads } from '~/counts'
+import type { ChartPeriod, VersionDownloads } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { VersionDownloadsChart } from '../VersionDownloadsChart'
 
-const { SELF, ROW, BAR, SHARE, PERIOD } =
-  SELECTORS.PROJECTS.VERSION_DOWNLOADS_CHART
+const { SELF, ROW, BAR, SHARE } = SELECTORS.PROJECTS.VERSION_DOWNLOADS_CHART
 
 const VERSION_DOWNLOADS = {
   // 7 minor versions, 20,000 downloads: 1.0 and 1.1 share the last row.
@@ -23,9 +21,14 @@ const VERSION_DOWNLOADS = {
   LAST_90_DAYS: { '1.5': 100, '1.6': 300 },
 } satisfies VersionDownloads
 
-/** Renders the chart of `VERSION_DOWNLOADS`. */
-const renderChart = () =>
-  render(<VersionDownloadsChart versionDownloads={VERSION_DOWNLOADS} />)
+/** Renders the chart of `VERSION_DOWNLOADS`, barring `period`'s, all time unless given. */
+const renderChart = (period: ChartPeriod = 'ALL') =>
+  render(
+    <VersionDownloadsChart
+      versionDownloads={VERSION_DOWNLOADS}
+      period={period}
+    />
+  )
 
 /** Each row's cells' text: its name, its downloads, and its share. */
 const getRowCells = () =>
@@ -33,24 +36,10 @@ const getRowCells = () =>
     .queryAllByTestId(ROW)
     .map((row) => Array.from(row.children, (cell) => cell.textContent))
 
-/** Clicks the button for the period it says, like "Last 90 days". */
-const clickPeriod = (label: string) => {
-  const button = screen
-    .getAllByTestId(PERIOD)
-    .find((period) => period.textContent === label)
-  if (!button) {
-    throw new Error(`No period button says ${label}`)
-  }
-  return userEvent.setup().click(button)
-}
-
 describe('VersionDownloadsChart', () => {
-  it('opens on all time, listing the most downloaded minor versions, most first, then the rest together in words, each shortened like the glyphs, with its share on the right', () => {
+  it('lists the most downloaded minor versions, most first, then the rest together in words, each shortened like the glyphs, with its share on the right', () => {
     renderChart()
 
-    expect(
-      screen.getAllByTestId(PERIOD).map((period) => period.textContent)
-    ).toEqual(['All time', 'Last 30 days', 'Last 90 days'])
     expect(getRowCells()).toEqual([
       ['v1.6', '12.4K', '62%'],
       ['v1.5', '6K', '30%'],
@@ -74,15 +63,15 @@ describe('VersionDownloadsChart', () => {
     )
   })
 
-  it("switches to a period's downloads, and says so where it had none", async () => {
-    renderChart()
+  it("bars the period's downloads, and says so where it had none", () => {
+    const { unmount } = renderChart('LAST_90_DAYS')
 
-    await clickPeriod('Last 90 days')
     expect(getRowCells()).toEqual([
       ['v1.6', '300', '75%'],
       ['v1.5', '100', '25%'],
     ])
-    await clickPeriod('Last 30 days')
+    unmount()
+    renderChart('LAST_30_DAYS')
     expect(getRowCells()).toEqual([])
     expect(screen.getByTestId(SELF).textContent).toContain(
       'No downloads in this period'
