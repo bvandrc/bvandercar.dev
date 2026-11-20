@@ -190,6 +190,13 @@ describe('ProjectCharts', () => {
     })
     const allTime = getReleaseXs()
 
+    // Below the charts.
+    expect(
+      screen
+        .getByTestId(VERSION_DOWNLOADS_CHART.SELF)
+        .compareDocumentPosition(screen.getAllByTestId(CHART_PERIOD)[0]) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
     expect(getPeriods()).toEqual([
       ['All time', 'true'],
       ['Last 90 days', 'false'],

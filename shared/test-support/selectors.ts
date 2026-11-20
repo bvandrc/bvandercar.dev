@@ -53,6 +53,7 @@ export const SELECTORS = {
       PLOT: 'running-total-chart-plot',
       READOUT: 'running-total-chart-readout',
       TOTAL: 'running-total-chart-total',
+      RISE: 'running-total-chart-rise',
       DOT: 'running-total-chart-dot',
       RELEASE: 'running-total-chart-release',
       LINE: 'running-total-chart-line',

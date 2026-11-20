@@ -37,7 +37,7 @@ export type ProjectChartsProps = Pick<
  * chart, whichever it has, sharing one span, zoom, and set of releases, and
  * last its package's downloads by version, where counted.
  *
- * Buttons above switch them all between all time and the last 30 or 90
+ * Buttons below switch them all between all time and the last 90 or 30
  * days: the line charts zoom to the period, and the versions bar its
  * downloads. Mounted with the tooltip it sits in, so each opening starts at
  * `initialSpan`, with no period chosen, or zoomed all the way out, on all
@@ -84,7 +84,6 @@ export const ProjectCharts = ({
   } satisfies RunningTotalChartViewProps
   return (
     <div className="flex flex-col gap-3">
-      <PeriodSwitch period={period} onChange={choosePeriod} />
       {activity && (
         <ActivityChart activity={activity} kind="commits" {...shared} />
       )}
@@ -104,6 +103,7 @@ export const ProjectCharts = ({
           period={period ?? 'ALL'}
         />
       )}
+      <PeriodSwitch period={period} onChange={choosePeriod} />
     </div>
   )
 }

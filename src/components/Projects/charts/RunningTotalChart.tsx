@@ -139,7 +139,8 @@ const ChartReadout = ({ icon, children }: ChartReadoutProps) => (
 
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
- * the total, written beside it.
+ * the total, written beside it, with what the stretch in view added below it
+ * where that stretch starts past zero.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
  * summary, or the total through the period under the pointer, like its week.
@@ -315,15 +316,27 @@ export const RunningTotalChart = ({
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
         {Date.parse(lastDay) <= endTime && (
-          <text
-            x={lastX + 6}
-            // Centred on the line's end, about a third of the text's height down.
-            y={toY(total) + 5}
-            className="fill-ink text-sm font-bold"
-            data-testid="running-total-chart-total">
-            {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
-            {formatCompactCount(total)}
-          </text>
+          <>
+            <text
+              x={lastX + 6}
+              // Centred on the line's end, about a third of the text's height down.
+              y={toY(total) + 5}
+              className="fill-ink text-sm font-bold"
+              data-testid="running-total-chart-total">
+              {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
+              {formatCompactCount(total)}
+            </text>
+            {/* Where the baseline isn't zero, what the stretch in view added, so its start can be read too. */}
+            {lineStartTotal > 0 && (
+              <text
+                x={lastX + 6}
+                y={toY(total) + 20}
+                className="fill-ink-muted text-xs"
+                data-testid="running-total-chart-rise">
+                +{formatCompactCount(total - lineStartTotal)}
+              </text>
+            )}
+          </>
         )}
         {activePeriod !== undefined && (
           <PeriodMarker

@@ -8,7 +8,7 @@ import {
   type RunningTotalChartViewProps,
 } from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, DOT, RELEASE, LINE } =
+const { PLOT, READOUT, TOTAL, RISE, DOT, RELEASE, LINE } =
   SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // Each day's commits for the three weeks from Mar 2: 5, 1,200, then 12.
@@ -192,6 +192,21 @@ describe('RunningTotalChart', () => {
       Date.parse('2026-03-02'),
       expect.any(Number)
     )
+  })
+
+  it('writes what the stretch in view added under the total, where it starts past zero', () => {
+    const { unmount } = renderChart()
+    // From zero, the total says it all.
+    expect(screen.queryByTestId(RISE)).toBeNull()
+    unmount()
+
+    renderChart({
+      span: { start: '2026-03-09', end: '2026-03-22' },
+      zoomed: true,
+    })
+    // 1,217 in all, 5 of them by Mar 9.
+    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
+    expect(screen.getByTestId(RISE).textContent).toBe('+1.2K')
   })
 
   it("hides the total while zoomed in short of the line's end", () => {
