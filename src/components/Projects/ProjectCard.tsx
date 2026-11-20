@@ -19,6 +19,7 @@ import {
   type ThumbnailWidth,
 } from '~/screenshots'
 import { getProjectCounts } from './lib/project-counts'
+import { ProjectCounts } from './ProjectCounts'
 import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
@@ -46,7 +47,7 @@ export type ProjectCardProps = {
   onPreviewOpen: () => void
 }
 
-/** A project's name, type, blurb, repo link, and live preview or screenshot. */
+/** A project's name, type, blurb, repo link, and live preview or screenshot; a private repo's card shows its counts without the link. */
 export const ProjectCard = ({
   project,
   centered,
@@ -171,7 +172,13 @@ export const ProjectCard = ({
                 'mt-0.5 min-h-5 items-center',
                 centered && 'md:col-start-3'
               )}>
-              <RepoLink {...countsFields} nameId={nameId} />
+              {/* A private repo would 404 for a visitor, so its counts link
+                  nowhere, and there's no "repo" to follow. */}
+              {project.privateRepo ? (
+                <ProjectCounts {...countsFields} />
+              ) : (
+                <RepoLink {...countsFields} nameId={nameId} />
+              )}
             </p>
           </div>
           <p
