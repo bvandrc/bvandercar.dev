@@ -18,8 +18,8 @@ import {
   THUMBNAIL_WIDTHS,
   type ThumbnailWidth,
 } from '~/screenshots'
+import { CountsAndRepoLink } from './CountsAndRepoLink'
 import { getProjectCounts } from './lib/project-counts'
-import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
 // on its line.
@@ -46,7 +46,7 @@ export type ProjectCardProps = {
   onPreviewOpen: () => void
 }
 
-/** A project's name, type, blurb, repo link, and live preview or screenshot. */
+/** A project's name, type, blurb, counts and repo link, and live preview or screenshot. */
 export const ProjectCard = ({
   project,
   centered,
@@ -171,7 +171,11 @@ export const ProjectCard = ({
                 'mt-0.5 min-h-5 items-center',
                 centered && 'md:col-start-3'
               )}>
-              <RepoLink {...countsFields} nameId={nameId} />
+              <CountsAndRepoLink
+                {...countsFields}
+                privateRepo={project.privateRepo}
+                nameId={nameId}
+              />
             </p>
           </div>
           <p

@@ -7,7 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, BLURB, COUNTS, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -44,11 +44,14 @@ const renderCard = (project: Project, onPreviewOpen: () => void = vi.fn()) =>
     />
   )
 
-/** Renders a card with a live preview, and returns it. */
+/** Renders a card with a live preview and a repo link, and returns it. */
 const renderPreviewCard = (onPreviewOpen?: () => void) => {
-  const project = ALL_PROJECTS.find(({ embed }) => embed)
+  // A private repo's card has no repo link to tab from.
+  const project = ALL_PROJECTS.find(
+    ({ embed, privateRepo }) => embed && !privateRepo
+  )
   if (!project) {
-    throw new Error('No project has a live preview')
+    throw new Error('No project with a public repo has a live preview')
   }
   renderCard(project, onPreviewOpen)
   return screen.getByTestId(CARD)
@@ -67,6 +70,22 @@ describe('ProjectCard', () => {
 
     // This site's fetch, not the profile's 41.
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
+  })
+
+  it('passes on a private repo, whose counts then sit in no link', () => {
+    const PROJECT = {
+      name: 'Private',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      privateRepo: true,
+      blurb: 'Closed source.',
+    } satisfies Project
+    renderCard(PROJECT)
+
+    expect(screen.queryByTestId(REPO_LINK)).toBeNull()
+    // Still shown, just in no link that would 404.
+    expect(screen.getByTestId(COUNTS).closest('a')).toBeNull()
   })
 
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {

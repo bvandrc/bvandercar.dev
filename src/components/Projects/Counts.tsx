@@ -87,6 +87,8 @@ export type CountsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
   Pick<ReturnType<typeof getProjectCounts>, 'shown' | 'chartCount'> & {
     /** Picks what the counts chart, once the charts' code has loaded; undefined for nothing */
     getCharts: (charts: LazyCharts) => CountsCharts | undefined
+    /** Makes them a tab stop of their own, whose keyboard focus opens the tooltip, for counts no link holds */
+    focusable?: boolean
     className?: string
     'data-testid': string
     /** Words beside the glyphs, which open the tooltip too */
@@ -102,8 +104,9 @@ export type CountsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
  * first time the tooltip opens. On a touch screen, which has no hover, a tap
  * opens and closes the tooltip instead, rather than following a link the
  * counts sit in. Pass `open` and `onOpenChange` to also open it from
- * elsewhere, and `children` for words after the glyphs that hover, or a tap,
- * opens it from too.
+ * elsewhere, `children` for words after the glyphs that hover, or a tap,
+ * opens it from too, and `focusable` for counts no link holds, whose own
+ * keyboard focus then opens it.
  */
 export const Counts = ({
   shown,
@@ -111,6 +114,7 @@ export const Counts = ({
   getCharts,
   open = false,
   onOpenChange,
+  focusable = false,
   className,
   'data-testid': testId,
   children,
@@ -166,6 +170,9 @@ export const Counts = ({
   // What opens the tooltip, wherever they're spread.
   const openProps = {
     ...triggerProps,
+    // The tooltip opens on its trigger's keyboard focus, so a tab stop is
+    // all it takes.
+    tabIndex: focusable ? 0 : undefined,
     // Starts loading the charts as the pointer arrives, ahead of the
     // tooltip's open delay, or with a tap.
     onPointerEnter: prefetchCharts,
