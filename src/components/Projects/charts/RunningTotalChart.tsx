@@ -50,12 +50,6 @@ const RELEASE_LINE_CLASSES = {
 // How near a release line the pointer snaps to it, in pixels.
 const RELEASE_SNAP_PX = 4
 
-// The readout's summary is quieter than a hovered period's total, which leads.
-const READOUT_CLASSES = {
-  SUMMARY: 'text-ink-muted',
-  PERIOD: 'text-ink',
-} as const
-
 export type RunningTotalChartProps = {
   /** The ISO date counting starts on */
   firstDay: string
@@ -125,20 +119,17 @@ const PeriodMarker = ({ x, y, tone }: PeriodMarkerProps) => (
 )
 
 type ChartReadoutProps = Pick<RunningTotalChartProps, 'icon'> & {
-  /** Whether it reads out the summary, rather than what's under the pointer */
-  isSummary: boolean
   children: React.ReactNode
 }
 
 /** The caption in the chart's top-left corner, behind the count's glyph. */
-const ChartReadout = ({ icon, isSummary, children }: ChartReadoutProps) => (
+const ChartReadout = ({ icon, children }: ChartReadoutProps) => (
   <p
     className={cn(
-      'flex items-center gap-1.5 whitespace-nowrap',
+      'flex items-center gap-1.5 whitespace-nowrap text-ink',
       // Held in the top-left corner, over the strip the line leaves
       // clear, and letting the pointer through to the plot beneath.
-      'pointer-events-none absolute top-0 left-0',
-      READOUT_CLASSES[isSummary ? 'SUMMARY' : 'PERIOD']
+      'pointer-events-none absolute top-0 left-0'
     )}
     data-testid="running-total-chart-readout">
     {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
@@ -336,11 +327,7 @@ export const RunningTotalChart = ({
         {/* The hover target: the whole box, not just the thin line. */}
         <rect width={PLOT.WIDTH} height={PLOT.HEIGHT} fill="transparent" />
       </svg>
-      <ChartReadout
-        icon={icon}
-        isSummary={activePeriod === undefined && activeRelease === undefined}>
-        {getReadout()}
-      </ChartReadout>
+      <ChartReadout icon={icon}>{getReadout()}</ChartReadout>
     </div>
   )
 }

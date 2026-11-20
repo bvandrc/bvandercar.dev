@@ -53,12 +53,12 @@ export const VersionDownloadsChart = ({
     // share lines up on the right.
     <ul
       aria-hidden
-      className="grid w-82 grid-cols-[max-content_1fr_max-content] gap-x-2"
+      className="grid w-82 grid-cols-[max-content_1fr_max-content] gap-x-2 text-xs"
       data-testid="version-downloads-chart">
       {versionBars.map((bar) => (
         <li
           key={formatVersionBar(bar)}
-          className="col-span-3 grid min-h-6 grid-cols-subgrid items-center"
+          className="col-span-3 grid min-h-5 grid-cols-subgrid items-center"
           data-testid="version-downloads-chart-row">
           <span className="text-ink-muted tabular-nums">
             {formatVersionBar(bar)}
@@ -82,7 +82,7 @@ export const VersionDownloadsChart = ({
       ))}
       {restBar && (
         <li
-          className="col-span-3 grid min-h-6 grid-cols-subgrid items-center"
+          className="col-span-3 grid min-h-5 grid-cols-subgrid items-center"
           data-testid="version-downloads-chart-row">
           {/* Across the version and bar columns, so its words never widen the first. */}
           <span className="col-span-2 text-ink-muted tabular-nums">
