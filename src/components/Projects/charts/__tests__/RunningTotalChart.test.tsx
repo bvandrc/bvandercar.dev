@@ -4,6 +4,7 @@ import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import {
   RunningTotalChart,
+  type RunningTotalChartProps,
   type RunningTotalChartViewProps,
 } from '../RunningTotalChart'
 
@@ -15,8 +16,12 @@ const DAILY = [
   1, 0, 1, 0, 1, 1, 1, 200, 100, 300, 100, 200, 200, 100, 2, 2, 2, 2, 2, 1, 1,
 ]
 
+/** What a case may set on the chart: what it takes from the charts shown with it, and its releases' counts. */
+type ChartOptions = RunningTotalChartViewProps &
+  Pick<RunningTotalChartProps, 'releaseCounts'>
+
 /** Builds a chart of `DAILY`, reading out each week, summarized as "Commits". */
-const buildChart = (props?: RunningTotalChartViewProps) => (
+const buildChart = (props?: ChartOptions) => (
   <RunningTotalChart
     firstDay="2026-03-02"
     daily={DAILY}
@@ -31,8 +36,7 @@ const buildChart = (props?: RunningTotalChartViewProps) => (
 )
 
 /** Renders `buildChart`'s chart. */
-const renderChart = (props?: RunningTotalChartViewProps) =>
-  render(buildChart(props))
+const renderChart = (props?: ChartOptions) => render(buildChart(props))
 
 /** Moves the pointer to `clientX` on the plot, which the test DOM lays out from x = 0. */
 const movePointer = (clientX: number) =>
@@ -217,5 +221,26 @@ describe('RunningTotalChart', () => {
     // Further off, the week reads out as before.
     movePointer(releaseX + 20)
     expect(readout.textContent).toMatch(/^Through /)
+  })
+
+  it("reads out a hovered release's count for the version it names, where counted", () => {
+    renderChart({
+      releases: [
+        { version: '1.0.1', day: '2026-03-12' },
+        { version: '1.0.2', day: '2026-03-12' },
+        { version: '1.1.0', day: '2026-03-20' },
+      ],
+      releaseCounts: { '1.0.1': 1, '1.0.2': 1210 },
+    })
+    const [first, second] = screen.getAllByTestId(RELEASE)
+    const readout = screen.getByTestId(READOUT)
+
+    // The latest that day's, not the day's together.
+    movePointer(Number(first.getAttribute('x1')))
+    // Shortened like the glyphs.
+    expect(readout.textContent).toBe('v1.0.2 released Mar 12, 2026 · 1.2K')
+    // A version not counted reads out without one.
+    movePointer(Number(second.getAttribute('x1')))
+    expect(readout.textContent).toBe('v1.1.0 released Mar 20, 2026')
   })
 })

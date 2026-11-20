@@ -4,7 +4,7 @@ import type { DownloadHistory } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { DownloadsChart } from '../DownloadsChart'
 
-const { PLOT, READOUT } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+const { PLOT, READOUT, RELEASE } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // 5, 1,200, then 12 downloads a week ending Mar 24.
 const HISTORY = {
@@ -30,6 +30,24 @@ describe('DownloadsChart', () => {
     render(<DownloadsChart history={HISTORY} />)
 
     expect(screen.getByTestId(READOUT).textContent).toBe('Downloads')
+  })
+
+  it("reads out a hovered release's downloads, as counted for its version", () => {
+    render(
+      <DownloadsChart
+        history={HISTORY}
+        registry="pypi"
+        releases={[{ version: '1.0.0', day: '2026-03-12' }]}
+        versionDownloads={{ '1.0.0': 1210 }}
+      />
+    )
+
+    fireEvent.pointerMove(screen.getByTestId(PLOT), {
+      clientX: Number(screen.getByTestId(RELEASE).getAttribute('x1')),
+    })
+    expect(screen.getByTestId(READOUT).textContent).toBe(
+      'v1.0.0 released Mar 12, 2026 · 1.2K'
+    )
   })
 
   it('reads out day by day across a span under 50 days', () => {

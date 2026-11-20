@@ -3,6 +3,7 @@ import { isNotNil, sum } from 'es-toolkit'
 import {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { Registry } from '~/counts'
@@ -23,8 +24,9 @@ export type ProjectPackage = { registry: Registry; name: string }
 
 /**
  * What a project's counts chart: its repo's commits, its package's
- * downloads, or both, with the package's releases, the dates both span, and
- * a sentence describing each for screen readers.
+ * downloads, with each version's where counted, or both, with the package's
+ * releases, the dates both span, and a sentence describing each for screen
+ * readers.
  *
  * Undefined for nothing to chart: no history, a repo with no package and
  * under 20 commits, or a stretch under two weeks, like a package released
@@ -48,7 +50,12 @@ export const getProjectCharts = (
       : undefined
   const downloads =
     pkg && downloadHistory && downloadHistory.daily.length > 1
-      ? { registry: pkg.registry, history: downloadHistory }
+      ? {
+          registry: pkg.registry,
+          history: downloadHistory,
+          // Read out on its downloads chart's release lines.
+          versionDownloads: PACKAGE_VERSION_DOWNLOADS[pkg.registry][pkg.name],
+        }
       : undefined
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]

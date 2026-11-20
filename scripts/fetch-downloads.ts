@@ -3,11 +3,11 @@
  * names: in all, which its project's counts' glyph shows, and day by day,
  * with its releases, for the charts in its counts' tooltip.
  *
- * Writes the totals to src/generated/package-download-totals.ts, the daily
- * histories and releases to src/generated/package-downloads.ts, which only
- * the lazily loaded charts import, and, for PyPI packages, each version's
- * daily history to src/generated/package-version-downloads.ts, for the same
- * packages; all gitignored. Reads the package names from the content `pnpm fetch:profile` copied, so run that
+ * Writes the totals to src/generated/package-download-totals.ts, and the
+ * daily histories, releases, and, for PyPI packages, each version's
+ * downloads to src/generated/package-downloads.ts, which only the lazily
+ * loaded charts import, for the same packages; both gitignored. Reads the
+ * package names from the content `pnpm fetch:profile` copied, so run that
  * first. Each registry's fetches live in fetch-downloads/: npm.ts reads npm's
  * APIs, and pypi.ts reads PyPI's, and BigQuery's, only when
  * `GOOGLE_APPLICATION_CREDENTIALS` points at Google Cloud credentials; without
@@ -26,10 +26,7 @@ import {
   PACKAGE_FIELDS,
   type Registry,
 } from '../shared/counts.ts'
-import type {
-  DailyDownloads,
-  RegistryHistory,
-} from './fetch-downloads/common.ts'
+import type { RegistryHistory } from './fetch-downloads/common.ts'
 import { fetchNpmHistory } from './fetch-downloads/npm.ts'
 import { fetchPypiHistory } from './fetch-downloads/pypi.ts'
 import { GENERATED_DIR } from './shared/constants.ts'
@@ -43,17 +40,8 @@ import { reportSkipped } from './shared/skipped.ts'
 
 const TOTALS_FILE = `${GENERATED_DIR}/package-download-totals.ts`
 const HISTORY_FILE = `${GENERATED_DIR}/package-downloads.ts`
-const VERSIONS_FILE = `${GENERATED_DIR}/package-version-downloads.ts`
 
-exitIfReusing('package downloads', [TOTALS_FILE, HISTORY_FILE, VERSIONS_FILE])
-
-/** `days`, which run oldest first, as a history from the first through the last. */
-const toHistory = (days: DailyDownloads[]): DownloadHistory => ({
-  firstDay: days[0].day,
-  // Every history written has a day counted, so a last one.
-  lastDay: days.at(-1)?.day ?? days[0].day,
-  daily: days.map(({ downloads }) => downloads),
-})
+exitIfReusing('package downloads', [TOTALS_FILE, HISTORY_FILE])
 
 /**
  * The packages of one registry's history to write, each with its total.
@@ -113,7 +101,14 @@ await writeGenerated(
       name: 'PACKAGE_DOWNLOADS',
       doc: "Each package's daily downloads since its first publish, by registry, then package name.",
       type: 'Record<Registry, Record<string, DownloadHistory | undefined>>',
-      value: byPackage(({ days }) => toHistory(days)),
+      value: byPackage(
+        ({ days }): DownloadHistory => ({
+          firstDay: days[0].day,
+          // Every kept package has a day counted, so a last one.
+          lastDay: days.at(-1)?.day ?? days[0].day,
+          daily: days.map(({ downloads }) => downloads),
+        })
+      ),
     },
     {
       name: 'PACKAGE_RELEASES',
@@ -121,21 +116,14 @@ await writeGenerated(
       type: 'Record<Registry, Record<string, Release[] | undefined>>',
       value: byPackage(({ releases }) => releases),
     },
-  ]
-)
-await writeGenerated(
-  VERSIONS_FILE,
-  'fetch:downloads',
-  "import type { DownloadHistory, Registry } from '~/counts'",
-  [
     {
       name: 'PACKAGE_VERSION_DOWNLOADS',
-      doc: "Each package's daily downloads of each version, from its first download, by registry, package name, then version; npm's API gives only the last week, so npm has none.",
-      type: 'Record<Registry, Record<string, Record<string, DownloadHistory> | undefined>>',
+      doc: "Each package's downloads of each version since its first publish, by registry, package name, then version; npm's API gives only the last week's, so npm has none.",
+      type: 'Record<Registry, Record<string, Record<string, number> | undefined>>',
       value: mapValues(kept, (entries) =>
         Object.fromEntries(
           entries.flatMap(({ pkg, versions }) =>
-            versions ? [[pkg, mapValues(versions, toHistory)]] : []
+            versions ? [[pkg, versions]] : []
           )
         )
       ),

@@ -10,12 +10,12 @@ export const byDay = (a: Release, b: Release) => a.day.localeCompare(b.day)
  * What a registry's fetch read: each package's downloads per day, and its
  * releases, for the packages it could.
  *
- * `versions` splits the days by version, from each one's first download,
- * where the registry gives its whole history; npm's gives only the last week.
+ * `versions` totals the days by version, where the registry gives each one's
+ * whole history; npm's gives only the last week.
  */
 export type RegistryHistory = {
   pkg: string
   days: DailyDownloads[]
-  versions?: Record<string, DailyDownloads[]>
+  versions?: Record<string, number>
   releases: Release[]
 }[]

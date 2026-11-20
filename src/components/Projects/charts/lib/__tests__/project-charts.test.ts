@@ -1,6 +1,7 @@
 import type {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
 import { getProjectCharts, type ProjectPackage } from '../project-charts'
@@ -14,6 +15,7 @@ const FIXTURES = vi.hoisted(() => ({
   FRESH_PACKAGE: 'fresh-package',
   UNRELEASED_PACKAGE: 'unreleased-package',
   ONE_DAY_PACKAGE: 'one-day-package',
+  PYPI_PACKAGE: 'some-pypi-package',
   // Each day's downloads from Mar 4 to 24.
   DAILY_DOWNLOADS: [
     1, 1, 1, 1, 1, 0, 0, 200, 300, 100, 200, 100, 200, 100, 2, 2, 2, 2, 2, 1, 1,
@@ -27,6 +29,7 @@ const {
   FRESH_PACKAGE,
   UNRELEASED_PACKAGE,
   ONE_DAY_PACKAGE,
+  PYPI_PACKAGE,
 } = FIXTURES
 
 vi.mock('@/generated/repo-activity', () => ({
@@ -86,7 +89,13 @@ vi.mock('@/generated/package-downloads', () => ({
         daily: [3],
       },
     },
-    pypi: {},
+    pypi: {
+      [FIXTURES.PYPI_PACKAGE]: {
+        firstDay: '2026-03-04',
+        lastDay: '2026-03-24',
+        daily: FIXTURES.DAILY_DOWNLOADS,
+      },
+    },
   } satisfies typeof PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES: {
     npm: {
@@ -98,8 +107,14 @@ vi.mock('@/generated/package-downloads', () => ({
       [FIXTURES.FRESH_PACKAGE]: [{ version: '1.0.0', day: '2026-03-20' }],
       [FIXTURES.ONE_DAY_PACKAGE]: [{ version: '1.0.0', day: '2026-02-23' }],
     },
-    pypi: {},
+    pypi: {
+      [FIXTURES.PYPI_PACKAGE]: [{ version: '1.0.0', day: '2026-03-04' }],
+    },
   } satisfies typeof PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS: {
+    npm: {},
+    pypi: { [FIXTURES.PYPI_PACKAGE]: { '1.0.0': 1017 } },
+  } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
 
 /** The npm package named `name`, as a project gives it. */
@@ -120,6 +135,18 @@ describe('getProjectCharts', () => {
         expect.stringMatching(/^Weekly npm downloads /),
       ],
     })
+  })
+
+  it("charts a package's downloads with each version's, where its registry counts them", () => {
+    expect(
+      getProjectCharts(REPO, { registry: 'pypi', name: PYPI_PACKAGE })
+    ).toMatchObject({
+      downloads: { registry: 'pypi', versionDownloads: { '1.0.0': 1017 } },
+    })
+    // npm's API gives only the last week's.
+    expect(
+      getProjectCharts(REPO, buildNpmPackage(NPM_PACKAGE))?.downloads
+    ).toHaveProperty('versionDownloads', undefined)
   })
 
   it('starts a repo with no package on the day its commits reach 15', () => {

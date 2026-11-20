@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
-import type { ActivityHistory, DownloadHistory, Registry } from '~/counts'
+import type { ActivityHistory } from '~/counts'
 import { ActivityChart } from './ActivityChart'
-import { DownloadsChart } from './DownloadsChart'
+import { DownloadsChart, type DownloadsChartProps } from './DownloadsChart'
 import { type DaySpan, panSpan, zoomSpan } from './lib/spans'
 import type { RunningTotalChartViewProps } from './RunningTotalChart'
 
@@ -18,8 +18,11 @@ export type ProjectChartsProps = Pick<
   activity?: ActivityHistory
   /** The history whose merged PRs it charts */
   prs?: ActivityHistory
-  /** The downloads it charts, and the registry they're from, if only one */
-  downloads?: { registry?: Registry; history: DownloadHistory }
+  /** The downloads it charts, the registry they're from, if only one, and each version's, where counted */
+  downloads?: Pick<
+    DownloadsChartProps,
+    'history' | 'registry' | 'versionDownloads'
+  >
 }
 
 /**

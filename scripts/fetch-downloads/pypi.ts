@@ -183,19 +183,12 @@ const queryPypiDownloads = async (
   return counts
 }
 
-/**
- * Each version's downloads per day, by version, from the first day it was
- * downloaded through the last of `days`, which run oldest first.
- */
-const splitByVersion = (days: { day: string; counts: VersionCounts }[]) => {
-  const versions: Record<string, DailyDownloads[]> = {}
-  for (const { day, counts } of days) {
-    for (const version of Object.keys(counts)) {
-      versions[version] ??= []
-    }
-    // Every version downloaded by now gets the day, 0 where it had none.
-    for (const [version, versionDays] of Object.entries(versions)) {
-      versionDays.push({ day, downloads: counts[version] ?? 0 })
+/** Each version's downloads across `days`, by version. */
+const sumByVersion = (days: VersionCounts[]) => {
+  const versions: VersionCounts = {}
+  for (const counts of days) {
+    for (const [version, downloads] of Object.entries(counts)) {
+      versions[version] = (versions[version] ?? 0) + downloads
     }
   }
   return versions
@@ -262,7 +255,7 @@ const fetchPypiDailyDownloads = async (
           downloads: sum(Object.values(counts)),
         })
       ),
-      versions: splitByVersion(days),
+      versions: sumByVersion(days.map(({ counts }) => counts)),
     }
   })
 }

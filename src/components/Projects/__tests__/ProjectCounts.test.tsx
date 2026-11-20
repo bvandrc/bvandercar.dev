@@ -5,6 +5,7 @@ import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-total
 import type {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
@@ -128,8 +129,14 @@ vi.mock('@/generated/package-downloads', () => ({
         { version: '1.1.0', day: '2026-03-12' },
       ],
     },
-    pypi: {},
+    pypi: {
+      [FIXTURES.PYPI_PACKAGE]: [{ version: '2.0.0', day: '2026-03-12' }],
+    },
   } satisfies typeof PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS: {
+    npm: {},
+    pypi: { [FIXTURES.PYPI_PACKAGE]: { '2.0.0': 1210 } },
+  } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
 
 /** Hovers the counts, and returns the tooltip once it opens and any charts in it have loaded. */
@@ -227,16 +234,19 @@ describe('ProjectCounts', () => {
     ])
   })
 
-  it("charts its PyPI package's downloads too, named as PyPI's", async () => {
+  it("charts its PyPI package's downloads too, named as PyPI's, with each release's downloads", async () => {
     renderWithProviders(
       <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
     )
 
     await hoverCounts()
-    expect(
-      within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
-        .textContent
-    ).toBe('PyPI downloads')
+    const downloads = within(screen.getByTestId(DOWNLOADS_CHART))
+    const readout = downloads.getByTestId(READOUT)
+    expect(readout.textContent).toBe('PyPI downloads')
+    fireEvent.pointerMove(downloads.getByTestId(PLOT), {
+      clientX: Number(downloads.getByTestId(RELEASE).getAttribute('x1')),
+    })
+    expect(readout.textContent).toBe('v2.0.0 released Mar 12, 2026 · 1.2K')
   })
 
   it('leaves the counts in words where there is nothing to chart', async () => {
