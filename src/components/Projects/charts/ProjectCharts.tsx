@@ -19,8 +19,8 @@ export type ProjectChartsProps = Pick<
 > & {
   /** The dates both charts span, zoomed all the way out */
   span: DaySpan
-  /** The dates both charts open zoomed in on, inside `span`; without it, they open zoomed all the way out */
-  initialSpan?: DaySpan
+  /** The period the charts open on, all time unless given */
+  initialPeriod?: ChartPeriod
   /** The history whose commits it charts */
   activity?: ActivityHistory
   /** The history whose merged PRs it charts */
@@ -33,10 +33,9 @@ export type ProjectChartsProps = Pick<
  * A project's commits chart, merged PRs chart, then its package's downloads
  * chart, whichever it has, sharing one span, zoom, and set of releases.
  *
- * Buttons below switch them all between all time and the last 90 or 30
- * days, zooming them to the period. Mounted with the tooltip it sits in, so
- * each opening starts at `initialSpan`, with no period chosen, or zoomed all
- * the way out, on all time.
+ * Buttons below switch them all between all time and the last year, 90
+ * days, or 30 days, zooming them to the period. Mounted with the tooltip it
+ * sits in, so each opening starts on `initialPeriod`, or all time.
  * Loaded on its own, with the histories it charts, the first time a
  * project's counts are hovered, so neither the charts' code, gestures
  * included, nor their data is in the page's first load.
@@ -46,15 +45,15 @@ export const ProjectCharts = ({
   prs,
   downloads,
   span: fullSpan,
-  initialSpan,
+  initialPeriod = 'ALL',
   releases,
 }: ProjectChartsProps) => {
   // Shared by both charts, so a release stays lined up across them as they zoom.
-  const [zoomedSpan, setZoomedSpan] = useState(initialSpan)
-  // A zoom or pan leaves it chosen.
-  const [period, setPeriod] = useState<ChartPeriod | undefined>(
-    initialSpan ? undefined : 'ALL'
+  const [zoomedSpan, setZoomedSpan] = useState(() =>
+    getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[initialPeriod])
   )
+  // A zoom or pan leaves it chosen.
+  const [period, setPeriod] = useState(initialPeriod)
   /** Zooms every chart to `next`'s last days, all the way out for all time. */
   const choosePeriod = (next: ChartPeriod) => {
     setPeriod(next)

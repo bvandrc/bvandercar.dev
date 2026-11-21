@@ -51,6 +51,8 @@ const RELEASES = [
 
 // From the first release to the later of the two histories' last days.
 const SPAN = { start: '2026-03-04', end: '2026-03-26' } satisfies DaySpan
+// From Dec 1, so 90 and 30 days each zoom in, though a year doesn't.
+const LONG_SPAN = { start: '2025-12-01', end: '2026-03-26' } satisfies DaySpan
 
 /** Renders both charts across `SPAN`, with `RELEASES`, or with `props` in place of any of them. */
 const renderCharts = (props?: Partial<ProjectChartsProps>) =>
@@ -146,13 +148,21 @@ describe('ProjectCharts', () => {
     expect(zoomed[1]).toEqual(zoomed[0])
   })
 
-  it('opens zoomed in on its initial span, and zooms back out to the full one', () => {
-    // Past the first release, so only the second is in view.
-    renderCharts({ initialSpan: { start: '2026-03-10', end: '2026-03-26' } })
-    expect(getReleaseXs().map((xs) => xs.length)).toEqual([1, 1])
+  it('opens on its initial period, zoomed in on its last days, and zooms back out to the full span', async () => {
+    renderCharts({ span: LONG_SPAN, initialPeriod: 'LAST_30_DAYS' })
+    const last30 = getReleaseXs()
 
+    expect(getPeriods().map(([, checked]) => checked)).toEqual([
+      'false',
+      'false',
+      'false',
+      'true',
+    ])
     turnWheel(getPlot(COMMITS_CHART), 100, 3000)
-    expect(getReleaseXs().map((xs) => xs.length)).toEqual([2, 2])
+    const zoomedOut = getReleaseXs()
+    expect(zoomedOut).not.toEqual(last30)
+    await clickPeriod('All time')
+    expect(getReleaseXs()).toEqual(zoomedOut)
   })
 
   it('pans both zoomed-in charts together', () => {
@@ -168,9 +178,8 @@ describe('ProjectCharts', () => {
     expect(panned[1]).toEqual(panned[0])
   })
 
-  it('switches every chart between all time, which it opens on, and the last 90 or 30 days, zooming them to the period', async () => {
-    // Since Dec 1, so 90 and 30 days each zoom in.
-    renderCharts({ span: { start: '2025-12-01', end: '2026-03-26' } })
+  it('switches every chart between all time, which it opens on, and the last year, 90 days, or 30 days, zooming them to the period', async () => {
+    renderCharts({ span: LONG_SPAN })
     const allTime = getReleaseXs()
 
     // Below the charts.
@@ -183,30 +192,22 @@ describe('ProjectCharts', () => {
     ).toBeTruthy()
     expect(getPeriods()).toEqual([
       ['All time', 'true'],
-      ['Last 90 days', 'false'],
-      ['Last 30 days', 'false'],
+      ['1 year', 'false'],
+      ['90 days', 'false'],
+      ['30 days', 'false'],
     ])
-    await clickPeriod('Last 30 days')
+    await clickPeriod('30 days')
     const last30 = getReleaseXs()
     expect(last30).not.toEqual(allTime)
     // Both releases, Mar 4 and 12, are within the last 30 days, lined up.
     expect(last30[0]).toHaveLength(2)
     expect(last30[1]).toEqual(last30[0])
-    await clickPeriod('Last 90 days')
+    await clickPeriod('90 days')
     expect(getReleaseXs()).not.toEqual(last30)
+    // Under a year in all, so the same as all time.
+    await clickPeriod('1 year')
+    expect(getReleaseXs()).toEqual(allTime)
     await clickPeriod('All time')
     expect(getReleaseXs()).toEqual(allTime)
-  })
-
-  it('opens on its initial span with no period chosen, until one is', async () => {
-    renderCharts({ initialSpan: { start: '2026-03-10', end: '2026-03-26' } })
-
-    expect(getPeriods().map(([, checked]) => checked)).toEqual([
-      'false',
-      'false',
-      'false',
-    ])
-    await clickPeriod('All time')
-    expect(getReleaseXs().map((xs) => xs.length)).toEqual([2, 2])
   })
 })
