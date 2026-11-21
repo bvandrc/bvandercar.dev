@@ -50,12 +50,6 @@ const RELEASE_LINE_CLASSES = {
 // How near a release line the pointer snaps to it, in pixels.
 const RELEASE_SNAP_PX = 4
 
-// The readout's summary is quieter than a hovered period's total, which leads.
-const READOUT_CLASSES = {
-  SUMMARY: 'text-ink-muted',
-  PERIOD: 'text-ink',
-} as const
-
 export type RunningTotalChartProps = {
   /** The ISO date counting starts on */
   firstDay: string
@@ -125,20 +119,17 @@ const PeriodMarker = ({ x, y, tone }: PeriodMarkerProps) => (
 )
 
 type ChartReadoutProps = Pick<RunningTotalChartProps, 'icon'> & {
-  /** Whether it reads out the summary, rather than what's under the pointer */
-  isSummary: boolean
   children: React.ReactNode
 }
 
 /** The caption in the chart's top-left corner, behind the count's glyph. */
-const ChartReadout = ({ icon, isSummary, children }: ChartReadoutProps) => (
+const ChartReadout = ({ icon, children }: ChartReadoutProps) => (
   <p
     className={cn(
-      'flex items-center gap-1.5 whitespace-nowrap',
+      'flex items-center gap-1.5 whitespace-nowrap text-ink',
       // Held in the top-left corner, over the strip the line leaves
       // clear, and letting the pointer through to the plot beneath.
-      'pointer-events-none absolute top-0 left-0',
-      READOUT_CLASSES[isSummary ? 'SUMMARY' : 'PERIOD']
+      'pointer-events-none absolute top-0 left-0'
     )}
     data-testid="running-total-chart-readout">
     {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
@@ -148,7 +139,8 @@ const ChartReadout = ({ icon, isSummary, children }: ChartReadoutProps) => (
 
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
- * the total, written beside it.
+ * the total, written beside it, with what the stretch in view added below it
+ * while zoomed in on a stretch that starts past zero.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
  * summary, or the total through the period under the pointer, like its week.
@@ -184,20 +176,28 @@ export const RunningTotalChart = ({
     (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
   )
   const shownSpan = span ?? { start: firstDay, end: lastDay }
-  const { startTime, endTime, msPerPx, toX, toY, getTimeAtX } = getPlotScale(
-    shownSpan,
-    total
-  )
-  const lastX = toX(lastDay)
   // The line starts on the first day, at what was counted before it, or at a
   // span's later start, at what was counted by then.
   const lineStart =
-    Date.parse(firstDay) < startTime ? shownSpan.start : firstDay
+    Date.parse(firstDay) < Date.parse(shownSpan.start)
+      ? shownSpan.start
+      : firstDay
   const lineStartTime = Date.parse(lineStart)
-  const startX = toX(lineStart)
   const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
+  const lastShown = days.findLastIndex(
+    (day) => Date.parse(day) <= Date.parse(shownSpan.end)
+  )
+  // The height spans what the shown stretch counts, from where the line
+  // starts to the last day in view, so a short one's rise fills it too.
+  const lineStartTotal = dayTotals[firstShown - 1] ?? 0
+  const { startTime, endTime, msPerPx, toX, toY, getTimeAtX } = getPlotScale(
+    shownSpan,
+    { low: lineStartTotal, high: dayTotals[lastShown] ?? lineStartTotal }
+  )
+  const lastX = toX(lastDay)
+  const startX = toX(lineStart)
   // Through every day, whichever periods it reads out.
-  const line = `M${startX},${toY(dayTotals[firstShown - 1] ?? 0)}${dayTotals
+  const line = `M${startX},${toY(lineStartTotal)}${dayTotals
     .map((count, index) => [count, days[index]] as const)
     .slice(firstShown)
     .map(([count, day]) => `L${toX(day)},${toY(count)}`)
@@ -316,15 +316,27 @@ export const RunningTotalChart = ({
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
         {Date.parse(lastDay) <= endTime && (
-          <text
-            x={lastX + 6}
-            // Centred on the line's end, about a third of the text's height down.
-            y={toY(total) + 5}
-            className="fill-ink text-sm font-bold"
-            data-testid="running-total-chart-total">
-            {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
-            {formatCompactCount(total)}
-          </text>
+          <>
+            <text
+              x={lastX + 6}
+              // Centred on the line's end, about a third of the text's height down.
+              y={toY(total) + 5}
+              className="fill-ink text-sm font-bold"
+              data-testid="running-total-chart-total">
+              {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
+              {formatCompactCount(total)}
+            </text>
+            {/* Zoomed in past zero, what the stretch in view added, so its start can be read too; a full view that starts partway, like the footer's, needs none. */}
+            {zoomed && lineStartTotal > 0 && (
+              <text
+                x={lastX + 6}
+                y={toY(total) + 20}
+                className="fill-ink-muted text-xs"
+                data-testid="running-total-chart-rise">
+                +{formatCompactCount(total - lineStartTotal)}
+              </text>
+            )}
+          </>
         )}
         {activePeriod !== undefined && (
           <PeriodMarker
@@ -336,11 +348,7 @@ export const RunningTotalChart = ({
         {/* The hover target: the whole box, not just the thin line. */}
         <rect width={PLOT.WIDTH} height={PLOT.HEIGHT} fill="transparent" />
       </svg>
-      <ChartReadout
-        icon={icon}
-        isSummary={activePeriod === undefined && activeRelease === undefined}>
-        {getReadout()}
-      </ChartReadout>
+      <ChartReadout icon={icon}>{getReadout()}</ChartReadout>
     </div>
   )
 }

@@ -73,13 +73,14 @@ type ChartsPlaceholderProps = {
   count: number
 }
 
-/** A blank chart's size for each that may show, so the tooltip jumps as little as it can once they load. */
+/** A blank chart's size for each that may show, and a blank period switch, so the tooltip jumps as little as it can once they load. */
 const ChartsPlaceholder = ({ count }: ChartsPlaceholderProps) => (
   <div className="flex flex-col gap-3" data-testid="project-charts-loading">
     {Array.from({ length: count }, (_, index) => (
       // biome-ignore lint/suspicious/noArrayIndexKey: the blanks have no identity of their own.
       <div key={index} className="h-21 w-82" />
     ))}
+    <div className="h-5 w-82" />
   </div>
 )
 
