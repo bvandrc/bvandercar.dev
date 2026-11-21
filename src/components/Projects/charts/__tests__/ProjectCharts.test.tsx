@@ -73,19 +73,19 @@ const getReleaseXs = () =>
       .map((line) => line.getAttribute('x1'))
   )
 
-/** The period buttons' labels, and which one is chosen, if any. */
+/** The period options' labels, and which one is chosen, if any. */
 const getPeriods = () =>
   screen
-    .getAllByTestId(CHART_PERIOD)
-    .map((button) => [button.textContent, button.getAttribute('aria-pressed')])
+    .getAllByTestId(CHART_PERIOD.OPTION)
+    .map((button) => [button.textContent, button.getAttribute('aria-checked')])
 
-/** Clicks the period button that says `label`, like "Last 30 days". */
+/** Clicks the period option that says `label`, like "Last 30 days". */
 const clickPeriod = (label: string) => {
   const button = screen
-    .getAllByTestId(CHART_PERIOD)
+    .getAllByTestId(CHART_PERIOD.OPTION)
     .find((period) => period.textContent === label)
   if (!button) {
-    throw new Error(`No period button says ${label}`)
+    throw new Error(`No period option says ${label}`)
   }
   return userEvent.setup().click(button)
 }
@@ -194,8 +194,9 @@ describe('ProjectCharts', () => {
     expect(
       screen
         .getByTestId(VERSION_DOWNLOADS_CHART.SELF)
-        .compareDocumentPosition(screen.getAllByTestId(CHART_PERIOD)[0]) &
-        Node.DOCUMENT_POSITION_FOLLOWING
+        .compareDocumentPosition(
+          screen.getAllByTestId(CHART_PERIOD.OPTION)[0]
+        ) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy()
     expect(getPeriods()).toEqual([
       ['All time', 'true'],
@@ -219,7 +220,7 @@ describe('ProjectCharts', () => {
   it('opens on its initial span with no period chosen, until one is', async () => {
     renderCharts({ initialSpan: { start: '2026-03-10', end: '2026-03-26' } })
 
-    expect(getPeriods().map(([, pressed]) => pressed)).toEqual([
+    expect(getPeriods().map(([, checked]) => checked)).toEqual([
       'false',
       'false',
       'false',
