@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { PROJECTS, type Project } from '@/generated/profile/content/projects'
@@ -72,7 +72,47 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it('passes on a private repo, whose counts then sit in no link', () => {
+  it('shows its counts beside its repo link, not in it, tabbing to them first', async () => {
+    const user = userEvent.setup()
+    const card = renderPreviewCard()
+    const counts = within(card).getByTestId(COUNTS)
+
+    // So a press on them only toggles their charts.
+    expect(counts.closest('a')).toBeNull()
+    // The name's link comes first.
+    await user.tab()
+    await user.tab()
+    expect(document.activeElement).toBe(counts)
+    await user.tab()
+    expect(document.activeElement).toBe(within(card).getByTestId(REPO_LINK))
+  })
+
+  it("opens its counts' tooltip as openCounts turns true, as for a URL asking for their charts", async () => {
+    const PROJECT = {
+      name: 'Counted',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'Counted.',
+    } satisfies Project
+    const props = {
+      project: PROJECT,
+      centered: false,
+      pulsePreview: false,
+      onPreviewOpen: vi.fn(),
+    }
+    const { rerender } = renderWithProviders(<ProjectCard {...props} />)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+
+    rerender(<ProjectCard {...props} openCounts />)
+    await waitFor(() =>
+      expect(screen.getByTestId(COUNTS).getAttribute('aria-describedby')).toBe(
+        screen.getByRole('tooltip').id
+      )
+    )
+  })
+
+  it("shows a private repo's counts with no repo link, which would 404", () => {
     const PROJECT = {
       name: 'Private',
       href: 'https://example.com/',
@@ -83,9 +123,8 @@ describe('ProjectCard', () => {
     } satisfies Project
     renderCard(PROJECT)
 
+    expect(screen.getByTestId(COUNTS)).toBeDefined()
     expect(screen.queryByTestId(REPO_LINK)).toBeNull()
-    // Still shown, just in no link that would 404.
-    expect(screen.getByTestId(COUNTS).closest('a')).toBeNull()
   })
 
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {

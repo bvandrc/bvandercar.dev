@@ -19,12 +19,10 @@ import {
   THUMBNAIL_WIDTHS,
   type ThumbnailWidth,
 } from '~/screenshots'
-import {
-  CountsAndRepoLink,
-  type CountsAndRepoLinkProps,
-} from './CountsAndRepoLink'
 import { getCardTitleId } from './lib/charts-link'
 import { getProjectCounts } from './lib/project-counts'
+import { ProjectCounts } from './ProjectCounts'
+import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
 // on its line.
@@ -49,7 +47,9 @@ export type ProjectCardProps = {
   /** Whether a live preview's toggle pulses, to draw the eye to it. */
   pulsePreview: boolean
   onPreviewOpen: () => void
-} & Pick<CountsAndRepoLinkProps, 'openCounts'>
+  /** Opens its counts' tooltip, charts and all, as it turns true, as for a URL asking for them */
+  openCounts?: boolean
+}
 
 /** A project's name, type, blurb, counts and repo link, and live preview or screenshot. */
 export const ProjectCard = ({
@@ -57,7 +57,7 @@ export const ProjectCard = ({
   centered,
   pulsePreview,
   onPreviewOpen,
-  openCounts,
+  openCounts = false,
 }: ProjectCardProps) => {
   const nameId = useId()
   const cardId = getAnchorId(project.name)
@@ -174,7 +174,11 @@ export const ProjectCard = ({
             </div>
             <p
               className={cn(
-                'flex text-xs',
+                // The counts in the repo link's color, beside it.
+                'flex flex-wrap text-xs text-link-subtle',
+                // As far from the counts as they are from each other, with
+                // room.
+                'gap-x-2.5 gap-y-0.5',
                 // Grows from nothing, so it stays beside the name while its
                 // counts fit, with "repo" wrapping below them, and only then
                 // drops below.
@@ -185,12 +189,12 @@ export const ProjectCard = ({
                 'mt-0.5 min-h-5 items-center',
                 centered && 'md:col-start-3'
               )}>
-              <CountsAndRepoLink
-                {...countsFields}
-                privateRepo={project.privateRepo}
-                nameId={nameId}
-                openCounts={openCounts}
-              />
+              {/* Beside the repo link, not in it, so a press on them only toggles their charts. */}
+              <ProjectCounts {...countsFields} open={openCounts} />
+              {/* A private repo would 404 for a visitor. */}
+              {!project.privateRepo && (
+                <RepoLink repo={project.repo} nameId={nameId} />
+              )}
             </p>
           </div>
           <p
