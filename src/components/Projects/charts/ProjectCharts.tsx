@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { objectKeys } from 'ts-extras'
 
 import {
   type ActivityHistory,
@@ -34,8 +35,11 @@ export type ProjectChartsProps = Pick<
  * chart, whichever it has, sharing one span, zoom, and set of releases.
  *
  * Buttons below switch them all between all time and the last year, 90
- * days, or 30 days, zooming them to the period. Mounted with the tooltip it
- * sits in, so each opening starts on `initialPeriod`, or all time.
+ * days, or 30 days, zooming them to the period. A period reaching back past
+ * where they start would show the same as all time, so it's left out, and
+ * with none left, so are the buttons. Mounted with the tooltip it sits in,
+ * so each opening starts on `initialPeriod`, or all time where that's left
+ * out.
  * Loaded on its own, with the histories it charts, the first time a
  * project's counts are hovered, so neither the charts' code, gestures
  * included, nor their data is in the page's first load.
@@ -48,12 +52,18 @@ export const ProjectCharts = ({
   initialPeriod = 'ALL',
   releases,
 }: ProjectChartsProps) => {
+  // All time, and each period shorter than it, which would otherwise show
+  // the same.
+  const periods = objectKeys(CHART_PERIOD_DAYS).filter(
+    (key) => key === 'ALL' || getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[key])
+  )
+  const openingPeriod = periods.includes(initialPeriod) ? initialPeriod : 'ALL'
   // Shared by both charts, so a release stays lined up across them as they zoom.
   const [zoomedSpan, setZoomedSpan] = useState(() =>
-    getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[initialPeriod])
+    getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[openingPeriod])
   )
   // A zoom or pan leaves it chosen.
-  const [period, setPeriod] = useState(initialPeriod)
+  const [period, setPeriod] = useState(openingPeriod)
   /** Zooms every chart to `next`'s last days, all the way out for all time. */
   const choosePeriod = (next: ChartPeriod) => {
     setPeriod(next)
@@ -83,7 +93,13 @@ export const ProjectCharts = ({
       )}
       {prs && <ActivityChart activity={prs} kind="prs" {...shared} />}
       {downloads && <DownloadsChart {...downloads} {...shared} />}
-      <PeriodSwitch period={period} onChange={choosePeriod} />
+      {periods.length > 1 && (
+        <PeriodSwitch
+          periods={periods}
+          period={period}
+          onChange={choosePeriod}
+        />
+      )}
     </div>
   )
 }

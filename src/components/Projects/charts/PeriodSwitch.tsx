@@ -18,6 +18,8 @@ const PERIOD_OPTIONS = objectEntries(PERIOD_LABELS).map(([value, label]) => ({
 }))
 
 export type PeriodSwitchProps = {
+  /** The periods it offers, which sit in the same order whichever they are */
+  periods: ChartPeriod[]
   /** The period chosen */
   period: ChartPeriod
   /** Called with the period whose option is clicked */
@@ -30,9 +32,13 @@ export type PeriodSwitchProps = {
  *
  * For sighted pointer users only, like the charts it switches.
  */
-export const PeriodSwitch = ({ period, onChange }: PeriodSwitchProps) => (
+export const PeriodSwitch = ({
+  periods,
+  period,
+  onChange,
+}: PeriodSwitchProps) => (
   <SegmentedControl
-    options={PERIOD_OPTIONS}
+    options={PERIOD_OPTIONS.filter(({ value }) => periods.includes(value))}
     value={period}
     onChange={onChange}
     // Out of the tab order and hidden from screen readers, like the charts.
