@@ -118,25 +118,6 @@ const PeriodMarker = ({ x, y, tone }: PeriodMarkerProps) => (
   </>
 )
 
-type ChartReadoutProps = Pick<RunningTotalChartProps, 'icon'> & {
-  children: React.ReactNode
-}
-
-/** The caption in the chart's top-left corner, behind the count's glyph. */
-const ChartReadout = ({ icon, children }: ChartReadoutProps) => (
-  <p
-    className={cn(
-      'flex items-center gap-1.5 whitespace-nowrap text-ink',
-      // Held in the top-left corner, over the strip the line leaves
-      // clear, and letting the pointer through to the plot beneath.
-      'pointer-events-none absolute top-0 left-0'
-    )}
-    data-testid="running-total-chart-readout">
-    {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
-    {children}
-  </p>
-)
-
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
  * the total, written beside it, with what the stretch in view added below it
@@ -348,7 +329,18 @@ export const RunningTotalChart = ({
         {/* The hover target: the whole box, not just the thin line. */}
         <rect width={PLOT.WIDTH} height={PLOT.HEIGHT} fill="transparent" />
       </svg>
-      <ChartReadout icon={icon}>{getReadout()}</ChartReadout>
+      {/* The caption, behind the count's glyph. */}
+      <p
+        className={cn(
+          'flex items-center gap-1.5 whitespace-nowrap text-ink',
+          // Held in the top-left corner, over the strip the line leaves
+          // clear, and letting the pointer through to the plot beneath.
+          'pointer-events-none absolute top-0 left-0'
+        )}
+        data-testid="running-total-chart-readout">
+        {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
+        {getReadout()}
+      </p>
     </div>
   )
 }

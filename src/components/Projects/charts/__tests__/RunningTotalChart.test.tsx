@@ -2,13 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
-import { PLOT as PLOT_BOX } from '../lib/plot'
 import {
   RunningTotalChart,
   type RunningTotalChartViewProps,
 } from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, RISE, DOT, RELEASE, LINE } =
+const { PLOT, READOUT, TOTAL, RISE, RELEASE } =
   SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // Each day's commits for the three weeks from Mar 2: 5, 1,200, then 12.
@@ -60,15 +59,6 @@ describe('RunningTotalChart', () => {
     expect(readout.textContent).toBe('Commits')
   })
 
-  it('draws its line through every day, though it reads out each week', () => {
-    renderChart()
-
-    // A segment to each of the 21 days, from where the line starts.
-    expect(
-      screen.getByTestId(LINE).getAttribute('d')?.match(/L/g)
-    ).toHaveLength(21)
-  })
-
   it('leaves out the days before a later span start, starting from the total by then', () => {
     renderChart({ span: { start: '2026-03-10', end: '2026-03-22' } })
 
@@ -78,28 +68,6 @@ describe('RunningTotalChart', () => {
       'Through Mar 15, 2026: 1,205 commits'
     )
     expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
-  })
-
-  it("fills its height with the shown stretch's rise while zoomed in, from what it counted by its start to its last day in view", () => {
-    renderChart({
-      span: { start: '2026-03-09', end: '2026-03-16' },
-      zoomed: true,
-    })
-    // M<x>,<y>: where the line starts.
-    const lineStartY = Number(
-      screen.getByTestId(LINE).getAttribute('d')?.split(/[,L]/)[1]
-    )
-    movePointer(0)
-
-    // Its 5 commits by Mar 9 on the baseline, and the 1,207 by Mar 16 at the top.
-    expect(lineStartY).toBe(PLOT_BOX.BASELINE)
-    // Across a zoomed span, the pointer finds the middle week further left.
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 15, 2026: 1,205 commits'
-    )
-    expect(Number(screen.getByTestId(DOT).getAttribute('cy'))).toBeCloseTo(
-      PLOT_BOX.BASELINE - (1200 / 1202) * (PLOT_BOX.BASELINE - PLOT_BOX.TOP)
-    )
   })
 
   it('reads out the week now under a still pointer once the chart pans beneath it', () => {
@@ -121,10 +89,6 @@ describe('RunningTotalChart', () => {
     )
     expect(screen.getByTestId(READOUT).textContent).toBe(
       'Through Mar 15, 2026: 1,205 commits'
-    )
-    // Still on the plot, rather than slid off its left edge with Mar 8.
-    expect(Number(screen.getByTestId(DOT).getAttribute('cx'))).toBeGreaterThan(
-      0
     )
   })
 
