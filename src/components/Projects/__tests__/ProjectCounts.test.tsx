@@ -10,6 +10,7 @@ import type {
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
+import { mockPressFocus } from '@/test-helpers/focus-visible'
 import { renderWithProviders } from '@/test-helpers/render'
 import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
@@ -155,22 +156,6 @@ const hoverCounts = async () => {
   const tooltip = await screen.findByTestId(TOOLTIP)
   await waitFor(() => expect(screen.queryByTestId(CHARTS_LOADING)).toBeNull())
   return tooltip
-}
-
-/**
- * Leaves the focus a tap or click gives the counts without a focus ring, as a
- * browser does, so it doesn't hold their tooltip open.
- *
- * happy-dom matches `:focus-visible` on any focus, as if from the keyboard.
- */
-const mockPressFocus = () => {
-  const { matches } = Element.prototype
-  const spy = vi
-    .spyOn(Element.prototype, 'matches')
-    .mockImplementation(function (this: Element, selector: string) {
-      return selector !== ':focus-visible' && matches.call(this, selector)
-    })
-  onTestFinished(() => spy.mockRestore())
 }
 
 /** What screen readers hear for the open tooltip, sentence by sentence. */
