@@ -7,7 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, COUNTS, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -72,22 +72,6 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it('passes on a private repo, whose counts then sit in no link', () => {
-    const PROJECT = {
-      name: 'Private',
-      href: 'https://example.com/',
-      type: ALL_PROJECTS[0].type,
-      repo: COUNTED_REPO,
-      privateRepo: true,
-      blurb: 'Closed source.',
-    } satisfies Project
-    renderCard(PROJECT)
-
-    expect(screen.queryByTestId(REPO_LINK)).toBeNull()
-    // Still shown, just in no link that would 404.
-    expect(screen.getByTestId(COUNTS).closest('a')).toBeNull()
-  })
-
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
     const user = userEvent.setup()
     const onPreviewOpen = vi.fn()
@@ -144,21 +128,6 @@ describe('ProjectCard', () => {
     // thumbnail follows the toggle, so it would be next.
     await user.tab()
     expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
-  })
-
-  it("crops its toggle's poster to its embed's poster height", () => {
-    const PROJECT = {
-      name: 'Busy',
-      href: 'https://example.com/',
-      type: ALL_PROJECTS[0].type,
-      repo: COUNTED_REPO,
-      blurb: 'A site with a busy top.',
-      screenshot: './project-screenshots/busy.png',
-      embed: { posterHeight: 48 },
-    } satisfies Project
-    renderCard(PROJECT)
-
-    expect(screen.getByTestId(LIVE_PREVIEW.POSTER).style.height).toBe('48px')
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {

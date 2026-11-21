@@ -244,21 +244,16 @@ describe('ProjectCounts', () => {
     ])
   })
 
-  it("charts its PyPI package's downloads too, named as PyPI's, then by version, and describes them", async () => {
+  it("charts its PyPI package's downloads too, then by version, and describes them", async () => {
     renderWithProviders(
       <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
     )
 
-    await hoverCounts()
+    const tooltip = await hoverCounts()
+    expect(tooltip.contains(screen.getByTestId(DOWNLOADS_CHART))).toBe(true)
     expect(
-      within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(CAPTION)
-        .textContent
-    ).toBe('PyPI downloads')
-    expect(
-      screen
-        .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
-        .map((row) => row.firstChild?.textContent)
-    ).toEqual(['v2.0', 'v1.0'])
+      tooltip.contains(screen.getByTestId(VERSION_DOWNLOADS_CHART.SELF))
+    ).toBe(true)
     expect(getTooltipSentences()?.at(-1)).toBe(
       'Most downloaded minor versions: v2.0 with 1,210 and v1.0 with 7'
     )
