@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { UrlHashTarget } from '@bvandrc/react-toolkit'
 
 import { List } from '@/components/primitives/List'
 import { Section, SubSection } from '@/components/Section'
@@ -7,7 +8,6 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { getAnchorId } from '@/lib/anchor-id'
 import { cn } from '@/lib/cn'
-import type { UrlHashTarget } from '@/lib/url-hash'
 import { ProjectCard } from './ProjectCard'
 
 type GridLayout = 'PREVIEW' | 'PAIRS'

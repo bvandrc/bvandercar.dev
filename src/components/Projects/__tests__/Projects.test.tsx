@@ -1,9 +1,9 @@
+import type { UrlHashTarget } from '@bvandrc/react-toolkit'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { getAnchorId } from '@/lib/anchor-id'
-import type { UrlHashTarget } from '@/lib/url-hash'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { Projects } from '../Projects'
