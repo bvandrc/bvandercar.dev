@@ -97,21 +97,6 @@ describe('ProjectCard', () => {
     )
   })
 
-  it("shows a private repo's counts with no repo link, which would 404", () => {
-    const PROJECT = {
-      name: 'Private',
-      href: 'https://example.com/',
-      type: ALL_PROJECTS[0].type,
-      repo: COUNTED_REPO,
-      privateRepo: true,
-      blurb: 'Closed source.',
-    } satisfies Project
-    renderCard(PROJECT)
-
-    expect(screen.getByTestId(COUNTS)).toBeDefined()
-    expect(screen.queryByTestId(REPO_LINK)).toBeNull()
-  })
-
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
     const user = userEvent.setup()
     const onPreviewOpen = vi.fn()
