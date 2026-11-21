@@ -19,9 +19,9 @@ import {
   THUMBNAIL_WIDTHS,
   type ThumbnailWidth,
 } from '~/screenshots'
+import { Counts } from './Counts'
 import { getCardTitleId } from './lib/charts-link'
 import { getProjectCounts } from './lib/project-counts'
-import { ProjectCounts } from './ProjectCounts'
 import { RepoLink } from './RepoLink'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
@@ -65,7 +65,7 @@ export const ProjectCard = ({
   const isMobile = useIsMobile()
   const typeIcon = TYPE_ICONS[project.type]
   const countsFields = pick(project, COUNTS_FIELDS)
-  const { counts } = getProjectCounts(countsFields)
+  const { counts, shown, pkg, chartCount } = getProjectCounts(countsFields)
   const headerRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLDivElement>(null)
   const nameStep = useShrinkToFit({
@@ -190,7 +190,21 @@ export const ProjectCard = ({
                 centered && 'md:col-start-3'
               )}>
               {/* Beside the repo link, not in it, so a press on them only toggles their charts. */}
-              <ProjectCounts {...countsFields} open={openCounts} />
+              <Counts
+                shown={shown}
+                chartCount={chartCount}
+                // Its repo's commits, and its package's downloads, as
+                // running totals, marking the package's releases on both.
+                getCharts={(charts) =>
+                  charts.getProjectCharts(project.repo, pkg)
+                }
+                open={openCounts}
+                // Takes the room its gaps need at their tightest, then grows
+                // them back as room allows, so they close up before "repo"
+                // wraps below.
+                className="max-w-max grow basis-0"
+                data-testid="project-counts"
+              />
               {/* A private repo would 404 for a visitor. */}
               {!project.privateRepo && (
                 <RepoLink repo={project.repo} nameId={nameId} />

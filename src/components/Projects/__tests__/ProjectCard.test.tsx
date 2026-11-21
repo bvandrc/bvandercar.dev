@@ -7,7 +7,9 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, BLURB, COUNTS, COMMITS_CHART, REPO_LINK, THUMBNAIL } =
+  SELECTORS.PROJECTS
+const { END_LABEL } = SELECTORS.LINE_CHART
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -28,6 +30,25 @@ vi.mock('@/generated/repo-activity-totals', async (importOriginal) => {
     REPO_ACTIVITY_TOTALS: {
       ...REPO_ACTIVITY_TOTALS,
       [COUNTED_REPO]: { commits: 600, prs: 587 },
+    },
+  }
+})
+
+vi.mock('@/generated/repo-activity', async (importOriginal) => {
+  const { REPO_ACTIVITY } =
+    await importOriginal<typeof import('@/generated/repo-activity')>()
+  // Every commit and PR on its first day, then three quiet weeks, so it
+  // spans the two weeks a chart needs.
+  const QUIET_DAYS = Array.from({ length: 20 }, () => 0)
+  return {
+    REPO_ACTIVITY: {
+      ...REPO_ACTIVITY,
+      [COUNTED_REPO]: {
+        firstDay: '2026-03-01',
+        lastDay: '2026-03-21',
+        commits: [600, ...QUIET_DAYS],
+        prs: [587, ...QUIET_DAYS],
+      },
     },
   }
 })
@@ -70,6 +91,24 @@ describe('ProjectCard', () => {
 
     // This site's fetch, not the profile's 41.
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
+  })
+
+  it("charts its repo's history in its counts' tooltip, ending at the count its glyph shows", async () => {
+    const PROJECT = {
+      name: 'Counted',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'Counted.',
+    } satisfies Project
+    renderCard(PROJECT)
+    const counts = screen.getByTestId(COUNTS)
+
+    await userEvent.setup().hover(counts)
+    const chart = await screen.findByTestId(COMMITS_CHART)
+    const total = within(chart).getByTestId(END_LABEL).textContent
+    expect(total).toBe('600')
+    expect(counts.textContent).toContain(total)
   })
 
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
