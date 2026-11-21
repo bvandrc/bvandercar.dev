@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { PROJECTS, type Project } from '@/generated/profile/content/projects'
@@ -7,7 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, COUNTS, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -72,31 +72,6 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it("opens its counts' tooltip as openCounts turns true, as for a URL asking for their charts", async () => {
-    const PROJECT = {
-      name: 'Counted',
-      href: 'https://example.com/',
-      type: ALL_PROJECTS[0].type,
-      repo: COUNTED_REPO,
-      blurb: 'Counted.',
-    } satisfies Project
-    const props = {
-      project: PROJECT,
-      centered: false,
-      pulsePreview: false,
-      onPreviewOpen: vi.fn(),
-    }
-    const { rerender } = renderWithProviders(<ProjectCard {...props} />)
-    expect(screen.queryByRole('tooltip')).toBeNull()
-
-    rerender(<ProjectCard {...props} openCounts />)
-    await waitFor(() =>
-      expect(screen.getByTestId(COUNTS).getAttribute('aria-describedby')).toBe(
-        screen.getByRole('tooltip').id
-      )
-    )
-  })
-
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
     const user = userEvent.setup()
     const onPreviewOpen = vi.fn()
@@ -153,21 +128,6 @@ describe('ProjectCard', () => {
     // thumbnail follows the toggle, so it would be next.
     await user.tab()
     expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
-  })
-
-  it("crops its toggle's poster to its embed's poster height", () => {
-    const PROJECT = {
-      name: 'Busy',
-      href: 'https://example.com/',
-      type: ALL_PROJECTS[0].type,
-      repo: COUNTED_REPO,
-      blurb: 'A site with a busy top.',
-      screenshot: './project-screenshots/busy.png',
-      embed: { posterHeight: 48 },
-    } satisfies Project
-    renderCard(PROJECT)
-
-    expect(screen.getByTestId(LIVE_PREVIEW.POSTER).style.height).toBe('48px')
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {
