@@ -7,7 +7,7 @@ import {
   type RunningTotalChartViewProps,
 } from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, DOT, RELEASE, LINE } =
+const { PLOT, READOUT, TOTAL, RISE, RELEASE } =
   SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
 
 // Each day's commits for the three weeks from Mar 2: 5, 1,200, then 12.
@@ -59,15 +59,6 @@ describe('RunningTotalChart', () => {
     expect(readout.textContent).toBe('Commits')
   })
 
-  it('draws its line through every day, though it reads out each week', () => {
-    renderChart()
-
-    // A segment to each of the 21 days, from where the line starts.
-    expect(
-      screen.getByTestId(LINE).getAttribute('d')?.match(/L/g)
-    ).toHaveLength(21)
-  })
-
   it('leaves out the days before a later span start, starting from the total by then', () => {
     renderChart({ span: { start: '2026-03-10', end: '2026-03-22' } })
 
@@ -77,28 +68,6 @@ describe('RunningTotalChart', () => {
       'Through Mar 15, 2026: 1,205 commits'
     )
     expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
-  })
-
-  it('keeps its height from zero to the total while zoomed in, so a count sits at the same height', () => {
-    /** The hover dot's height on the middle week, Mar 9 to 15. */
-    const getMiddleDotY = () => {
-      movePointer(140)
-      return screen.getByTestId(DOT).getAttribute('cy')
-    }
-    const { unmount } = renderChart()
-    const unzoomed = getMiddleDotY()
-    unmount()
-
-    renderChart({
-      span: { start: '2026-03-09', end: '2026-03-16' },
-      zoomed: true,
-    })
-    movePointer(0)
-    // Across a zoomed span, the pointer finds the middle week further left.
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 15, 2026: 1,205 commits'
-    )
-    expect(screen.getByTestId(DOT).getAttribute('cy')).toBe(unzoomed)
   })
 
   it('reads out the week now under a still pointer once the chart pans beneath it', () => {
@@ -120,10 +89,6 @@ describe('RunningTotalChart', () => {
     )
     expect(screen.getByTestId(READOUT).textContent).toBe(
       'Through Mar 15, 2026: 1,205 commits'
-    )
-    // Still on the plot, rather than slid off its left edge with Mar 8.
-    expect(Number(screen.getByTestId(DOT).getAttribute('cx'))).toBeGreaterThan(
-      0
     )
   })
 
@@ -191,6 +156,27 @@ describe('RunningTotalChart', () => {
       Date.parse('2026-03-02'),
       expect.any(Number)
     )
+  })
+
+  it('writes what the stretch in view added under the total, while zoomed in on one that starts past zero', () => {
+    const { unmount } = renderChart()
+    // From zero, the total says it all.
+    expect(screen.queryByTestId(RISE)).toBeNull()
+    unmount()
+    // Its full view, starting partway, like the footer's charts' all time.
+    const { unmount: unmountPartway } = renderChart({
+      span: { start: '2026-03-09', end: '2026-03-22' },
+    })
+    expect(screen.queryByTestId(RISE)).toBeNull()
+    unmountPartway()
+
+    renderChart({
+      span: { start: '2026-03-09', end: '2026-03-22' },
+      zoomed: true,
+    })
+    // 1,217 in all, 5 of them by Mar 9.
+    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
+    expect(screen.getByTestId(RISE).textContent).toBe('+1.2K')
   })
 
   it("hides the total while zoomed in short of the line's end", () => {

@@ -27,13 +27,20 @@ export const PLOT = {
   BASELINE: HEIGHT - INSET,
 } as const
 
+/** The counts a plot's height runs between: `low` on its baseline, `high` at its top. */
+export type PlotRange = { low: number; high: number }
+
 /**
- * Maps `span`'s times across the plot, and counts from zero to `total` up it.
+ * Maps `span`'s times across the plot, and counts from `range`'s low to its
+ * high up it.
  *
- * The height runs from zero to `total` however far it's zoomed in, so a
- * height always means the same count.
+ * Give it the counts at the shown stretch's ends, so its rise fills the
+ * height however far it's zoomed in.
  */
-export const getPlotScale = ({ start, end }: DaySpan, total: number) => {
+export const getPlotScale = (
+  { start, end }: DaySpan,
+  { low, high }: PlotRange
+) => {
   // Compared as times, not strings: a zoomed-in span's ends are ISO times,
   // which sort after the plain ISO date of the same day.
   const startTime = Date.parse(start)
@@ -51,8 +58,9 @@ export const getPlotScale = ({ start, end }: DaySpan, total: number) => {
       INSET + ((Date.parse(day) - startTime) / spanTime) * plotWidth,
     /** Where a count falls up the plot. */
     toY: (count: number) =>
-      // A total of zero stays on the baseline rather than dividing by zero.
-      PLOT.BASELINE - (count / (total || 1)) * (PLOT.BASELINE - PLOT.TOP),
+      // A range with no rise stays on the baseline rather than dividing by zero.
+      PLOT.BASELINE -
+      ((count - low) / (high - low || 1)) * (PLOT.BASELINE - PLOT.TOP),
     /** The time at `x` across the plot, which may fall outside the span. */
     getTimeAtX: (x: number) => startTime + ((x - INSET) / plotWidth) * spanTime,
   }
