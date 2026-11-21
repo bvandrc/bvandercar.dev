@@ -23,6 +23,7 @@ import {
   CountsAndRepoLink,
   type CountsAndRepoLinkProps,
 } from './CountsAndRepoLink'
+import { getCardTitleId } from './lib/charts-link'
 import { getProjectCounts } from './lib/project-counts'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
@@ -59,6 +60,7 @@ export const ProjectCard = ({
   openCounts,
 }: ProjectCardProps) => {
   const nameId = useId()
+  const cardId = getAnchorId(project.name)
   const cardRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const typeIcon = TYPE_ICONS[project.type]
@@ -94,7 +96,7 @@ export const ProjectCard = ({
     <Card
       ref={cardRef}
       // Its name's anchor, so a `#` link, or a URL, can go straight to it.
-      id={getAnchorId(project.name)}
+      id={cardId}
       // A click anywhere else on a card with a live preview opens it too.
       // Only the toggle closes it, so a click on or around the open page,
       // even as it's still growing, leaves it open.
@@ -123,6 +125,8 @@ export const ProjectCard = ({
         <div className="flex min-w-0 flex-1 flex-col gap-2.5">
           <div
             ref={headerRef}
+            // Centered by a link to its charts.
+            id={getCardTitleId(cardId)}
             className={cn(
               'flex flex-wrap items-start justify-between gap-x-4 gap-y-1',
               // A centered card spans its group's width, so from md, where
