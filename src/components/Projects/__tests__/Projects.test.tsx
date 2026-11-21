@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { getAnchorId } from '@/lib/anchor-id'
+import type { UrlHashTarget } from '@/lib/url-hash'
 import { renderWithProviders } from '@/test-helpers/render'
 import { SELECTORS } from '~/test-support/selectors'
 import { Projects } from '../Projects'
@@ -28,7 +29,7 @@ const getPulses = () =>
 describe('Projects', () => {
   it('pulses every preview toggle until any one is opened', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<Projects urlTargetId={undefined} />)
+    renderWithProviders(<Projects urlTarget={undefined} />)
     // More than one, or stopping "the others" would prove nothing.
     expect(getPulses().length).toBeGreaterThan(1)
     expect(new Set(getPulses())).toEqual(new Set(['true']))
@@ -39,24 +40,21 @@ describe('Projects', () => {
 
   it('pulses again on a new visit', async () => {
     const user = userEvent.setup()
-    const { unmount } = renderWithProviders(
-      <Projects urlTargetId={undefined} />
-    )
+    const { unmount } = renderWithProviders(<Projects urlTarget={undefined} />)
     await user.click(screen.getAllByTestId(TOGGLE)[0])
     unmount()
 
-    renderWithProviders(<Projects urlTargetId={undefined} />)
+    renderWithProviders(<Projects urlTarget={undefined} />)
     expect(new Set(getPulses())).toEqual(new Set(['true']))
   })
 
   describe("opening a card's counts from the URL", () => {
-    afterEach(() => {
-      window.history.replaceState(null, '', '/')
-    })
-
-    it('opens the tooltip of the card the page landed on, where the URL asks for its charts', async () => {
-      window.history.replaceState(null, '', `/?charts#${TARGET_ID}`)
-      renderWithProviders(<Projects urlTargetId={TARGET_ID} />)
+    it('opens the tooltip of the card the page landed on, where its `#` asks for its charts', async () => {
+      const URL_TARGET = {
+        id: TARGET_ID,
+        params: new URLSearchParams('show_charts=true'),
+      } satisfies UrlHashTarget
+      renderWithProviders(<Projects urlTarget={URL_TARGET} />)
 
       await waitFor(() =>
         expect(
@@ -69,10 +67,23 @@ describe('Projects', () => {
       expect(screen.getAllByRole('tooltip')).toHaveLength(1)
     })
 
-    it('opens none for a URL naming the card alone', () => {
-      window.history.replaceState(null, '', `/#${TARGET_ID}`)
-      renderWithProviders(<Projects urlTargetId={TARGET_ID} />)
-      expect(screen.queryByRole('tooltip')).toBeNull()
+    it("opens none where its `#` doesn't ask for its charts", () => {
+      const QUERIES = [
+        // The card alone.
+        '',
+        'show_charts=false',
+      ]
+      for (const query of QUERIES) {
+        const URL_TARGET = {
+          id: TARGET_ID,
+          params: new URLSearchParams(query),
+        } satisfies UrlHashTarget
+        const { unmount } = renderWithProviders(
+          <Projects urlTarget={URL_TARGET} />
+        )
+        expect(screen.queryByRole('tooltip'), query).toBeNull()
+        unmount()
+      }
     })
   })
 })

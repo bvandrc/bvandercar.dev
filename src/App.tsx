@@ -11,7 +11,7 @@ import { useScrollToUrlHash } from './hooks/useScrollToUrlHash'
 import { cn } from './lib/cn'
 
 export const App = () => {
-  const landedId = useScrollToUrlHash()
+  const urlTarget = useScrollToUrlHash()
   return (
     <TooltipProvider>
       <div
@@ -27,7 +27,7 @@ export const App = () => {
           <Contents />
         </div>
         <main className="flex flex-col gap-8" data-testid="main">
-          <Projects urlTargetId={landedId} />
+          <Projects urlTarget={urlTarget} />
           <Skills />
           <BeyondCode />
         </main>

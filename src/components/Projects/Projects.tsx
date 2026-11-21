@@ -7,6 +7,7 @@ import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
 import { getAnchorId } from '@/lib/anchor-id'
 import { cn } from '@/lib/cn'
+import type { UrlHashTarget } from '@/lib/url-hash'
 import { ProjectCard } from './ProjectCard'
 
 type GridLayout = 'PREVIEW' | 'PAIRS'
@@ -22,22 +23,19 @@ const GRID_CLASSES = {
 const getGridLayout = ({ projects }: ProjectSection): GridLayout =>
   projects.some(({ embed }) => embed) ? 'PREVIEW' : 'PAIRS'
 
-/** The query parameter that opens the charts of the card a URL's `#` names, as in `/?charts#task-rankr`. */
-const CHARTS_PARAM = 'charts'
+/** The `#`'s parameter that opens its card's counts' charts, as in `/#task-rankr?show_charts=true`. */
+const CHARTS_PARAM = 'show_charts'
 
 type ProjectsProps = {
-  /** The id the page landed on from the URL's `#`, whose card opens its counts' charts where the URL asks. */
-  urlTargetId: string | undefined
+  /** What the URL's `#` named, once the page has landed on it, whose card opens its counts' charts where it asks. */
+  urlTarget: UrlHashTarget | undefined
 }
 
-export const Projects = ({ urlTargetId }: ProjectsProps) => {
+export const Projects = ({ urlTarget }: ProjectsProps) => {
   // Every preview toggle pulses on each page visit, until any one is opened.
   const [previewOpened, setPreviewOpened] = useState(false)
-  const chartsOpenFor = new URLSearchParams(window.location.search).has(
-    CHARTS_PARAM
-  )
-    ? urlTargetId
-    : undefined
+  const chartsOpenFor =
+    urlTarget?.params.get(CHARTS_PARAM) === 'true' ? urlTarget.id : undefined
   return (
     <Section
       glyph={SECTIONS.PROJECTS.glyph}
