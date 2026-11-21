@@ -19,3 +19,22 @@ export const getPeriodEnds = (
   span !== undefined && getSpanMs(span) < DAILY_SPAN_DAYS * DAY_MS
     ? listDays(firstDay, lastDay)
     : weekEnds
+
+/**
+ * Which of `periodEnds`, ISO dates oldest first, ends the period the day at
+ * `time` falls in, by index: the last for a time past them all.
+ *
+ * Where that period ends after `end`, out of view, as a zoomed-in span can,
+ * the period before it instead.
+ */
+export const getPeriodAt = (
+  periodEnds: string[],
+  time: number,
+  end: number
+) => {
+  const index = periodEnds.findIndex(
+    (periodEnd) => Date.parse(periodEnd) + DAY_MS > time
+  )
+  const period = index === -1 ? periodEnds.length - 1 : index
+  return Date.parse(periodEnds[period]) > end ? Math.max(period - 1, 0) : period
+}

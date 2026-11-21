@@ -5,8 +5,8 @@ import {
 } from '@bvandrc/react-toolkit/gestures'
 
 export type PlotInputOptions = Omit<ZoomPanGestures, 'getValueAt'> & {
-  /** The time at `x` pixels across the plot, which a zoom is anchored at */
-  getTimeAtX: (x: number) => number
+  /** The x value at `px` pixels across the plot, which a zoom is anchored at */
+  getXAt: (px: number) => number
 }
 
 /**
@@ -19,14 +19,14 @@ export type PlotInputOptions = Omit<ZoomPanGestures, 'getValueAt'> & {
  */
 export const usePlotInput = (
   plotRef: React.RefObject<Element | null>,
-  { getTimeAtX, ...gestures }: PlotInputOptions
+  { getXAt, ...gestures }: PlotInputOptions
 ) => {
   const [pointerX, setPointerX] = useState<number>()
   /** How far across the plot a pointer at `clientX` is. */
   const toPlotX = (clientX: number) =>
     clientX - (plotRef.current?.getBoundingClientRect().left ?? 0)
   const pinchingRef = useZoomPanGestures(plotRef, {
-    getValueAt: (clientX) => getTimeAtX(toPlotX(clientX)),
+    getValueAt: (clientX) => getXAt(toPlotX(clientX)),
     ...gestures,
   })
   /** Reads the pointer's place off the event, so it never has to land on anything in particular. */

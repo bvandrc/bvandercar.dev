@@ -4,7 +4,7 @@ import type { ActivityHistory } from '~/counts'
 import { SELECTORS } from '~/test-support/selectors'
 import { ActivityChart } from '../ActivityChart'
 
-const { PLOT, READOUT } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+const { PLOT, CAPTION } = SELECTORS.LINE_CHART
 
 // 3, 40, then 12 commits a week from Monday, Feb 23, and 1, 4, then 2 merged
 // PRs, read on Thursday, Mar 12, partway through its last week.
@@ -19,9 +19,9 @@ describe('ActivityChart', () => {
   it("captions itself as commits, and reads out the activity's weeks, the one under way through the day it was read", () => {
     render(<ActivityChart activity={ACTIVITY} kind="commits" />)
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('Commits')
+    expect(screen.getByTestId(CAPTION).textContent).toBe('Commits')
     fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 400 })
-    expect(screen.getByTestId(READOUT).textContent).toBe(
+    expect(screen.getByTestId(CAPTION).textContent).toBe(
       'Through Mar 12, 2026: 55 commits'
     )
   })
@@ -29,9 +29,9 @@ describe('ActivityChart', () => {
   it('captions itself as PRs, and reads out the merged PRs rather than the commits', () => {
     render(<ActivityChart activity={ACTIVITY} kind="prs" />)
 
-    expect(screen.getByTestId(READOUT).textContent).toBe('PRs')
+    expect(screen.getByTestId(CAPTION).textContent).toBe('PRs')
     fireEvent.pointerMove(screen.getByTestId(PLOT), { clientX: 400 })
-    expect(screen.getByTestId(READOUT).textContent).toBe(
+    expect(screen.getByTestId(CAPTION).textContent).toBe(
       'Through Mar 12, 2026: 7 PRs'
     )
   })

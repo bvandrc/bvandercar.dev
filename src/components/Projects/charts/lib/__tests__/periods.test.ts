@@ -1,4 +1,4 @@
-import { getPeriodEnds } from '../periods'
+import { getPeriodAt, getPeriodEnds } from '../periods'
 
 const WEEK_ENDS = ['2026-03-08', '2026-03-15', '2026-03-22']
 const FIRST_DAY = '2026-03-02'
@@ -34,5 +34,29 @@ describe('getPeriodEnds', () => {
         WEEK_ENDS
       )
     }
+  })
+})
+
+describe('getPeriodAt', () => {
+  const END = Date.parse(LAST_DAY)
+
+  it('finds the period a time falls in, the first or last past either end', () => {
+    const CASES = [
+      ['2026-02-01', 0],
+      // A period's last day, through its end.
+      ['2026-03-08T23:00:00Z', 0],
+      ['2026-03-09', 1],
+      ['2026-04-01', 2],
+    ] as const
+    for (const [day, expected] of CASES) {
+      expect(getPeriodAt(WEEK_ENDS, Date.parse(day), END), day).toBe(expected)
+    }
+  })
+
+  it('falls back a period where the one it falls in ends out of view, as a zoomed-in span can', () => {
+    // Mar 10 is in the week ending Mar 15, past a span ending Mar 12.
+    expect(
+      getPeriodAt(WEEK_ENDS, Date.parse('2026-03-10'), Date.parse('2026-03-12'))
+    ).toBe(0)
   })
 })

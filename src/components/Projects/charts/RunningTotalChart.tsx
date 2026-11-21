@@ -1,16 +1,15 @@
-import { useId, useRef } from 'react'
-import { clamp, uniq } from 'es-toolkit'
+import { uniq } from 'es-toolkit'
 
-import { Icon } from '@/components/primitives/Icon'
-import { cn } from '@/lib/cn'
+import {
+  LineChart,
+  type LineChartHover,
+  type LineChartProps,
+} from '@/components/primitives/LineChart'
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { formatDay } from '@/lib/format-date'
-import type { GlyphName } from '@/lib/icons'
 import type { Release } from '~/counts'
-import { DAY_MS } from '~/dates'
-import { usePlotInput } from './hooks/usePlotInput'
 import { useRunningTotalPlot } from './hooks/useRunningTotalPlot'
-import { PLOT } from './lib/plot'
+import { getPeriodAt } from './lib/periods'
 import type { DaySpan } from './lib/spans'
 import { formatLatestVersion } from './lib/weeks'
 
@@ -18,40 +17,21 @@ import { formatLatestVersion } from './lib/weeks'
 export type ChartTone = 'COMMITS' | 'PRS' | 'DOWNLOADS'
 
 const TONE_CLASSES = {
-  COMMITS: {
-    LINE: 'stroke-commits',
-    AREA: 'fill-commits/10',
-    DOT: 'fill-commits',
-  },
-  PRS: {
-    LINE: 'stroke-prs',
-    AREA: 'fill-prs/10',
-    DOT: 'fill-prs',
-  },
+  COMMITS: 'text-commits',
+  PRS: 'text-prs',
   // Its own color, so the downloads chart never reads as another commits one.
-  DOWNLOADS: {
-    LINE: 'stroke-cyan-600',
-    AREA: 'fill-cyan-600/10',
-    DOT: 'fill-cyan-600',
-  },
-} as const satisfies Record<ChartTone, Record<string, string>>
+  DOWNLOADS: 'text-cyan-600',
+} as const satisfies Record<ChartTone, string>
 
-// A grab cursor while there's somewhere to drag the chart to.
-const PLOT_CURSOR_CLASSES = {
-  FIXED: '',
-  PANNABLE: 'cursor-grab active:cursor-grabbing',
-} as const
+// As wide as fits a 375px phone screen, with the tooltip's padding and margins.
+const CHART_WIDTH = 328
+const CHART_HEIGHT = 84
 
-// A hovered release's line stands out from the rest.
-const RELEASE_LINE_CLASSES = {
-  IDLE: 'stroke-ink-muted/30',
-  ACTIVE: 'stroke-ink-muted',
-} as const
-
-// How near a release line the pointer snaps to it, in pixels.
-const RELEASE_SNAP_PX = 4
-
-export type RunningTotalChartProps = {
+/** Along x as times: a zoom's anchor is one, and a pan's delta is in milliseconds. */
+export type RunningTotalChartProps = Pick<
+  LineChartProps,
+  'icon' | 'onZoom' | 'onPan'
+> & {
   /** The ISO date counting starts on */
   firstDay: string
   /** Its count on each day from `firstDay` on, oldest first, which the line runs through; two or more */
@@ -69,16 +49,10 @@ export type RunningTotalChartProps = {
   /** What one of what it counts is called, like "commit" */
   noun: string
   tone: ChartTone
-  /** The glyph in front of the caption, the same as the count's own */
-  icon?: GlyphName
   /** What the readout says while no period is hovered */
   summary: string
   /** Whether `span` is zoomed in, which lets a mouse drag the chart along */
   zoomed?: boolean
-  /** Called for a wheel turned, or a pinch, over the chart, with the time under it and how much to scale `span`'s width, to zoom around it; without it, the page scrolls and zooms as usual */
-  onZoom?: (anchor: number, factor: number) => void
-  /** Called for a drag, a sideways scroll, or two fingers moved, over the chart, with how many milliseconds later to move `span` */
-  onPan?: (delta: number) => void
   /** Marked with a grey line on each day there was one, naming its latest version on hover */
   releases?: Release[]
   'data-testid': string
@@ -89,35 +63,6 @@ export type RunningTotalChartViewProps = Pick<
   RunningTotalChartProps,
   'releases' | 'span' | 'zoomed' | 'onZoom' | 'onPan'
 >
-
-type PeriodMarkerProps = Pick<RunningTotalChartProps, 'tone'> & {
-  /** Where the period's last day falls across the plot */
-  x: number
-  /** Where its running total falls up the plot */
-  y: number
-}
-
-/** The hovered period's line down the plot, with a dot where it meets the line. */
-const PeriodMarker = ({ x, y, tone }: PeriodMarkerProps) => (
-  <>
-    <line
-      x1={x}
-      x2={x}
-      y1={PLOT.CAPTION_HEIGHT}
-      y2={PLOT.BASELINE}
-      className="stroke-ink-muted/50"
-    />
-    <circle
-      cx={x}
-      cy={y}
-      r={4}
-      strokeWidth={2}
-      // A ring in the tooltip's own color, so the dot stands off the line.
-      className={cn(TONE_CLASSES[tone].DOT, 'stroke-surface-raised')}
-      data-testid="running-total-chart-dot"
-    />
-  </>
-)
 
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
@@ -145,183 +90,56 @@ export const RunningTotalChart = ({
   releases = [],
   'data-testid': testId,
 }: RunningTotalChartProps) => {
-  const plotRef = useRef<SVGSVGElement>(null)
-  // An id is only for the clip path's url(), where colons don't belong.
-  const clipId = `plot-${useId().replaceAll(':', '')}`
-  const {
-    lastDay,
-    total,
-    periodTotals,
-    lineStartTime,
-    lineStartTotal,
-    startTime,
-    endTime,
-    msPerPx,
-    toX,
-    toY,
-    getTimeAtX,
-    startX,
-    lastX,
-    line,
-  } = useRunningTotalPlot({ firstDay, daily, periodEnds, span })
-  /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
-  const getShownTimeAtX = (x: number) =>
-    clamp(getTimeAtX(x), lineStartTime, endTime)
-  const releaseDays = uniq(releases.map(({ day }) => day)).filter(
-    (day) => Date.parse(day) >= startTime && Date.parse(day) <= endTime
-  )
-  // Where the pointer is across the plot, rather than the period under it,
-  // so a zoom or pan that slides the line beneath a still pointer reads out
-  // what it's over now.
-  const { pointerX, pointerProps } = usePlotInput(plotRef, {
-    getTimeAtX: getShownTimeAtX,
-    valuePerPx: msPerPx,
-    onZoom,
-    onPan,
-  })
-  // The release line within a few pixels of the pointer, which it snaps to
-  // over a period.
-  const activeRelease =
-    pointerX === undefined
-      ? undefined
-      : releaseDays.find(
-          (day) => Math.abs(toX(day) - pointerX) <= RELEASE_SNAP_PX
-        )
-  /** The period the pointer's day falls in, unless it's on a release line. */
-  const getActivePeriod = () => {
-    if (pointerX === undefined || activeRelease) {
-      return undefined
-    }
-    const time = getShownTimeAtX(pointerX)
-    // The first period ending on or after that day, or the last past them all.
-    const index = periodEnds.findIndex(
-      (periodEnd) => Date.parse(periodEnd) + DAY_MS > time
-    )
-    const period = index === -1 ? periodEnds.length - 1 : index
-    // A zoomed-in span can end partway through a week, whose end, where its
-    // dot would sit, is out of view, so the period before it reads out instead.
-    return Date.parse(periodEnds[period]) > endTime
-      ? Math.max(period - 1, 0)
-      : period
+  const { total, periodTotals, lineStartTotal, domain, range, points } =
+    useRunningTotalPlot({ firstDay, daily, periodEnds, span })
+  /** The period the day at `time` falls in, of those ending in view. */
+  const getActivePeriod = (time: number) =>
+    getPeriodAt(periodEnds, time, domain.x2)
+  /** The hovered period's last day and total, which the dot marks. */
+  const getPeriodPoint = (time: number) => {
+    const period = getActivePeriod(time)
+    return { x: Date.parse(periodEnds[period]), y: periodTotals[period] }
   }
-  const activePeriod = getActivePeriod()
   /** What the caption says: the hovered release, or period, or else the summary. */
-  const getReadout = () => {
-    if (activeRelease) {
+  const renderReadout = (hover: LineChartHover | undefined) => {
+    if (!hover) {
+      return summary
+    }
+    const { marker, x } = hover
+    if (marker !== undefined) {
       const versions = releases
-        .filter(({ day }) => day === activeRelease)
+        .filter(({ day }) => Date.parse(day) === marker)
         .map(({ version }) => version)
-      return `${formatLatestVersion(versions)} released ${formatDay(activeRelease)}`
+      return `${formatLatestVersion(versions)} released ${formatDay(new Date(marker).toISOString())}`
     }
-    if (activePeriod !== undefined) {
-      return `Through ${formatDay(periodEnds[activePeriod])}: ${formatCount(periodTotals[activePeriod], noun)}`
-    }
-    return summary
+    const period = getActivePeriod(x)
+    return `Through ${formatDay(periodEnds[period])}: ${formatCount(periodTotals[period], noun)}`
   }
   return (
-    <div className="relative" data-testid={testId}>
-      <svg
-        ref={plotRef}
-        aria-hidden
-        width={PLOT.WIDTH}
-        height={PLOT.HEIGHT}
-        viewBox={`0 0 ${PLOT.WIDTH} ${PLOT.HEIGHT}`}
-        className={cn(
-          'overflow-visible',
-          // A finger dragged across it moves through the periods, not the page.
-          'touch-none',
-          // A mouse drags a zoomed-in chart along.
-          PLOT_CURSOR_CLASSES[zoomed && onPan ? 'PANNABLE' : 'FIXED']
-        )}
-        {...pointerProps}
-        data-testid="running-total-chart-plot">
-        <defs>
-          {/* Crops a zoomed-in line at the plot's edges. */}
-          <clipPath id={clipId}>
-            <rect width={PLOT.RIGHT + PLOT.INSET} height={PLOT.HEIGHT} />
-          </clipPath>
-        </defs>
-        <line
-          x1={PLOT.INSET}
-          x2={PLOT.RIGHT}
-          y1={PLOT.BASELINE}
-          y2={PLOT.BASELINE}
-          className="stroke-ink-muted/30"
-        />
-        {releaseDays.map((day) => (
-          <line
-            key={day}
-            x1={toX(day)}
-            x2={toX(day)}
-            y1={PLOT.CAPTION_HEIGHT}
-            y2={PLOT.BASELINE}
-            className={
-              RELEASE_LINE_CLASSES[day === activeRelease ? 'ACTIVE' : 'IDLE']
-            }
-            data-testid="running-total-chart-release"
-          />
-        ))}
-        <path
-          d={`${line}L${lastX},${PLOT.BASELINE}L${startX},${PLOT.BASELINE}Z`}
-          clipPath={`url(#${clipId})`}
-          className={TONE_CLASSES[tone].AREA}
-        />
-        <path
-          d={line}
-          fill="none"
-          strokeWidth={2}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          clipPath={`url(#${clipId})`}
-          className={TONE_CLASSES[tone].LINE}
-          data-testid="running-total-chart-line"
-        />
-        {/* Only while the line's end is in view, unless zoomed in short of it. */}
-        {Date.parse(lastDay) <= endTime && (
-          <>
-            <text
-              x={lastX + 6}
-              // Centred on the line's end, about a third of the text's height down.
-              y={toY(total) + 5}
-              className="fill-ink text-sm font-bold"
-              data-testid="running-total-chart-total">
-              {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
-              {formatCompactCount(total)}
-            </text>
-            {/* Zoomed in past zero, what the stretch in view added, so its start can be read too; a full view that starts partway, like the footer's, needs none. */}
-            {zoomed && lineStartTotal > 0 && (
-              <text
-                x={lastX + 6}
-                y={toY(total) + 20}
-                className="fill-ink-muted text-xs"
-                data-testid="running-total-chart-rise">
-                +{formatCompactCount(total - lineStartTotal)}
-              </text>
-            )}
-          </>
-        )}
-        {activePeriod !== undefined && (
-          <PeriodMarker
-            x={toX(periodEnds[activePeriod])}
-            y={toY(periodTotals[activePeriod])}
-            tone={tone}
-          />
-        )}
-        {/* The hover target: the whole box, not just the thin line. */}
-        <rect width={PLOT.WIDTH} height={PLOT.HEIGHT} fill="transparent" />
-      </svg>
-      {/* The caption, behind the count's glyph. */}
-      <p
-        className={cn(
-          'flex items-center gap-1.5 whitespace-nowrap text-ink',
-          // Held in the top-left corner, over the strip the line leaves
-          // clear, and letting the pointer through to the plot beneath.
-          'pointer-events-none absolute top-0 left-0'
-        )}
-        data-testid="running-total-chart-readout">
-        {icon && <Icon name={icon} className="size-[1.1em] shrink-0" />}
-        {getReadout()}
-      </p>
-    </div>
+    <LineChart
+      width={CHART_WIDTH}
+      height={CHART_HEIGHT}
+      points={points}
+      domain={domain}
+      range={range}
+      colorClassName={TONE_CLASSES[tone]}
+      markers={uniq(releases.map(({ day }) => Date.parse(day)))}
+      renderCaption={renderReadout}
+      icon={icon}
+      getHoverPoint={getPeriodPoint}
+      // Shortened like the glyphs, since hovering the last period reads it in full.
+      endLabel={formatCompactCount(total)}
+      // Zoomed in past zero, what the stretch in view added, so its start can
+      // be read too; a full view that starts partway, like the footer's, needs none.
+      endNote={
+        zoomed && lineStartTotal > 0
+          ? `+${formatCompactCount(total - lineStartTotal)}`
+          : undefined
+      }
+      pannable={zoomed}
+      onZoom={onZoom}
+      onPan={onPan}
+      data-testid={testId}
+    />
   )
 }

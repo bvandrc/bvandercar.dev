@@ -11,11 +11,10 @@ const {
   COMMITS_CHART,
   PRS_CHART,
   DOWNLOADS_CHART,
-  RUNNING_TOTAL_CHART,
   VERSION_DOWNLOADS_CHART,
   CHART_PERIOD,
 } = SELECTORS.PROJECTS
-const { PLOT, RELEASE } = RUNNING_TOTAL_CHART
+const { PLOT, MARKER } = SELECTORS.LINE_CHART
 
 // 3, 40, then 12 commits a week from Monday, Feb 23, then quiet to Mar 26,
 // with a merged PR a week.
@@ -72,7 +71,7 @@ const renderCharts = (props?: Partial<ProjectChartsProps>) =>
 const getReleaseXs = () =>
   [COMMITS_CHART, DOWNLOADS_CHART].map((chart) =>
     within(screen.getByTestId(chart))
-      .queryAllByTestId(RELEASE)
+      .queryAllByTestId(MARKER)
       .map((line) => line.getAttribute('x1'))
   )
 

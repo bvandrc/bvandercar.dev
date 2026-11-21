@@ -26,6 +26,15 @@ export const SELECTORS = {
     EMAIL: 'social-links-email',
   },
   MAIN: 'main',
+  LINE_CHART: {
+    PLOT: 'line-chart-plot',
+    CAPTION: 'line-chart-caption',
+    END_LABEL: 'line-chart-end-label',
+    END_NOTE: 'line-chart-end-note',
+    DOT: 'line-chart-dot',
+    MARKER: 'line-chart-marker',
+    LINE: 'line-chart-line',
+  },
   PROJECTS: {
     SELF: 'projects',
     CARD: 'project-card',
@@ -51,15 +60,6 @@ export const SELECTORS = {
       ROW: 'version-downloads-chart-row',
       BAR: 'version-downloads-chart-bar',
       SHARE: 'version-downloads-chart-share',
-    },
-    RUNNING_TOTAL_CHART: {
-      PLOT: 'running-total-chart-plot',
-      READOUT: 'running-total-chart-readout',
-      TOTAL: 'running-total-chart-total',
-      RISE: 'running-total-chart-rise',
-      DOT: 'running-total-chart-dot',
-      RELEASE: 'running-total-chart-release',
-      LINE: 'running-total-chart-line',
     },
   },
   SKILLS: {
