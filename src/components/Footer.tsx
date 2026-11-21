@@ -40,16 +40,12 @@ export const Footer = () => {
           href={getRepoUrl('bvandercar.dev')}
           tone="muted"
           newTab
-          className="inline-flex items-center gap-2"
-          data-testid="footer-source-link">
+          className="inline-flex items-center gap-2">
           <Icon name="code-xml" />
           Source on GitHub
         </Link>
         <p>
-          Built{' '}
-          <time dateTime={buildDate} data-testid="footer-build-date">
-            {formatDay(buildDate)}
-          </time>
+          Built <time dateTime={buildDate}>{formatDay(buildDate)}</time>
         </p>
       </div>
     </footer>

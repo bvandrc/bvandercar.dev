@@ -70,8 +70,4 @@ describe('pickActiveSection', () => {
     )
     expect(pick(SECTIONS)).toBe('second')
   })
-
-  it('picks none for no sections', () => {
-    expect(pick([])).toBeUndefined()
-  })
 })

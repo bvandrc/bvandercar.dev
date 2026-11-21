@@ -15,7 +15,6 @@ const EMAIL_HREF = buildMailtoHref({
 })
 
 type SocialLinkProps = Pick<LinkProps, 'href' | 'tone' | 'newTab'> & {
-  'data-testid'?: string
   /** The tooltip, naming where the link goes. */
   tooltip: string
   /** The site's logo, shown before the text at its size, in the link's own color. */
@@ -59,12 +58,7 @@ export const SocialLinks = ({ tone }: SocialLinksProps) => (
       icon="simple-icons:linkedin">
       LinkedIn
     </SocialLink>
-    <SocialLink
-      href={EMAIL_HREF}
-      tone={tone}
-      tooltip="Email Me"
-      icon="mail"
-      data-testid="social-links-email">
+    <SocialLink href={EMAIL_HREF} tone={tone} tooltip="Email Me" icon="mail">
       Email
     </SocialLink>
   </>

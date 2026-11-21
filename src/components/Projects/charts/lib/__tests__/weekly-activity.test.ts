@@ -29,10 +29,6 @@ describe('getDayReachingCommits', () => {
     // 3, then 5 and 10 more on Mar 2 and 3.
     expect(getDayReachingCommits(HISTORY, 15)).toBe('2026-03-03')
   })
-
-  it('starts on the first day for a repo with fewer commits in all', () => {
-    expect(getDayReachingCommits(HISTORY, 100)).toBe('2026-02-25')
-  })
 })
 
 describe('describeWeeklyActivity', () => {

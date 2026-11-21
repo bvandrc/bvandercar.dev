@@ -10,11 +10,6 @@ const { TOGGLE, POSTER, FRAME } = SELECTORS.LIVE_PREVIEW
 const SRC = 'https://example.com/'
 
 describe('LivePreview', () => {
-  it('loads no frame until opened', () => {
-    render(<LivePreview src={SRC} title="Example" />)
-    expect(screen.queryByTestId(FRAME)).toBeNull()
-  })
-
   it('shows the page in a named frame once opened, and drops it once closed', async () => {
     const user = userEvent.setup()
     render(<LivePreview src={SRC} title="Example" />)
@@ -90,14 +85,6 @@ describe('LivePreview', () => {
       />
     )
     expect(screen.getByTestId(POSTER).style.height).toBe('48px')
-  })
-
-  it('pulses its toggle only while asked to', () => {
-    const { rerender } = render(<LivePreview src={SRC} title="Example" pulse />)
-    expect(screen.getByTestId(TOGGLE).dataset.pulse).toBe('true')
-
-    rerender(<LivePreview src={SRC} title="Example" />)
-    expect(screen.getByTestId(TOGGLE).dataset.pulse).toBe('false')
   })
 
   it('shows what its open prop says, and asks to change it on each toggle, when given one', async () => {

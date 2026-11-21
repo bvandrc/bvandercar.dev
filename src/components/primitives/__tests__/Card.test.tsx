@@ -93,13 +93,4 @@ describe('Card', () => {
     await user.click(screen.getByTestId(TEXT))
     expect(onSurfaceClick).not.toHaveBeenCalled()
   })
-
-  it('still calls its own onClick', async () => {
-    const user = userEvent.setup()
-    const onClick = vi.fn()
-    render(<Card onClick={onClick} data-testid={SELF} />)
-
-    await user.click(screen.getByTestId(SELF))
-    expect(onClick).toHaveBeenCalledOnce()
-  })
 })

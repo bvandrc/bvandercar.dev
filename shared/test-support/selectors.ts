@@ -22,9 +22,6 @@ export const SELECTORS = {
       },
     },
   },
-  SOCIAL_LINKS: {
-    EMAIL: 'social-links-email',
-  },
   MAIN: 'main',
   LINE_CHART: {
     PLOT: 'line-chart-plot',
@@ -75,8 +72,6 @@ export const SELECTORS = {
   BEYOND_CODE: 'beyond-code',
   FOOTER: {
     SELF: 'footer',
-    SOURCE_LINK: 'footer-source-link',
-    BUILD_DATE: 'footer-build-date',
   },
   LIVE_PREVIEW: {
     SELF: 'live-preview',

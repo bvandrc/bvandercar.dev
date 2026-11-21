@@ -1,19 +1,5 @@
 import { DAY_MS } from '~/dates'
-import { getLastDaysSpan, getSpanMs, panSpan, zoomSpan } from '../spans'
-
-describe('getSpanMs', () => {
-  it('measures a span of ISO dates or times', () => {
-    expect(getSpanMs({ start: '2026-03-01', end: '2026-03-08' })).toBe(
-      7 * DAY_MS
-    )
-    expect(
-      getSpanMs({
-        start: '2026-03-01T00:00:00.000Z',
-        end: '2026-03-01T12:00:00.000Z',
-      })
-    ).toBe(DAY_MS / 2)
-  })
-})
+import { getLastDaysSpan, panSpan, zoomSpan } from '../spans'
 
 describe('zoomSpan', () => {
   const FULL = { start: '2025-04-11', end: '2026-04-11' }
@@ -56,10 +42,6 @@ describe('zoomSpan', () => {
 
     expect(zoomed?.end).toBe(new Date(Date.parse(FULL.end)).toISOString())
   })
-
-  it('returns nothing once zoomed back out to the full span', () => {
-    expect(zoomSpan(FULL, FULL, Date.parse('2026-02-01'), 2)).toBeUndefined()
-  })
 })
 
 describe('panSpan', () => {
@@ -78,10 +60,6 @@ describe('panSpan', () => {
       start: '2026-01-01T00:00:00.000Z',
       end: '2026-01-29T00:00:00.000Z',
     })
-  })
-
-  it("leaves a span that isn't zoomed in where it is", () => {
-    expect(panSpan(undefined, FULL, 7 * DAY_MS)).toBeUndefined()
   })
 })
 

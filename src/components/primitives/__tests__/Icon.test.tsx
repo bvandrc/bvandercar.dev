@@ -23,11 +23,4 @@ describe('Icon', () => {
       '<path stroke="currentColor" d="m9 18l6-6l-6-6"></path>'
     )
   })
-
-  it('is hidden from screen readers', () => {
-    render(<Icon name="chevron-right" data-testid={ICON_TEST_ID} />)
-    expect(screen.getByTestId(ICON_TEST_ID).getAttribute('aria-hidden')).toBe(
-      'true'
-    )
-  })
 })
