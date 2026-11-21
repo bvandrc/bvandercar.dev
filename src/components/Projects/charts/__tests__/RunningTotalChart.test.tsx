@@ -194,11 +194,17 @@ describe('RunningTotalChart', () => {
     )
   })
 
-  it('writes what the stretch in view added under the total, where it starts past zero', () => {
+  it('writes what the stretch in view added under the total, while zoomed in on one that starts past zero', () => {
     const { unmount } = renderChart()
     // From zero, the total says it all.
     expect(screen.queryByTestId(RISE)).toBeNull()
     unmount()
+    // Its full view, starting partway, like the footer's charts' all time.
+    const { unmount: unmountPartway } = renderChart({
+      span: { start: '2026-03-09', end: '2026-03-22' },
+    })
+    expect(screen.queryByTestId(RISE)).toBeNull()
+    unmountPartway()
 
     renderChart({
       span: { start: '2026-03-09', end: '2026-03-22' },

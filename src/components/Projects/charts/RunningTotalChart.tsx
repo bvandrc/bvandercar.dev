@@ -140,7 +140,7 @@ const ChartReadout = ({ icon, children }: ChartReadoutProps) => (
 /**
  * Daily counts as a running total, on a small shaded line chart that ends at
  * the total, written beside it, with what the stretch in view added below it
- * where that stretch starts past zero.
+ * while zoomed in on a stretch that starts past zero.
  *
  * It's captioned in its top-left corner, behind the count's glyph, with a
  * summary, or the total through the period under the pointer, like its week.
@@ -326,8 +326,8 @@ export const RunningTotalChart = ({
               {/* Shortened like the glyphs, since hovering the last period reads it in full. */}
               {formatCompactCount(total)}
             </text>
-            {/* Where the baseline isn't zero, what the stretch in view added, so its start can be read too. */}
-            {lineStartTotal > 0 && (
+            {/* Zoomed in past zero, what the stretch in view added, so its start can be read too; a full view that starts partway, like the footer's, needs none. */}
+            {zoomed && lineStartTotal > 0 && (
               <text
                 x={lastX + 6}
                 y={toY(total) + 20}
