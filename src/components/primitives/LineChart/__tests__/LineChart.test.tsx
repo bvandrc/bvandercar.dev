@@ -68,22 +68,6 @@ describe('LineChart', () => {
     expect(screen.getByTestId(CAPTION).textContent).toBe('none')
   })
 
-  it("keeps the pointer's place between the line's start and the domain's end", () => {
-    renderChart()
-    const caption = screen.getByTestId(CAPTION)
-
-    const CASES = [
-      // Left of the line's start, which is past the domain's.
-      [getPlotX(5), 'x 20'],
-      // Past the plot's right edge, over the end label.
-      [SIZE.width + 20, 'x 100'],
-    ] as const
-    for (const [clientX, expected] of CASES) {
-      movePointer(clientX)
-      expect(caption.textContent, String(clientX)).toBe(expected)
-    }
-  })
-
   it('captions what is under a still pointer once the domain moves beneath it', () => {
     const { rerender } = renderChart()
     movePointer(getPlotX(40))

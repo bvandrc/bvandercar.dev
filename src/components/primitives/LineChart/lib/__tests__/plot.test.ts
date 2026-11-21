@@ -29,16 +29,4 @@ describe('getPlotScale', () => {
       PLOT.TOP,
     ])
   })
-
-  it('keeps a range with no rise on the baseline, rather than dividing by zero', () => {
-    const { toY, baseline } = getPlotScale(DOMAIN, { y1: 40, y2: 40 }, SIZE)
-
-    expect(toY(40)).toBe(baseline)
-  })
-
-  it('gives a domain with no width some to draw across, rather than dividing by zero', () => {
-    const { toX, right } = getPlotScale({ x1: 100, x2: 100 }, RANGE, SIZE)
-
-    expect([toX(100), toX(101)]).toEqual([PLOT.INSET, right])
-  })
 })

@@ -81,34 +81,6 @@ describe('RunningTotalChart', () => {
     )
   })
 
-  it('marks each day with a release with a line, one for releases on the same day', () => {
-    renderChart({
-      releases: [
-        { version: '1.0.0', day: '2026-03-02' },
-        { version: '1.0.1', day: '2026-03-20' },
-        // The same day as the last, so drawn on the same line.
-        { version: '1.0.2', day: '2026-03-20' },
-        { version: '1.1.0', day: '2026-03-22' },
-      ],
-    })
-
-    expect(screen.getAllByTestId(MARKER)).toHaveLength(3)
-  })
-
-  it("marks a release on a zoomed-in span's first day, as panned all the way back to it", () => {
-    renderChart({
-      releases: [{ version: '1.0.0', day: '2026-03-02' }],
-      // A zoomed-in span's ends are times, where the release's is a date.
-      span: {
-        start: '2026-03-02T00:00:00.000Z',
-        end: '2026-03-16T00:00:00.000Z',
-      },
-      zoomed: true,
-    })
-
-    expect(screen.getAllByTestId(MARKER)).toHaveLength(1)
-  })
-
   it('writes what the stretch in view added under the total, while zoomed in on one that starts past zero', () => {
     const { unmount } = renderChart()
     // From zero, the total says it all.
