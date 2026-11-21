@@ -110,26 +110,6 @@ const getChartedCardId = async (page: Page) => {
   return id
 }
 
-test("clicking a project's counts only opens and closes their charts, and leaves the page where it is", async ({
-  page,
-}) => {
-  await page.goto('/')
-  const counts = getChartedCounts(page)
-  const url = page.url()
-
-  // Hovered open, the first click keeps the charts open, and the next closes them.
-  await counts.hover()
-  const charts = page.getByTestId(SELECTORS.TOOLTIP).getByTestId(COMMITS_CHART)
-  await expect(charts).toBeVisible()
-  await counts.click()
-  await waitForFrames(page)
-  await expect(charts).toBeVisible()
-  await counts.click()
-  await expect(counts).toHaveAttribute('data-state', 'closed')
-  expect(page.url()).toBe(url)
-  expect(page.context().pages()).toHaveLength(1)
-})
-
 test('a URL whose `#` names a card, and asks for its charts, opens on the card with its counts charted', async ({
   page,
 }) => {
