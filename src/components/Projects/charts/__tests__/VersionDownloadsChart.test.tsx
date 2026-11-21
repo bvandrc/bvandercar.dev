@@ -17,8 +17,9 @@ const VERSION_DOWNLOADS = {
     '1.5': 6000,
     '1.6': 12_357,
   },
-  LAST_30_DAYS: {},
+  LAST_YEAR: { '1.4': 1500, '1.5': 6000, '1.6': 12_357 },
   LAST_90_DAYS: { '1.5': 100, '1.6': 300 },
+  LAST_30_DAYS: {},
 } satisfies VersionDownloads
 
 /** Renders the chart of `VERSION_DOWNLOADS`, barring `period`'s, all time unless given. */

@@ -123,12 +123,14 @@ vi.mock('@/generated/package-downloads', () => ({
     pypi: {
       [FIXTURES.PYPI_PACKAGE]: {
         ALL: { '1.0': 7, '1.1': 1210 },
+        LAST_YEAR: { '1.0': 7, '1.1': 1210 },
         LAST_30_DAYS: { '1.1': 30 },
         LAST_90_DAYS: { '1.1': 90 },
       },
       // One minor version alone, with nothing to compare it to.
       [FIXTURES.ONE_VERSION_PACKAGE]: {
         ALL: { '1.0': 1217 },
+        LAST_YEAR: { '1.0': 1217 },
         LAST_30_DAYS: {},
         LAST_90_DAYS: {},
       },

@@ -2,16 +2,27 @@ import { ToggleGroup } from 'radix-ui'
 
 import { cn } from '@/lib/cn'
 
-/** One of a segmented control's options: its value, and what it says. */
-export type SegmentedControlOption<T extends string> = {
+/** One of a segmented control's options: its value, what it says, and any other props for its button. */
+export type SegmentedControlOption<T extends string> = Omit<
+  ToggleGroup.ToggleGroupItemProps,
+  'value' | 'children'
+> & {
   value: T
   label: React.ReactNode
   'data-testid'?: string
 }
 
-export type SegmentedControlProps<T extends string> = Pick<
-  React.ComponentProps<'div'>,
-  'className' | 'aria-hidden'
+export type SegmentedControlProps<T extends string> = Omit<
+  ToggleGroup.ToggleGroupSingleProps,
+  // What it sets itself from the props below, and the div's own onChange,
+  // which its own replaces.
+  | 'type'
+  | 'value'
+  | 'defaultValue'
+  | 'onValueChange'
+  | 'onChange'
+  | 'rovingFocus'
+  | 'children'
 > & {
   options: readonly SegmentedControlOption<T>[]
   /** The option chosen, or undefined for none */
@@ -39,10 +50,10 @@ export const SegmentedControl = <T extends string>({
   onChange,
   focusable = true,
   className,
-  'aria-hidden': ariaHidden,
-  'data-testid': testId,
+  ...props
 }: SegmentedControlProps<T>) => (
   <ToggleGroup.Root
+    {...props}
     type="single"
     // Radix's value is a string, with none as an empty one.
     value={value ?? ''}
@@ -54,21 +65,19 @@ export const SegmentedControl = <T extends string>({
       }
     }}
     rovingFocus={focusable}
-    aria-hidden={ariaHidden}
-    className={cn('flex gap-1 text-xs', className)}
-    data-testid={testId}>
-    {options.map((option) => (
+    className={cn('flex gap-1 text-xs', className)}>
+    {options.map(({ label, className: optionClassName, ...option }) => (
       <ToggleGroup.Item
         key={option.value}
-        value={option.value}
+        {...option}
         tabIndex={focusable ? undefined : -1}
         className={cn(
           'rounded-md px-2 py-0.5 text-ink-muted hover:text-ink',
           // The chosen one stands out from the others.
-          'data-[state=on]:bg-ink-muted/20 data-[state=on]:text-ink'
-        )}
-        data-testid={option['data-testid']}>
-        {option.label}
+          'data-[state=on]:bg-ink-muted/20 data-[state=on]:text-ink',
+          optionClassName
+        )}>
+        {label}
       </ToggleGroup.Item>
     ))}
   </ToggleGroup.Root>

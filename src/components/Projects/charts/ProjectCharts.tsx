@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { objectKeys } from 'ts-extras'
 
 import {
   type ActivityHistory,
@@ -21,8 +22,8 @@ export type ProjectChartsProps = Pick<
 > & {
   /** The dates both charts span, zoomed all the way out */
   span: DaySpan
-  /** The dates both charts open zoomed in on, inside `span`; without it, they open zoomed all the way out */
-  initialSpan?: DaySpan
+  /** The period the charts open on, all time unless given */
+  initialPeriod?: ChartPeriod
   /** The history whose commits it charts */
   activity?: ActivityHistory
   /** The history whose merged PRs it charts */
@@ -37,11 +38,13 @@ export type ProjectChartsProps = Pick<
  * chart, whichever it has, sharing one span, zoom, and set of releases, and
  * last its package's downloads by version, where counted.
  *
- * Buttons below switch them all between all time and the last 90 or 30
- * days: the line charts zoom to the period, and the versions bar its
- * downloads. Mounted with the tooltip it sits in, so each opening starts at
- * `initialSpan`, with no period chosen, or zoomed all the way out, on all
- * time.
+ * Buttons below switch them all between all time and the last year, 90
+ * days, or 30 days: the line charts zoom to the period, and the versions bar
+ * its downloads. A period reaching back past where the line charts start
+ * would show the same as all time, so it's left out, and with none left, so
+ * are the buttons. Mounted with the tooltip it sits in,
+ * so each opening starts on `initialPeriod`, or all time where that's left
+ * out.
  * Loaded on its own, with the histories it charts, the first time a
  * project's counts are hovered, so neither the charts' code, gestures
  * included, nor their data is in the page's first load.
@@ -51,16 +54,22 @@ export const ProjectCharts = ({
   prs,
   downloads,
   span: fullSpan,
-  initialSpan,
+  initialPeriod = 'ALL',
   releases,
 }: ProjectChartsProps) => {
-  // Shared by both charts, so a release stays lined up across them as they zoom.
-  const [zoomedSpan, setZoomedSpan] = useState(initialSpan)
-  // A zoom or pan leaves it chosen, as what the versions bar.
-  const [period, setPeriod] = useState<ChartPeriod | undefined>(
-    initialSpan ? undefined : 'ALL'
+  // All time, and each period shorter than it, which would otherwise show
+  // the same.
+  const periods = objectKeys(CHART_PERIOD_DAYS).filter(
+    (key) => key === 'ALL' || getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[key])
   )
-  /** Shows `next` on every chart: the line charts zoomed to it, all the way out for all time. */
+  const openingPeriod = periods.includes(initialPeriod) ? initialPeriod : 'ALL'
+  // Shared by both charts, so a release stays lined up across them as they zoom.
+  const [zoomedSpan, setZoomedSpan] = useState(() =>
+    getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[openingPeriod])
+  )
+  // A zoom or pan leaves it chosen, as what the versions bar.
+  const [period, setPeriod] = useState(openingPeriod)
+  /** Zooms every chart to `next`'s last days, all the way out for all time. */
   const choosePeriod = (next: ChartPeriod) => {
     setPeriod(next)
     setZoomedSpan(getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[next]))
@@ -98,12 +107,16 @@ export const ProjectCharts = ({
       {downloads?.versionDownloads && (
         <VersionDownloadsChart
           versionDownloads={downloads.versionDownloads}
-          // Only charts that open on a span of their own, like the footer's,
-          // with no versions, open with no period chosen.
-          period={period ?? 'ALL'}
+          period={period}
         />
       )}
-      <PeriodSwitch period={period} onChange={choosePeriod} />
+      {periods.length > 1 && (
+        <PeriodSwitch
+          periods={periods}
+          period={period}
+          onChange={choosePeriod}
+        />
+      )}
     </div>
   )
 }

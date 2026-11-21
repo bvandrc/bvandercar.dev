@@ -6,6 +6,7 @@ import {
   type SegmentedControlOption,
 } from '../SegmentedControl'
 
+const SELF = 'segmented-control'
 const OPTION = 'segmented-control-option'
 
 const OPTIONS = [
@@ -60,6 +61,20 @@ describe('SegmentedControl', () => {
     expect(onChange).not.toHaveBeenCalled()
     await user.click(week)
     expect(onChange).toHaveBeenCalledExactlyOnceWith('week')
+  })
+
+  it('passes its other props to the group around its options', () => {
+    render(
+      <SegmentedControl
+        options={OPTIONS}
+        value="day"
+        onChange={vi.fn()}
+        aria-hidden
+        data-testid={SELF}
+      />
+    )
+
+    expect(screen.getByTestId(SELF).getAttribute('aria-hidden')).toBe('true')
   })
 
   it('leaves its options out of the tab order where it is not focusable', () => {

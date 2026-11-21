@@ -141,6 +141,7 @@ vi.mock('@/generated/package-downloads', () => ({
     pypi: {
       [FIXTURES.PYPI_PACKAGE]: {
         ALL: { '1.0': 7, '2.0': 1210 },
+        LAST_YEAR: { '1.0': 7, '2.0': 1210 },
         LAST_30_DAYS: { '2.0': 30 },
         LAST_90_DAYS: { '2.0': 90 },
       },

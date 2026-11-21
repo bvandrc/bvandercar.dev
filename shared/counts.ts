@@ -55,6 +55,7 @@ export type DownloadHistory = {
  */
 export const CHART_PERIOD_DAYS = {
   ALL: undefined,
+  LAST_YEAR: 365,
   LAST_90_DAYS: 90,
   LAST_30_DAYS: 30,
 } as const satisfies Record<string, number | undefined>
