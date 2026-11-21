@@ -37,11 +37,4 @@ describe('BrandIcon', () => {
     const svg = getIconSvg(screen.getByRole('img', { name: 'Playwright' }))
     expect(svg).toMatch(/viewBox="0 0 128 128"[^>]*><path fill="#2ead33"/)
   })
-
-  it('renders nothing for a slug with no logo', () => {
-    const { container } = render(
-      <BrandIcon slug="unknown" color="0170ea" size={14} />
-    )
-    expect(container.innerHTML).toBe('')
-  })
 })

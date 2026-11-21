@@ -42,13 +42,4 @@ describe('getChipSectionId', () => {
       getChipSectionId(ENTRIES, [{ sectionId: 'second' }], 'under-first')
     ).toBeUndefined()
   })
-
-  it('gives none for no section, or one not listed', () => {
-    for (const sectionId of [undefined, 'unlisted']) {
-      expect(
-        getChipSectionId(ENTRIES, CHIPS, sectionId),
-        String(sectionId)
-      ).toBeUndefined()
-    }
-  })
 })

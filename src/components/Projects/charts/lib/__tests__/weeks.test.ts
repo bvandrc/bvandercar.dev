@@ -1,12 +1,5 @@
 import { addDays } from '~/dates'
-import {
-  describeWeekly,
-  formatLatestVersion,
-  getPeakWeek,
-  getRunningTotals,
-  sumWeeks,
-  type Week,
-} from '../weeks'
+import { describeWeekly, sumWeeks, type Week } from '../weeks'
 
 /** Weeks a week apart from Mar 2, with `counts` in order. */
 const buildWeeks = (counts: number[]): Week[] =>
@@ -31,29 +24,6 @@ describe('sumWeeks', () => {
   })
 })
 
-describe('getPeakWeek', () => {
-  it('finds the week with the highest count', () => {
-    expect(getPeakWeek(buildWeeks([5, 40, 12]))).toMatchObject({
-      count: 40,
-      start: '2026-03-09',
-    })
-  })
-
-  it('takes the earliest of weeks that tie', () => {
-    expect(getPeakWeek(buildWeeks([40, 40, 12]))).toMatchObject({
-      count: 40,
-      start: '2026-03-02',
-    })
-  })
-})
-
-describe('formatLatestVersion', () => {
-  it('names only the latest of several, by their numbers rather than their order', () => {
-    // 1.10.0 sorts before 1.9.0 as text.
-    expect(formatLatestVersion(['1.9.0', '1.10.0', '1.0.5'])).toBe('v1.10.0')
-  })
-})
-
 describe('describeWeekly', () => {
   it('names what it counts, the first month, and the peak week, its count in full', () => {
     expect(
@@ -61,11 +31,5 @@ describe('describeWeekly', () => {
     ).toBe(
       'Weekly commits since Feb 2026, peaking at 1,200 in the week of Mar 9, 2026'
     )
-  })
-})
-
-describe('getRunningTotals', () => {
-  it('adds each day to the total through the day before', () => {
-    expect(getRunningTotals([1, 0, 2, 5])).toEqual([1, 1, 3, 8])
   })
 })

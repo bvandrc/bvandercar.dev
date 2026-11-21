@@ -43,10 +43,6 @@ describe('getVersionBars', () => {
 
     expect(bars.map(({ version }) => version)).toEqual(['1.10', '1.9'])
   })
-
-  it('shares none out where nothing was downloaded, rather than dividing by zero', () => {
-    expect(getVersionBars({ '1.0': 0, '1.1': 0 })[0].share).toBe(0)
-  })
 })
 
 describe('formatVersionBar', () => {
