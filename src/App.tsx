@@ -1,5 +1,7 @@
 import './styles/index.css'
 
+import { useUrlHashTarget } from '@bvandrc/react-toolkit'
+
 import { BeyondCode } from './components/BeyondCode'
 import { Contents } from './components/Contents'
 import { Footer } from './components/Footer'
@@ -7,11 +9,10 @@ import { Header } from './components/Header'
 import { Projects } from './components/Projects'
 import { TooltipProvider } from './components/primitives/Tooltip'
 import { Skills } from './components/Skills'
-import { useScrollToUrlHash } from './hooks/useScrollToUrlHash'
 import { cn } from './lib/cn'
 
 export const App = () => {
-  useScrollToUrlHash()
+  const urlTarget = useUrlHashTarget()
   return (
     <TooltipProvider>
       <div
@@ -27,7 +28,7 @@ export const App = () => {
           <Contents />
         </div>
         <main className="flex flex-col gap-8" data-testid="main">
-          <Projects />
+          <Projects urlTarget={urlTarget} />
           <Skills />
           <BeyondCode />
         </main>

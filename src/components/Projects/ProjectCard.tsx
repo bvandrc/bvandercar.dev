@@ -19,7 +19,10 @@ import {
   THUMBNAIL_WIDTHS,
   type ThumbnailWidth,
 } from '~/screenshots'
-import { CountsAndRepoLink } from './CountsAndRepoLink'
+import {
+  CountsAndRepoLink,
+  type CountsAndRepoLinkProps,
+} from './CountsAndRepoLink'
 import { getProjectCounts } from './lib/project-counts'
 
 // A name's sizes, largest first, which it steps down only to keep its counts
@@ -45,7 +48,7 @@ export type ProjectCardProps = {
   /** Whether a live preview's toggle pulses, to draw the eye to it. */
   pulsePreview: boolean
   onPreviewOpen: () => void
-}
+} & Pick<CountsAndRepoLinkProps, 'openCounts'>
 
 /** A project's name, type, blurb, counts and repo link, and live preview or screenshot. */
 export const ProjectCard = ({
@@ -53,6 +56,7 @@ export const ProjectCard = ({
   centered,
   pulsePreview,
   onPreviewOpen,
+  openCounts,
 }: ProjectCardProps) => {
   const nameId = useId()
   const cardRef = useRef<HTMLDivElement>(null)
@@ -181,6 +185,7 @@ export const ProjectCard = ({
                 {...countsFields}
                 privateRepo={project.privateRepo}
                 nameId={nameId}
+                openCounts={openCounts}
               />
             </p>
           </div>

@@ -43,6 +43,20 @@ describe('CountsAndRepoLink', () => {
     )
   })
 
+  it("opens the counts' tooltip as openCounts turns true, as for a URL asking for their charts", async () => {
+    const { rerender } = renderWithProviders(
+      <CountsAndRepoLink repo={REPO} nameId="project-name" />
+    )
+    expect(screen.queryByRole('tooltip')).toBeNull()
+
+    rerender(<CountsAndRepoLink repo={REPO} nameId="project-name" openCounts />)
+    await waitFor(() =>
+      expect(screen.getByTestId(COUNTS).getAttribute('aria-describedby')).toBe(
+        screen.getByRole('tooltip').id
+      )
+    )
+  })
+
   describe('for a private repo', () => {
     /** Renders a private repo's counts, and returns them. */
     const renderPrivateCounts = () => {
@@ -69,6 +83,26 @@ describe('CountsAndRepoLink', () => {
         expect(counts.getAttribute('aria-describedby')).toBe(
           screen.getByRole('tooltip').id
         )
+      )
+    })
+    it('opens the tooltip as openCounts turns true, as the link would', async () => {
+      const { rerender } = renderWithProviders(
+        <CountsAndRepoLink repo={REPO} privateRepo nameId="project-name" />
+      )
+      expect(screen.queryByRole('tooltip')).toBeNull()
+
+      rerender(
+        <CountsAndRepoLink
+          repo={REPO}
+          privateRepo
+          nameId="project-name"
+          openCounts
+        />
+      )
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(COUNTS).getAttribute('aria-describedby')
+        ).toBe(screen.getByRole('tooltip').id)
       )
     })
   })

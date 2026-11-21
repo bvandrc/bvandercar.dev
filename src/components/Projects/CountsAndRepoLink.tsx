@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useFocusVisibleOpen } from '@bvandrc/react-toolkit'
 
 import { Icon } from '@/components/primitives/Icon'
@@ -15,6 +16,8 @@ export type CountsAndRepoLinkProps = Omit<
   Pick<Project, 'privateRepo'> & {
     /** The `id` of the project's name, which describes the link */
     nameId: string
+    /** Opens the counts' tooltip, charts and all, as it turns true, as for a URL asking for them */
+    openCounts?: boolean
   }
 
 /**
@@ -23,11 +26,13 @@ export type CountsAndRepoLinkProps = Omit<
  * Each part shows its own tooltip on hover, and keyboard focus on the link
  * shows the counts' one, charts and all. A private repo would 404 for a
  * visitor, so its counts stand alone, in the link's color, and take that
- * keyboard focus themselves.
+ * keyboard focus themselves. `openCounts` opens the counts' tooltip too,
+ * which then closes as any would.
  */
 export const CountsAndRepoLink = ({
   nameId,
   privateRepo = false,
+  openCounts = false,
   ...countsProps
 }: CountsAndRepoLinkProps) => {
   const {
@@ -35,11 +40,21 @@ export const CountsAndRepoLink = ({
     setOpen: setCountsOpen,
     focusProps,
   } = useFocusVisibleOpen()
+  useEffect(() => {
+    if (openCounts) {
+      setCountsOpen(true)
+    }
+  }, [openCounts, setCountsOpen])
   if (privateRepo) {
     return (
       // Lined up as the link would be.
       <span className="inline-flex justify-end text-link-subtle">
-        <ProjectCounts {...countsProps} focusable />
+        <ProjectCounts
+          {...countsProps}
+          open={countsOpen}
+          onOpenChange={setCountsOpen}
+          focusable
+        />
       </span>
     )
   }
