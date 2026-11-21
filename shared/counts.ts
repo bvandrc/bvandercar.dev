@@ -46,5 +46,20 @@ export type DownloadHistory = {
   daily: number[]
 }
 
+/**
+ * The stretches a project's charts can show, by how many of their latest
+ * days each covers.
+ *
+ * `ALL` covers every day the charts have.
+ */
+export const CHART_PERIOD_DAYS = {
+  ALL: undefined,
+  LAST_90_DAYS: 90,
+  LAST_30_DAYS: 30,
+} as const satisfies Record<string, number | undefined>
+
+/** A stretch a project's charts can show. */
+export type ChartPeriod = keyof typeof CHART_PERIOD_DAYS
+
 /** A package's release: its version, and the ISO date it was published. */
 export type Release = { version: string; day: string }

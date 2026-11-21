@@ -1,9 +1,16 @@
 import { useState } from 'react'
 
-import type { ActivityHistory, DownloadHistory, Registry } from '~/counts'
+import {
+  type ActivityHistory,
+  CHART_PERIOD_DAYS,
+  type ChartPeriod,
+  type DownloadHistory,
+  type Registry,
+} from '~/counts'
 import { ActivityChart } from './ActivityChart'
 import { DownloadsChart } from './DownloadsChart'
-import { type DaySpan, panSpan, zoomSpan } from './lib/spans'
+import { type DaySpan, getLastDaysSpan, panSpan, zoomSpan } from './lib/spans'
+import { PeriodSwitch } from './PeriodSwitch'
 import type { RunningTotalChartViewProps } from './RunningTotalChart'
 
 export type ProjectChartsProps = Pick<
@@ -26,8 +33,10 @@ export type ProjectChartsProps = Pick<
  * A project's commits chart, merged PRs chart, then its package's downloads
  * chart, whichever it has, sharing one span, zoom, and set of releases.
  *
- * Mounted with the tooltip it sits in, so each opening starts at
- * `initialSpan`, or zoomed all the way out.
+ * Buttons below switch them all between all time and the last 90 or 30
+ * days, zooming them to the period. Mounted with the tooltip it sits in, so
+ * each opening starts at `initialSpan`, with no period chosen, or zoomed all
+ * the way out, on all time.
  * Loaded on its own, with the histories it charts, the first time a
  * project's counts are hovered, so neither the charts' code, gestures
  * included, nor their data is in the page's first load.
@@ -42,6 +51,15 @@ export const ProjectCharts = ({
 }: ProjectChartsProps) => {
   // Shared by both charts, so a release stays lined up across them as they zoom.
   const [zoomedSpan, setZoomedSpan] = useState(initialSpan)
+  // A zoom or pan leaves it chosen.
+  const [period, setPeriod] = useState<ChartPeriod | undefined>(
+    initialSpan ? undefined : 'ALL'
+  )
+  /** Zooms every chart to `next`'s last days, all the way out for all time. */
+  const choosePeriod = (next: ChartPeriod) => {
+    setPeriod(next)
+    setZoomedSpan(getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[next]))
+  }
   // Each from the span before, so gestures landing in one frame build on
   // each other rather than all starting from the same one.
   /** Zooms both charts around a time under the pointer, scaling their width by `factor`. */
@@ -66,6 +84,7 @@ export const ProjectCharts = ({
       )}
       {prs && <ActivityChart activity={prs} kind="prs" {...shared} />}
       {downloads && <DownloadsChart {...downloads} {...shared} />}
+      <PeriodSwitch period={period} onChange={choosePeriod} />
     </div>
   )
 }
