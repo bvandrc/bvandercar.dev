@@ -47,7 +47,7 @@ const {
   NEW_NPM_PACKAGE,
   PYPI_PACKAGE,
 } = FIXTURES
-const { PLOT, READOUT, TOTAL, RELEASE } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+const { PLOT, CAPTION, END_LABEL, MARKER } = SELECTORS.LINE_CHART
 
 // The repo's counts in full: its commits from this site's fetch, too few PRs
 // to show, and its downloads from the profile's, with no package to fetch
@@ -191,7 +191,7 @@ describe('ProjectCounts', () => {
     ] as const
     for (const [chart, expected] of CASES) {
       expect(
-        within(screen.getByTestId(chart)).getByTestId(TOTAL).textContent,
+        within(screen.getByTestId(chart)).getByTestId(END_LABEL).textContent,
         chart
       ).toBe(expected)
     }
@@ -251,7 +251,7 @@ describe('ProjectCounts', () => {
 
     await hoverCounts()
     expect(
-      within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
+      within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(CAPTION)
         .textContent
     ).toBe('PyPI downloads')
     expect(
@@ -283,7 +283,7 @@ describe('ProjectCounts', () => {
     const activity = within(screen.getByTestId(COMMITS_CHART))
     fireEvent.pointerMove(activity.getByTestId(PLOT), { clientX: 0 })
     // The first release, Mar 4: 3 commits the first week, then 15 more by then.
-    expect(activity.getByTestId(READOUT).textContent).toBe(
+    expect(activity.getByTestId(CAPTION).textContent).toBe(
       'Through Mar 4, 2026: 18 commits'
     )
   })
@@ -294,7 +294,7 @@ describe('ProjectCounts', () => {
     /** The activity chart's release lines' positions. */
     const getReleaseXs = () =>
       within(screen.getByTestId(COMMITS_CHART))
-        .getAllByTestId(RELEASE)
+        .getAllByTestId(MARKER)
         .map((line) => line.getAttribute('x1'))
 
     await hoverCounts()

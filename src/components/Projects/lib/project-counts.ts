@@ -6,8 +6,10 @@ import { getShownCountKinds } from '@/generated/profile/content/counts'
 import type { Project } from '@/generated/profile/content/projects'
 import { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
-import { type CountsField, PACKAGE_FIELDS } from '~/counts'
-import type { ProjectPackage } from '../charts/lib/project-charts'
+import { type CountsField, PACKAGE_FIELDS, type Registry } from '~/counts'
+
+/** A package a project publishes: the registry, and its name there. */
+export type ProjectPackage = { registry: Registry; name: string }
 
 /** The registry the project publishes a package to, and its name there, if any. */
 const getPackage = (

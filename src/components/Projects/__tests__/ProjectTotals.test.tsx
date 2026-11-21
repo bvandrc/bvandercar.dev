@@ -16,7 +16,7 @@ import { ProjectTotals } from '../ProjectTotals'
 
 const { TOTALS, COMMITS_CHART, PRS_CHART, DOWNLOADS_CHART, CHARTS_LOADING } =
   SELECTORS.PROJECTS
-const { TOTAL } = SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+const { END_LABEL } = SELECTORS.LINE_CHART
 const { TOOLTIP } = SELECTORS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
@@ -157,7 +157,7 @@ describe('ProjectTotals', () => {
     ] as const
     for (const [chart, expected] of CASES) {
       expect(
-        within(within(tooltip).getByTestId(chart)).getByTestId(TOTAL)
+        within(within(tooltip).getByTestId(chart)).getByTestId(END_LABEL)
           .textContent,
         chart
       ).toBe(expected)

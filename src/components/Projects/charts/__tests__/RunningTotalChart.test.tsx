@@ -1,14 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import {
   RunningTotalChart,
   type RunningTotalChartViewProps,
 } from '../RunningTotalChart'
 
-const { PLOT, READOUT, TOTAL, RISE, RELEASE } =
-  SELECTORS.PROJECTS.RUNNING_TOTAL_CHART
+const { PLOT, CAPTION, END_LABEL, END_NOTE, MARKER } = SELECTORS.LINE_CHART
 
 // Each day's commits for the three weeks from Mar 2: 5, 1,200, then 12.
 const DAILY = [
@@ -41,7 +39,7 @@ const movePointer = (clientX: number) =>
 describe('RunningTotalChart', () => {
   it('reads out the running total through the week nearest the pointer, and the summary again once it leaves', () => {
     renderChart()
-    const readout = screen.getByTestId(READOUT)
+    const readout = screen.getByTestId(CAPTION)
 
     // Past either end of the plot clamps to its first or last week.
     const CASES = [
@@ -64,32 +62,10 @@ describe('RunningTotalChart', () => {
 
     // Its left edge is now in the second week, where the total had reached 1,205.
     movePointer(0)
-    expect(screen.getByTestId(READOUT).textContent).toBe(
+    expect(screen.getByTestId(CAPTION).textContent).toBe(
       'Through Mar 15, 2026: 1,205 commits'
     )
-    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
-  })
-
-  it('reads out the week now under a still pointer once the chart pans beneath it', () => {
-    const { rerender } = renderChart({
-      span: { start: '2026-03-02', end: '2026-03-15' },
-      zoomed: true,
-    })
-    movePointer(5)
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 5 commits'
-    )
-
-    // A sideways scroll pans a week later without the pointer moving.
-    rerender(
-      buildChart({
-        span: { start: '2026-03-09', end: '2026-03-22' },
-        zoomed: true,
-      })
-    )
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 15, 2026: 1,205 commits'
-    )
+    expect(screen.getByTestId(END_LABEL).textContent).toBe('1.2K')
   })
 
   it('reads out the last week ending in view where a zoomed-in span ends partway through one', () => {
@@ -100,18 +76,7 @@ describe('RunningTotalChart', () => {
 
     // Its right edge is Mar 12, whose week ends out of view on Mar 15.
     movePointer(400)
-    expect(screen.getByTestId(READOUT).textContent).toBe(
-      'Through Mar 8, 2026: 5 commits'
-    )
-  })
-
-  it('reads out a tapped week, and keeps it once the finger lifts', () => {
-    renderChart()
-    const plot = screen.getByTestId(PLOT)
-
-    fireEvent.pointerDown(plot, { clientX: 0, pointerType: 'touch' })
-    fireEvent.pointerLeave(plot, { pointerType: 'touch' })
-    expect(screen.getByTestId(READOUT).textContent).toBe(
+    expect(screen.getByTestId(CAPTION).textContent).toBe(
       'Through Mar 8, 2026: 5 commits'
     )
   })
@@ -127,7 +92,7 @@ describe('RunningTotalChart', () => {
       ],
     })
 
-    expect(screen.getAllByTestId(RELEASE)).toHaveLength(3)
+    expect(screen.getAllByTestId(MARKER)).toHaveLength(3)
   })
 
   it("marks a release on a zoomed-in span's first day, as panned all the way back to it", () => {
@@ -141,33 +106,19 @@ describe('RunningTotalChart', () => {
       zoomed: true,
     })
 
-    expect(screen.getAllByTestId(RELEASE)).toHaveLength(1)
-  })
-
-  // How a wheel, a pinch, or a drag zooms and pans is useZoomPanGestures'
-  // own, tested in @bvandrc/react-toolkit; this keeps what the chart adds.
-  it('zooms with the wheel around the time under the pointer', () => {
-    const onZoom = vi.fn()
-    renderChart({ onZoom })
-
-    // Over the plot's start, so the time is the first day's.
-    turnWheel(screen.getByTestId(PLOT), 5, -100)
-    expect(onZoom).toHaveBeenCalledWith(
-      Date.parse('2026-03-02'),
-      expect.any(Number)
-    )
+    expect(screen.getAllByTestId(MARKER)).toHaveLength(1)
   })
 
   it('writes what the stretch in view added under the total, while zoomed in on one that starts past zero', () => {
     const { unmount } = renderChart()
     // From zero, the total says it all.
-    expect(screen.queryByTestId(RISE)).toBeNull()
+    expect(screen.queryByTestId(END_NOTE)).toBeNull()
     unmount()
     // Its full view, starting partway, like the footer's charts' all time.
     const { unmount: unmountPartway } = renderChart({
       span: { start: '2026-03-09', end: '2026-03-22' },
     })
-    expect(screen.queryByTestId(RISE)).toBeNull()
+    expect(screen.queryByTestId(END_NOTE)).toBeNull()
     unmountPartway()
 
     renderChart({
@@ -175,14 +126,8 @@ describe('RunningTotalChart', () => {
       zoomed: true,
     })
     // 1,217 in all, 5 of them by Mar 9.
-    expect(screen.getByTestId(TOTAL).textContent).toBe('1.2K')
-    expect(screen.getByTestId(RISE).textContent).toBe('+1.2K')
-  })
-
-  it("hides the total while zoomed in short of the line's end", () => {
-    renderChart({ span: { start: '2026-03-02', end: '2026-03-15' } })
-
-    expect(screen.queryByTestId(TOTAL)).toBeNull()
+    expect(screen.getByTestId(END_LABEL).textContent).toBe('1.2K')
+    expect(screen.getByTestId(END_NOTE).textContent).toBe('+1.2K')
   })
 
   it('snaps to a release line under the pointer, reading out its latest version and day', () => {
@@ -192,9 +137,9 @@ describe('RunningTotalChart', () => {
         { version: '1.0.2', day: '2026-03-12' },
       ],
     })
-    const release = screen.getByTestId(RELEASE)
+    const release = screen.getByTestId(MARKER)
     const releaseX = Number(release.getAttribute('x1'))
-    const readout = screen.getByTestId(READOUT)
+    const readout = screen.getByTestId(CAPTION)
 
     // A pixel off the line still lands on it.
     movePointer(releaseX + 1)

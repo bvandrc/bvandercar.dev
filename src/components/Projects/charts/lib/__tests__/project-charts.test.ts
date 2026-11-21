@@ -1,10 +1,11 @@
+import type { ProjectPackage } from '@/components/Projects/lib/project-counts'
 import type {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
   PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
-import { getProjectCharts, type ProjectPackage } from '../project-charts'
+import { getProjectCharts } from '../project-charts'
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const FIXTURES = vi.hoisted(() => ({

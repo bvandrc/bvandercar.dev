@@ -6,7 +6,7 @@ import {
   PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
-import type { Registry } from '~/counts'
+import type { ProjectPackage } from '../../lib/project-counts'
 import { getSpanMs, MIN_CHART_MS } from './spans'
 import { describeVersionDownloads, getVersionBars } from './version-downloads'
 import {
@@ -19,9 +19,6 @@ import { describeWeeklyDownloads } from './weekly-downloads'
 const UNPACKAGED_MIN_COMMITS = 20
 // How many commits a repo with no package has made before its chart starts.
 const UNPACKAGED_START_COMMITS = 15
-
-/** A package a project publishes: the registry, and its name there. */
-export type ProjectPackage = { registry: Registry; name: string }
 
 /** A package's downloads by minor version, where counted for two or more in all, which one alone wouldn't compare. */
 const getChartedVersions = ({ registry, name }: ProjectPackage) => {

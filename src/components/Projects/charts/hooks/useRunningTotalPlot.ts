@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
+import type { LineChartPoint } from '@/components/primitives/LineChart'
 import { addDays, getDaysBetween } from '~/dates'
-import { getPlotScale } from '../lib/plot'
 import type { DaySpan } from '../lib/spans'
 import { getRunningTotals } from '../lib/weeks'
 
@@ -17,11 +17,10 @@ export type RunningTotalPlotOptions = {
 }
 
 /**
- * Daily counts laid out as a running total on a plot of `span`: the totals,
- * the plot's scale, and the line's path.
+ * Daily counts laid out as a running total over `span`, for a `LineChart`:
+ * the totals, and the line's points, domain, and range, along x as times.
  *
- * Worked out again only when the counts or the span change, not on each
- * render, as a pointer moving over the chart makes.
+ * Worked out again only when the counts or the span change.
  */
 export const useRunningTotalPlot = ({
   firstDay,
@@ -48,42 +47,34 @@ export const useRunningTotalPlot = ({
   const spanEnd = span?.end
   const plotted = useMemo(() => {
     const { days, dayTotals, lastDay } = counted
-    const shownSpan = {
-      start: spanStart ?? firstDay,
-      end: spanEnd ?? lastDay,
+    // Compared as times, not strings: a zoomed-in span's ends are ISO times,
+    // which sort after the plain ISO date of the same day.
+    const domain = {
+      start: Date.parse(spanStart ?? firstDay),
+      end: Date.parse(spanEnd ?? lastDay),
     }
     // The line starts on the first day, at what was counted before it, or at
     // a span's later start, at what was counted by then.
-    const lineStart =
-      Date.parse(firstDay) < Date.parse(shownSpan.start)
-        ? shownSpan.start
-        : firstDay
-    const lineStartTime = Date.parse(lineStart)
+    const lineStartTime = Math.max(Date.parse(firstDay), domain.start)
     const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
-    const lastShown = days.findLastIndex(
-      (day) => Date.parse(day) <= Date.parse(shownSpan.end)
-    )
+    const lastShown = days.findLastIndex((day) => Date.parse(day) <= domain.end)
     // The height spans what the shown stretch counts, from where the line
     // starts to the last day in view, so a short one's rise fills it too.
     const lineStartTotal = dayTotals[firstShown - 1] ?? 0
-    const scale = getPlotScale(shownSpan, {
-      low: lineStartTotal,
-      high: dayTotals[lastShown] ?? lineStartTotal,
-    })
-    const { toX, toY } = scale
-    const startX = toX(lineStart)
     return {
-      ...scale,
-      lineStartTime,
+      domain,
+      range: {
+        low: lineStartTotal,
+        high: dayTotals[lastShown] ?? lineStartTotal,
+      },
       lineStartTotal,
-      startX,
-      lastX: toX(lastDay),
       // Through every day, whichever periods it reads out.
-      line: `M${startX},${toY(lineStartTotal)}${dayTotals
-        .map((count, index) => [count, days[index]] as const)
-        .slice(firstShown)
-        .map(([count, day]) => `L${toX(day)},${toY(count)}`)
-        .join('')}`,
+      points: [
+        { x: lineStartTime, y: lineStartTotal },
+        ...days
+          .map((day, index) => ({ x: Date.parse(day), y: dayTotals[index] }))
+          .slice(firstShown),
+      ] satisfies LineChartPoint[],
     }
   }, [counted, firstDay, spanStart, spanEnd])
   return { ...counted, ...plotted }
