@@ -365,13 +365,17 @@ describe('ProjectCounts', () => {
       expect(unhandled).toEqual([false, false])
     })
 
-    it('opens the tooltip on keyboard focus, as a tab stop of their own', async () => {
+    it('opens the tooltip on keyboard focus, as a tab stop of their own, loading its charts', async () => {
+      // A fresh copy, since the charts, once loaded, are kept for later counts.
+      vi.resetModules()
+      const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
       const user = userEvent.setup()
-      renderWithProviders(<ProjectCounts repo={REPO} />)
+      renderWithProviders(<FreshCounts repo={REPO} />)
 
       await user.tab()
       expect(document.activeElement).toBe(screen.getByTestId(COUNTS))
-      expect(await screen.findByTestId(TOOLTIP)).toBeTruthy()
+      // With no hover or press before it to start them loading.
+      expect(await screen.findByTestId(COMMITS_CHART)).toBeTruthy()
     })
   })
 

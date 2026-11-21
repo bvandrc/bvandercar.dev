@@ -190,6 +190,9 @@ export const Counts = ({
     // Starts loading the charts as the pointer arrives, ahead of the
     // tooltip's open delay, or with a tap.
     onPointerEnter: prefetchCharts,
+    // The tooltip opens on keyboard focus by itself, without reporting it,
+    // so its focus starts them loading too.
+    onFocus: prefetchCharts,
     onPointerDown: (event: React.PointerEvent<HTMLElement>) => {
       prefetchCharts()
       triggerProps.onPointerDown(event)
