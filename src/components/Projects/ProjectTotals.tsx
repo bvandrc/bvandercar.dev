@@ -35,6 +35,7 @@ export const ProjectTotals = () => {
         getCharts={(charts) => charts.getTotalCharts(repos, packages)}
         open={open}
         onOpenChange={setOpen}
+        inLink
         data-testid="project-totals">
         <span data-testid="project-totals-words">all-time</span>
       </Counts>

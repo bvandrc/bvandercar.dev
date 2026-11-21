@@ -10,6 +10,7 @@ import type {
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { REPO_ACTIVITY_TOTALS } from '@/generated/repo-activity-totals'
+import { mockPressFocus } from '@/test-helpers/focus-visible'
 import { renderWithProviders } from '@/test-helpers/render'
 import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
@@ -162,28 +163,28 @@ const getTooltipSentences = () =>
   screen.getByRole('tooltip').textContent?.split('. ')
 
 describe('ProjectCounts', () => {
-  it('shows the counts shortened, and in full as its name', () => {
+  it('shows the counts shortened, and in full as the name of a button, which a press toggles the tooltip from', () => {
     renderWithProviders(<ProjectCounts repo={REPO} />)
     const counts = screen.getByTestId(COUNTS)
 
     expect(counts.textContent).toBe('553.1K')
-    expect(counts.getAttribute('aria-label')).toBe(LABEL)
+    expect(screen.getByRole('button', { name: LABEL })).toBe(counts)
   })
 
   it('shows its PRs beside its commits where their rule does', () => {
     renderWithProviders(<ProjectCounts repo={REVIEWED_REPO} />)
 
-    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '667 commits, 587 PRs'
+    expect(screen.getByRole('button', { name: '667 commits, 587 PRs' })).toBe(
+      screen.getByTestId(COUNTS)
     )
   })
 
   it("counts with this site's own fetches where it has them, so each chart ends at the count shown for it", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
-    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '55 commits, 1,217 downloads'
-    )
+    expect(
+      screen.getByRole('button', { name: '55 commits, 1,217 downloads' })
+    ).toBe(screen.getByTestId(COUNTS))
     await hoverCounts()
     const CASES = [
       [COMMITS_CHART, '55'],
@@ -210,8 +211,8 @@ describe('ProjectCounts', () => {
     const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
     renderWithProviders(<FreshCounts repo={OTHER_REPO} />)
 
-    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '7 commits'
+    expect(screen.getByRole('button', { name: '7 commits' })).toBe(
+      screen.getByTestId(COUNTS)
     )
     await userEvent.setup().hover(screen.getByTestId(COUNTS))
     expect((await screen.findByTestId(TOOLTIP)).textContent).toBe('7 commits')
@@ -284,6 +285,7 @@ describe('ProjectCounts', () => {
   })
 
   it('starts the charts zoomed out each time the tooltip opens', async () => {
+    mockPressFocus()
     const user = userEvent.setup()
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
     /** The activity chart's release lines' positions. */
@@ -310,55 +312,81 @@ describe('ProjectCounts', () => {
     expect(getReleaseXs()).toEqual(unzoomed)
   })
 
-  it('opens from outside its trigger, loading its charts, and reports closing', async () => {
+  it('opens from outside its trigger, loading its charts, and still closes as any would', async () => {
     // A fresh copy, since the charts, once loaded, are kept for later counts.
     vi.resetModules()
     const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
     const user = userEvent.setup()
-    const changeOpen = vi.fn()
-    renderWithProviders(
-      <FreshCounts repo={REPO} open onOpenChange={changeOpen} />
-    )
+    renderWithProviders(<FreshCounts repo={REPO} open />)
 
     expect(await screen.findByTestId(COMMITS_CHART)).toBeTruthy()
     await user.keyboard('{Escape}')
-    expect(changeOpen).toHaveBeenLastCalledWith(false)
+    await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
   })
 
-  describe('in a link', () => {
-    /** Renders the counts in a link, and records whether each click on the page goes on to follow it. */
-    const renderInLink = () => {
-      const followed: boolean[] = []
+  describe('on a press', () => {
+    /** Renders the counts, and records whether each click on the page went on unhandled, as a card around them would see it. */
+    const renderRecordingClicks = () => {
+      const unhandled: boolean[] = []
       // On the document, so React's handlers have had their say first.
       const recordClick = (event: MouseEvent) =>
-        followed.push(!event.defaultPrevented)
+        unhandled.push(!event.defaultPrevented)
       document.addEventListener('click', recordClick)
       onTestFinished(() => document.removeEventListener('click', recordClick))
-      renderWithProviders(
-        <a href="https://example.com">
-          <ProjectCounts repo={REPO} />
-        </a>
-      )
-      return followed
+      renderWithProviders(<ProjectCounts repo={REPO} />)
+      return unhandled
     }
 
-    it('opens and closes the tooltip with a tap, rather than following the link', async () => {
+    it('opens and closes the tooltip with a tap, which goes no further', async () => {
+      mockPressFocus()
       const user = userEvent.setup()
-      const followed = renderInLink()
+      const unhandled = renderRecordingClicks()
       const counts = screen.getByTestId(COUNTS)
 
       await user.pointer({ keys: '[TouchA]', target: counts })
       expect(await screen.findByTestId(TOOLTIP)).toBeTruthy()
       await user.pointer({ keys: '[TouchA]', target: counts })
       await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
-      expect(followed).toEqual([false, false])
+      expect(unhandled).toEqual([false, false])
     })
 
-    it('follows the link on a mouse click', async () => {
-      const followed = renderInLink()
+    it('keeps the tooltip hover opened on a click, and closes it on the next, which go no further', async () => {
+      mockPressFocus()
+      const user = userEvent.setup()
+      const unhandled = renderRecordingClicks()
+      const counts = screen.getByTestId(COUNTS)
 
-      await userEvent.setup().click(screen.getByTestId(COUNTS))
-      expect(followed).toEqual([true])
+      await user.hover(counts)
+      await screen.findByTestId(TOOLTIP)
+      await user.click(counts)
+      expect(screen.getByTestId(TOOLTIP)).toBeTruthy()
+      await user.click(counts)
+      await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
+      expect(unhandled).toEqual([false, false])
     })
+
+    it('opens the tooltip on keyboard focus, as a tab stop of their own, loading its charts', async () => {
+      // A fresh copy, since the charts, once loaded, are kept for later counts.
+      vi.resetModules()
+      const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
+      const user = userEvent.setup()
+      renderWithProviders(<FreshCounts repo={REPO} />)
+
+      await user.tab()
+      expect(document.activeElement).toBe(screen.getByTestId(COUNTS))
+      // With no hover or press before it to start them loading.
+      expect(await screen.findByTestId(COMMITS_CHART)).toBeTruthy()
+    })
+  })
+
+  it('closes on a press after opening from outside its trigger', async () => {
+    mockPressFocus()
+    const user = userEvent.setup()
+    renderWithProviders(<ProjectCounts repo={REPO} open />)
+    const counts = screen.getByTestId(COUNTS)
+
+    await screen.findByTestId(TOOLTIP)
+    await user.pointer({ keys: '[TouchA]', target: counts })
+    await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
   })
 })

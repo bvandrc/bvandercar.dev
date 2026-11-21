@@ -48,11 +48,16 @@ export type CountsCharts = Omit<ProjectChartsProps, 'span'> &
     descriptions: string[]
   }
 
-// A tap stands in for the hover a touch screen lacks; a mouse, which can
-// hover, clicks through to the link the counts sit in.
+type Placement = 'IN_LINK' | 'ALONE'
+
+// Counts in a link toggle only on a tap, which stands in for the hover a
+// touch screen lacks, and a mouse clicks through to the link. Counts on their
+// own toggle on any press, which is cancelled, so Radix's own click handler
+// doesn't close what it opened, and a card around them doesn't act on it.
 const TOGGLE_OPTIONS = {
-  pointerTypes: ['touch'],
-} satisfies UsePressToggleOptions
+  IN_LINK: { pointerTypes: ['touch'] },
+  ALONE: { cancelClick: true },
+} satisfies Record<Placement, UsePressToggleOptions>
 
 /**
  * The gap between two counts: 10px with room, closing to 4px without.
@@ -88,8 +93,8 @@ export type CountsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
   Pick<ReturnType<typeof getProjectCounts>, 'shown' | 'chartCount'> & {
     /** Picks what the counts chart, once the charts' code has loaded; undefined for nothing */
     getCharts: (charts: LazyCharts) => CountsCharts | undefined
-    /** Makes them a tab stop of their own, whose keyboard focus opens the tooltip, for counts no link holds */
-    focusable?: boolean
+    /** Sits in a link, whose keyboard focus opens the tooltip, and which a mouse click follows */
+    inLink?: boolean
     className?: string
     'data-testid': string
     /** Words beside the glyphs, which open the tooltip too */
@@ -102,12 +107,12 @@ export type CountsProps = Pick<TooltipProps, 'open' | 'onOpenChange'> &
  *
  * Renders nothing for no counts. The hover shows the charts `getCharts`
  * picks in place of the counts in words, which load, with their data, the
- * first time the tooltip opens. On a touch screen, which has no hover, a tap
- * opens and closes the tooltip instead, rather than following a link the
- * counts sit in. Pass `open` and `onOpenChange` to also open it from
- * elsewhere, `children` for words after the glyphs that hover, or a tap,
- * opens it from too, and `focusable` for counts no link holds, whose own
- * keyboard focus then opens it.
+ * first time the tooltip opens. The counts are a tab stop, whose keyboard
+ * focus opens it, and a tap, click, Enter, or Space opens and closes it.
+ * Pass `inLink` for counts in a link, where only a tap does, and a click
+ * follows the link. Pass `open` and `onOpenChange` to also open it from
+ * elsewhere, and `children` for words after the glyphs that hover, or a
+ * press, opens it from too.
  */
 export const Counts = ({
   shown,
@@ -115,7 +120,7 @@ export const Counts = ({
   getCharts,
   open = false,
   onOpenChange,
-  focusable = false,
+  inLink = false,
   className,
   'data-testid': testId,
   children,
@@ -123,7 +128,9 @@ export const Counts = ({
   // Its pointerdown handler reads the state before Radix's own closes an open
   // tooltip, and its click handler cancels the click, which also stops
   // Radix's from closing it again.
-  const { isActive, setIsActive, triggerProps } = usePressToggle(TOGGLE_OPTIONS)
+  const { isActive, setIsActive, triggerProps } = usePressToggle(
+    TOGGLE_OPTIONS[inLink ? 'IN_LINK' : 'ALONE']
+  )
   const mayChart = chartCount > 0
   // Charts that failed to load leave the counts in words, until the next
   // hover or tap tries again.
@@ -141,12 +148,14 @@ export const Counts = ({
       prefetchCharts()
     }
   }
-  // Opened from outside, it loads the charts as it opens too.
+  // Opened or closed from outside, it opens or closes as hover would, so a
+  // press can still close it, and loads the charts as it opens too.
   useEffect(() => {
+    setIsActive(open)
     if (open) {
       prefetchCharts()
     }
-  }, [open, prefetchCharts])
+  }, [open, setIsActive, prefetchCharts])
   if (shown.length === 0) {
     return null
   }
@@ -172,21 +181,32 @@ export const Counts = ({
   const openProps = {
     ...triggerProps,
     // The tooltip opens on its trigger's keyboard focus, so a tab stop is
-    // all it takes.
-    tabIndex: focusable ? 0 : undefined,
+    // all it takes. In a link, the link is the tab stop.
+    tabIndex: inLink ? undefined : 0,
+    // A press toggles it, so outside a link it's a button, which takes the
+    // glyphs' name, as it has none of its own. In a link, a button would
+    // nest in it, which a link can't hold.
+    role: inLink ? undefined : 'button',
     // Starts loading the charts as the pointer arrives, ahead of the
     // tooltip's open delay, or with a tap.
     onPointerEnter: prefetchCharts,
+    // The tooltip opens on keyboard focus by itself, without reporting it,
+    // so its focus starts them loading too.
+    onFocus: prefetchCharts,
     onPointerDown: (event: React.PointerEvent<HTMLElement>) => {
       prefetchCharts()
       triggerProps.onPointerDown(event)
     },
   }
   /** The glyphs, as an image, with `props`. */
-  const renderGlyphs = (props?: React.ComponentProps<'span'>) => (
+  const renderGlyphs = (props?: { 'data-testid'?: string }) => (
     // An image, like the profile README's badge, so its name can be the full
     // counts rather than the shortened ones it shows.
-    <span role="img" aria-label={label} {...props} data-testid={testId}>
+    <span
+      role="img"
+      aria-label={label}
+      className="flex items-center"
+      {...props}>
       {shown.map(({ key, icon, count }, index) => (
         <Fragment key={key}>
           {index > 0 && <PairGap />}
@@ -200,7 +220,7 @@ export const Counts = ({
   )
   return (
     <Tooltip
-      open={isActive || open}
+      open={isActive}
       onOpenChange={changeOpen}
       content={getContent()}
       aria-label={description}
@@ -210,16 +230,28 @@ export const Counts = ({
       {children ? (
         // The glyphs and the words both open it.
         <span
-          className={cn('inline-flex items-center gap-2', className)}
+          className={cn(
+            'inline-flex items-center gap-2',
+            // A press opens and closes it, as a button's would.
+            'cursor-pointer',
+            className
+          )}
           {...openProps}>
-          {renderGlyphs({ className: 'flex items-center' })}
+          {renderGlyphs({ 'data-testid': testId })}
           {children}
         </span>
       ) : (
-        renderGlyphs({
-          className: cn('flex items-center', className),
-          ...openProps,
-        })
+        <span
+          className={cn(
+            'flex items-center',
+            // A press opens and closes it, as a button's would.
+            'cursor-pointer',
+            className
+          )}
+          {...openProps}
+          data-testid={testId}>
+          {renderGlyphs()}
+        </span>
       )}
     </Tooltip>
   )
