@@ -178,28 +178,28 @@ const getTooltipSentences = () =>
   screen.getByRole('tooltip').textContent?.split('. ')
 
 describe('ProjectCounts', () => {
-  it('shows the counts shortened, and in full as its name', () => {
+  it('shows the counts shortened, and in full as the name of a button, which a press toggles the tooltip from', () => {
     renderWithProviders(<ProjectCounts repo={REPO} />)
     const counts = screen.getByTestId(COUNTS)
 
     expect(counts.textContent).toBe('553.1K')
-    expect(counts.getAttribute('aria-label')).toBe(LABEL)
+    expect(screen.getByRole('button', { name: LABEL })).toBe(counts)
   })
 
   it('shows its PRs beside its commits where their rule does', () => {
     renderWithProviders(<ProjectCounts repo={REVIEWED_REPO} />)
 
-    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '667 commits, 587 PRs'
+    expect(screen.getByRole('button', { name: '667 commits, 587 PRs' })).toBe(
+      screen.getByTestId(COUNTS)
     )
   })
 
   it("counts with this site's own fetches where it has them, so each chart ends at the count shown for it", async () => {
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
 
-    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '55 commits, 1,217 downloads'
-    )
+    expect(
+      screen.getByRole('button', { name: '55 commits, 1,217 downloads' })
+    ).toBe(screen.getByTestId(COUNTS))
     await hoverCounts()
     const CASES = [
       [COMMITS_CHART, '55'],
@@ -226,8 +226,8 @@ describe('ProjectCounts', () => {
     const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
     renderWithProviders(<FreshCounts repo={OTHER_REPO} />)
 
-    expect(screen.getByTestId(COUNTS).getAttribute('aria-label')).toBe(
-      '7 commits'
+    expect(screen.getByRole('button', { name: '7 commits' })).toBe(
+      screen.getByTestId(COUNTS)
     )
     await userEvent.setup().hover(screen.getByTestId(COUNTS))
     expect((await screen.findByTestId(TOOLTIP)).textContent).toBe('7 commits')

@@ -221,6 +221,15 @@ describe('ProjectTotals', () => {
       expect(followed).toEqual([true])
     })
 
+    it("shows the counts as an image, not a button, which the link can't hold", () => {
+      renderTotals()
+
+      expect(screen.getByRole('img', { name: LABEL })).toBe(
+        screen.getByTestId(TOTALS.COUNTS)
+      )
+      expect(screen.queryByRole('button')).toBeNull()
+    })
+
     it('leaves the link as the only tab stop', async () => {
       const link = renderTotals()
 

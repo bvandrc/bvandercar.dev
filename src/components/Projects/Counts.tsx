@@ -183,6 +183,10 @@ export const Counts = ({
     // The tooltip opens on its trigger's keyboard focus, so a tab stop is
     // all it takes. In a link, the link is the tab stop.
     tabIndex: inLink ? undefined : 0,
+    // A press toggles it, so outside a link it's a button, which takes the
+    // glyphs' name, as it has none of its own. In a link, a button would
+    // nest in it, which a link can't hold.
+    role: inLink ? undefined : 'button',
     // Starts loading the charts as the pointer arrives, ahead of the
     // tooltip's open delay, or with a tap.
     onPointerEnter: prefetchCharts,
@@ -192,10 +196,14 @@ export const Counts = ({
     },
   }
   /** The glyphs, as an image, with `props`. */
-  const renderGlyphs = (props?: React.ComponentProps<'span'>) => (
+  const renderGlyphs = (props?: { 'data-testid'?: string }) => (
     // An image, like the profile README's badge, so its name can be the full
     // counts rather than the shortened ones it shows.
-    <span role="img" aria-label={label} {...props} data-testid={testId}>
+    <span
+      role="img"
+      aria-label={label}
+      className="flex items-center"
+      {...props}>
       {shown.map(({ key, icon, count }, index) => (
         <Fragment key={key}>
           {index > 0 && <PairGap />}
@@ -219,16 +227,28 @@ export const Counts = ({
       {children ? (
         // The glyphs and the words both open it.
         <span
-          className={cn('inline-flex items-center gap-2', className)}
+          className={cn(
+            'inline-flex items-center gap-2',
+            // A press opens and closes it, as a button's would.
+            'cursor-pointer',
+            className
+          )}
           {...openProps}>
-          {renderGlyphs({ className: 'flex items-center' })}
+          {renderGlyphs({ 'data-testid': testId })}
           {children}
         </span>
       ) : (
-        renderGlyphs({
-          className: cn('flex items-center', className),
-          ...openProps,
-        })
+        <span
+          className={cn(
+            'flex items-center',
+            // A press opens and closes it, as a button's would.
+            'cursor-pointer',
+            className
+          )}
+          {...openProps}
+          data-testid={testId}>
+          {renderGlyphs()}
+        </span>
       )}
     </Tooltip>
   )
