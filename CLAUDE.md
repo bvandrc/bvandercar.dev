@@ -45,6 +45,14 @@ Conventions live outside this file, synced from https://github.com/bvandrc/bvand
 - `pnpm preview:ci` — serve the last build on port 4173, without building, so run `pnpm build` first; `--strictPort` makes it fail where the port is taken, rather than move to another. All three Playwright suites expect this server to already be running.
 - `pnpm test:e2e`, `pnpm test:a11y`, `pnpm test:lighthouse` — the three Playwright projects. `pnpm pw:open` for the UI runner.
 
+## Action labels
+
+Adding one of these to a PR runs a workflow.
+
+| Label | What adding it does | Workflow |
+| --- | --- | --- |
+| `refresh-data` | Rebuilds the PR's preview with freshly fetched counts, rather than the ones cached that UTC day | `preview.yml` |
+
 ## Repo conventions
 
 - **Package manager**: pnpm. `npm install` writes a competing `package-lock.json` that CI ignores.
