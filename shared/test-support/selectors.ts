@@ -39,7 +39,10 @@ export const SELECTORS = {
       WORDS: 'project-totals-words',
     },
     CHARTS_LOADING: 'project-charts-loading',
-    CHART_PERIOD: 'chart-period',
+    CHART_PERIOD: {
+      SELF: 'chart-period',
+      OPTION: 'chart-period-option',
+    },
     COMMITS_CHART: 'commits-chart',
     PRS_CHART: 'prs-chart',
     DOWNLOADS_CHART: 'downloads-chart',
