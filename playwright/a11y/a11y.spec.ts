@@ -63,30 +63,14 @@ test.describe('Accessibility', () => {
   test('Open tooltip', async ({ page }) => {
     await page.goto('/')
 
-    // Keyboard focus opens the counts' one too, which is how the mobile
-    // project gets one.
-    await page.getByTestId(PROJECTS.REPO_LINK).first().focus()
+    // Keyboard focus on a card's counts opens their tooltip, which is how the
+    // mobile project gets one.
+    await page.getByTestId(PROJECTS.COUNTS).first().focus()
     await expect(page.getByTestId(TOOLTIP)).toBeVisible()
 
     // Radix portals the tooltip to the end of <body>, outside every landmark,
     // so it can float above the page; screen readers get its text as the
     // trigger's description instead.
-    await checkA11y(page, { disableRules: ['region'] })
-  })
-
-  test("Open tooltip from a private repo's counts", async ({ page }) => {
-    await page.goto('/')
-
-    // Its counts sit in no link, so they're the tab stop themselves.
-    await page
-      .getByTestId(PROJECTS.CARD)
-      .filter({ hasNot: page.getByTestId(PROJECTS.REPO_LINK) })
-      .first()
-      .getByTestId(PROJECTS.COUNTS)
-      .focus()
-    await expect(page.getByTestId(TOOLTIP)).toBeVisible()
-
-    // Portaled outside every landmark, like any tooltip.
     await checkA11y(page, { disableRules: ['region'] })
   })
 

@@ -157,6 +157,22 @@ const hoverCounts = async () => {
   return tooltip
 }
 
+/**
+ * Leaves the focus a tap or click gives the counts without a focus ring, as a
+ * browser does, so it doesn't hold their tooltip open.
+ *
+ * happy-dom matches `:focus-visible` on any focus, as if from the keyboard.
+ */
+const mockPressFocus = () => {
+  const { matches } = Element.prototype
+  const spy = vi
+    .spyOn(Element.prototype, 'matches')
+    .mockImplementation(function (this: Element, selector: string) {
+      return selector !== ':focus-visible' && matches.call(this, selector)
+    })
+  onTestFinished(() => spy.mockRestore())
+}
+
 /** What screen readers hear for the open tooltip, sentence by sentence. */
 const getTooltipSentences = () =>
   screen.getByRole('tooltip').textContent?.split('. ')
@@ -289,6 +305,7 @@ describe('ProjectCounts', () => {
   })
 
   it('starts the charts zoomed out each time the tooltip opens', async () => {
+    mockPressFocus()
     const user = userEvent.setup()
     renderWithProviders(<ProjectCounts repo={REPO} npmPackage={NPM_PACKAGE} />)
     /** The activity chart's release lines' positions. */
@@ -315,55 +332,77 @@ describe('ProjectCounts', () => {
     expect(getReleaseXs()).toEqual(unzoomed)
   })
 
-  it('opens from outside its trigger, loading its charts, and reports closing', async () => {
+  it('opens from outside its trigger, loading its charts, and still closes as any would', async () => {
     // A fresh copy, since the charts, once loaded, are kept for later counts.
     vi.resetModules()
     const { ProjectCounts: FreshCounts } = await import('../ProjectCounts')
     const user = userEvent.setup()
-    const changeOpen = vi.fn()
-    renderWithProviders(
-      <FreshCounts repo={REPO} open onOpenChange={changeOpen} />
-    )
+    renderWithProviders(<FreshCounts repo={REPO} open />)
 
     expect(await screen.findByTestId(COMMITS_CHART)).toBeTruthy()
     await user.keyboard('{Escape}')
-    expect(changeOpen).toHaveBeenLastCalledWith(false)
+    await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
   })
 
-  describe('in a link', () => {
-    /** Renders the counts in a link, and records whether each click on the page goes on to follow it. */
-    const renderInLink = () => {
-      const followed: boolean[] = []
+  describe('on a press', () => {
+    /** Renders the counts, and records whether each click on the page went on unhandled, as a card around them would see it. */
+    const renderRecordingClicks = () => {
+      const unhandled: boolean[] = []
       // On the document, so React's handlers have had their say first.
       const recordClick = (event: MouseEvent) =>
-        followed.push(!event.defaultPrevented)
+        unhandled.push(!event.defaultPrevented)
       document.addEventListener('click', recordClick)
       onTestFinished(() => document.removeEventListener('click', recordClick))
-      renderWithProviders(
-        <a href="https://example.com">
-          <ProjectCounts repo={REPO} />
-        </a>
-      )
-      return followed
+      renderWithProviders(<ProjectCounts repo={REPO} />)
+      return unhandled
     }
 
-    it('opens and closes the tooltip with a tap, rather than following the link', async () => {
+    it('opens and closes the tooltip with a tap, which goes no further', async () => {
+      mockPressFocus()
       const user = userEvent.setup()
-      const followed = renderInLink()
+      const unhandled = renderRecordingClicks()
       const counts = screen.getByTestId(COUNTS)
 
       await user.pointer({ keys: '[TouchA]', target: counts })
       expect(await screen.findByTestId(TOOLTIP)).toBeTruthy()
       await user.pointer({ keys: '[TouchA]', target: counts })
       await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
-      expect(followed).toEqual([false, false])
+      expect(unhandled).toEqual([false, false])
     })
 
-    it('follows the link on a mouse click', async () => {
-      const followed = renderInLink()
+    it('keeps the tooltip hover opened on a click, and closes it on the next, which go no further', async () => {
+      mockPressFocus()
+      const user = userEvent.setup()
+      const unhandled = renderRecordingClicks()
+      const counts = screen.getByTestId(COUNTS)
 
-      await userEvent.setup().click(screen.getByTestId(COUNTS))
-      expect(followed).toEqual([true])
+      await user.hover(counts)
+      await screen.findByTestId(TOOLTIP)
+      await user.click(counts)
+      expect(screen.getByTestId(TOOLTIP)).toBeTruthy()
+      await user.click(counts)
+      await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
+      expect(unhandled).toEqual([false, false])
     })
+
+    it('opens the tooltip on keyboard focus, as a tab stop of their own', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ProjectCounts repo={REPO} />)
+
+      await user.tab()
+      expect(document.activeElement).toBe(screen.getByTestId(COUNTS))
+      expect(await screen.findByTestId(TOOLTIP)).toBeTruthy()
+    })
+  })
+
+  it('closes on a press after opening from outside its trigger', async () => {
+    mockPressFocus()
+    const user = userEvent.setup()
+    renderWithProviders(<ProjectCounts repo={REPO} open />)
+    const counts = screen.getByTestId(COUNTS)
+
+    await screen.findByTestId(TOOLTIP)
+    await user.pointer({ keys: '[TouchA]', target: counts })
+    await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
   })
 })

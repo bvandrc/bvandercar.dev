@@ -1,10 +1,10 @@
 import { expect, type Locator, type Page, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
-import { getChartedCounts, getChartedRepoLink } from '../support/charted-counts'
+import { getChartedCard, getChartedCounts } from '../support/charted-counts'
 
 const { LINE_CHART } = SELECTORS
-const { CARD, CHART_PERIOD, COUNTS, COMMITS_CHART, DOWNLOADS_CHART } =
+const { CHART_PERIOD, COUNTS, COMMITS_CHART, DOWNLOADS_CHART } =
   SELECTORS.PROJECTS
 
 /** Waits two frames, for what a state change rendered to show. */
@@ -101,17 +101,34 @@ test("the wheel zooms both of a project's charts around the pointer, without scr
   await expect(totals).toHaveCount(2)
 })
 
-/** The id of the card whose counts `getChartedRepoLink` charts. */
+/** The id of `getChartedCard`'s card. */
 const getChartedCardId = async (page: Page) => {
-  const id = await page
-    .getByTestId(CARD)
-    .filter({ has: getChartedRepoLink(page) })
-    .getAttribute('id')
+  const id = await getChartedCard(page).getAttribute('id')
   if (!id) {
     throw new Error('The charted card has no id')
   }
   return id
 }
+
+test("clicking a project's counts only opens and closes their charts, and leaves the page where it is", async ({
+  page,
+}) => {
+  await page.goto('/')
+  const counts = getChartedCounts(page)
+  const url = page.url()
+
+  // Hovered open, the first click keeps the charts open, and the next closes them.
+  await counts.hover()
+  const charts = page.getByTestId(SELECTORS.TOOLTIP).getByTestId(COMMITS_CHART)
+  await expect(charts).toBeVisible()
+  await counts.click()
+  await waitForFrames(page)
+  await expect(charts).toBeVisible()
+  await counts.click()
+  await expect(counts).toHaveAttribute('data-state', 'closed')
+  expect(page.url()).toBe(url)
+  expect(page.context().pages()).toHaveLength(1)
+})
 
 test('a URL whose `#` names a card, and asks for its charts, opens on the card with its counts charted', async ({
   page,
@@ -124,8 +141,7 @@ test('a URL whose `#` names a card, and asks for its charts, opens on the card w
   await page.goto(`/#${id}?show_charts=true`)
   await expectChartsOpenOn(page, id)
 
-  // Its period buttons sit in the tooltip, inside the link React renders it
-  // in, so their focus and blur reach the link's own: they mustn't close it.
+  // Its period buttons' focus and blur mustn't close the tooltip they sit in.
   const counts = page.locator(`#${id}`).getByTestId(COUNTS)
   const periods = page
     .getByTestId(SELECTORS.TOOLTIP)

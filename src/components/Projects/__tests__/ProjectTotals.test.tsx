@@ -188,4 +188,46 @@ describe('ProjectTotals', () => {
     const tooltip = await findLoadedTooltip()
     expect(within(tooltip).getByTestId(COMMITS_CHART)).toBeDefined()
   })
+
+  describe('in their link', () => {
+    /** Renders the totals, and records whether each click on the page goes on to follow their link. */
+    const renderRecordingClicks = () => {
+      const followed: boolean[] = []
+      // On the document, so React's handlers have had their say first.
+      const recordClick = (event: MouseEvent) =>
+        followed.push(!event.defaultPrevented)
+      document.addEventListener('click', recordClick)
+      onTestFinished(() => document.removeEventListener('click', recordClick))
+      renderTotals()
+      return followed
+    }
+
+    it('opens and closes the tooltip with a tap, rather than following the link', async () => {
+      const user = userEvent.setup()
+      const followed = renderRecordingClicks()
+      const counts = screen.getByTestId(TOTALS.COUNTS)
+
+      await user.pointer({ keys: '[TouchA]', target: counts })
+      expect(await screen.findByTestId(TOOLTIP)).toBeTruthy()
+      await user.pointer({ keys: '[TouchA]', target: counts })
+      await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
+      expect(followed).toEqual([false, false])
+    })
+
+    it('follows the link on a mouse click', async () => {
+      const followed = renderRecordingClicks()
+
+      await userEvent.setup().click(screen.getByTestId(TOTALS.COUNTS))
+      expect(followed).toEqual([true])
+    })
+
+    it('leaves the link as the only tab stop', async () => {
+      const link = renderTotals()
+
+      await userEvent.setup().tab()
+      expect(document.activeElement).toBe(link)
+      await userEvent.setup().tab()
+      expect(document.activeElement).toBe(document.body)
+    })
+  })
 })
