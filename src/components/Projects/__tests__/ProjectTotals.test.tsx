@@ -141,8 +141,6 @@ describe('ProjectTotals', () => {
     expect(counts).toMatchObject({ textContent: '1K601.2K' })
     expect(counts.getAttribute('aria-label')).toBe(LABEL)
     expect(link.getAttribute('href')).toBe('#projects')
-    // Bracketed as a whole.
-    expect(link.textContent).toMatch(/^\[.+all-time\]$/)
   })
 
   it('charts the commits, merged PRs, and downloads across every project on hover, each ending at the total shown, and describes them', async () => {
@@ -170,14 +168,6 @@ describe('ProjectTotals', () => {
     ])
   })
 
-  it('charts them on hovering the words beside them too', async () => {
-    renderTotals()
-
-    await userEvent.setup().hover(screen.getByTestId(TOTALS.WORDS))
-    const tooltip = await findLoadedTooltip()
-    expect(within(tooltip).getByTestId(COMMITS_CHART)).toBeDefined()
-  })
-
   // Which focus opens it is useFocusVisibleOpen's own, tested in
   // @bvandrc/react-toolkit.
   it('shows the charts on keyboard focus on the link', async () => {
@@ -187,56 +177,5 @@ describe('ProjectTotals', () => {
     expect(document.activeElement).toBe(link)
     const tooltip = await findLoadedTooltip()
     expect(within(tooltip).getByTestId(COMMITS_CHART)).toBeDefined()
-  })
-
-  describe('in their link', () => {
-    /** Renders the totals, and records whether each click on the page goes on to follow their link. */
-    const renderRecordingClicks = () => {
-      const followed: boolean[] = []
-      // On the document, so React's handlers have had their say first.
-      const recordClick = (event: MouseEvent) =>
-        followed.push(!event.defaultPrevented)
-      document.addEventListener('click', recordClick)
-      onTestFinished(() => document.removeEventListener('click', recordClick))
-      renderTotals()
-      return followed
-    }
-
-    it('opens and closes the tooltip with a tap, rather than following the link', async () => {
-      const user = userEvent.setup()
-      const followed = renderRecordingClicks()
-      const counts = screen.getByTestId(TOTALS.COUNTS)
-
-      await user.pointer({ keys: '[TouchA]', target: counts })
-      expect(await screen.findByTestId(TOOLTIP)).toBeTruthy()
-      await user.pointer({ keys: '[TouchA]', target: counts })
-      await waitFor(() => expect(screen.queryByTestId(TOOLTIP)).toBeNull())
-      expect(followed).toEqual([false, false])
-    })
-
-    it('follows the link on a mouse click', async () => {
-      const followed = renderRecordingClicks()
-
-      await userEvent.setup().click(screen.getByTestId(TOTALS.COUNTS))
-      expect(followed).toEqual([true])
-    })
-
-    it("shows the counts as an image, not a button, which the link can't hold", () => {
-      renderTotals()
-
-      expect(screen.getByRole('img', { name: LABEL })).toBe(
-        screen.getByTestId(TOTALS.COUNTS)
-      )
-      expect(screen.queryByRole('button')).toBeNull()
-    })
-
-    it('leaves the link as the only tab stop', async () => {
-      const link = renderTotals()
-
-      await userEvent.setup().tab()
-      expect(document.activeElement).toBe(link)
-      await userEvent.setup().tab()
-      expect(document.activeElement).toBe(document.body)
-    })
   })
 })

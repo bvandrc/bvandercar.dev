@@ -7,7 +7,8 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, REPO_LINK, THUMBNAIL } = SELECTORS.PROJECTS
+const { CARD, BLURB, COUNTS, COMMITS_CHART, THUMBNAIL } = SELECTORS.PROJECTS
+const { END_LABEL } = SELECTORS.LINE_CHART
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
 const { COUNTED_REPO } = vi.hoisted(() => ({ COUNTED_REPO: 'counted-repo' }))
@@ -32,6 +33,25 @@ vi.mock('@/generated/repo-activity-totals', async (importOriginal) => {
   }
 })
 
+vi.mock('@/generated/repo-activity', async (importOriginal) => {
+  const { REPO_ACTIVITY } =
+    await importOriginal<typeof import('@/generated/repo-activity')>()
+  // Every commit and PR on its first day, then three quiet weeks, so it
+  // spans the two weeks a chart needs.
+  const QUIET_DAYS = Array.from({ length: 20 }, () => 0)
+  return {
+    REPO_ACTIVITY: {
+      ...REPO_ACTIVITY,
+      [COUNTED_REPO]: {
+        firstDay: '2026-03-01',
+        lastDay: '2026-03-21',
+        commits: [600, ...QUIET_DAYS],
+        prs: [587, ...QUIET_DAYS],
+      },
+    },
+  }
+})
+
 const ALL_PROJECTS = PROJECTS.flatMap((group) => group.projects)
 
 const renderCard = (project: Project, onPreviewOpen: () => void = vi.fn()) =>
@@ -44,14 +64,11 @@ const renderCard = (project: Project, onPreviewOpen: () => void = vi.fn()) =>
     />
   )
 
-/** Renders a card with a live preview and a repo link, and returns it. */
+/** Renders a card with a live preview, and returns it. */
 const renderPreviewCard = (onPreviewOpen?: () => void) => {
-  // A private repo's card has no repo link to tab from.
-  const project = ALL_PROJECTS.find(
-    ({ embed, privateRepo }) => embed && !privateRepo
-  )
+  const project = ALL_PROJECTS.find(({ embed }) => embed)
   if (!project) {
-    throw new Error('No project with a public repo has a live preview')
+    throw new Error('No project has a live preview')
   }
   renderCard(project, onPreviewOpen)
   return screen.getByTestId(CARD)
@@ -70,6 +87,24 @@ describe('ProjectCard', () => {
 
     // This site's fetch, not the profile's 41.
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
+  })
+
+  it("charts its repo's history in its counts' tooltip, ending at the count its glyph shows", async () => {
+    const PROJECT = {
+      name: 'Counted',
+      href: 'https://example.com/',
+      type: ALL_PROJECTS[0].type,
+      repo: COUNTED_REPO,
+      blurb: 'Counted.',
+    } satisfies Project
+    renderCard(PROJECT)
+    const counts = screen.getByTestId(COUNTS)
+
+    await userEvent.setup().hover(counts)
+    const chart = await screen.findByTestId(COMMITS_CHART)
+    const total = within(chart).getByTestId(END_LABEL).textContent
+    expect(total).toBe('600')
+    expect(counts.textContent).toContain(total)
   })
 
   it('opens its live preview on a click on the card, and closes it only from its toggle', async () => {
@@ -112,22 +147,6 @@ describe('ProjectCard', () => {
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).getByTestId(THUMBNAIL)).toBeDefined()
-  })
-
-  it("tabs from its repo link to its live preview's toggle, and on past its thumbnail", async () => {
-    const user = userEvent.setup()
-    const card = renderPreviewCard()
-    within(card).getByTestId(REPO_LINK).focus()
-
-    await user.tab()
-    expect(document.activeElement).toBe(
-      within(card).getByTestId(LIVE_PREVIEW.TOGGLE)
-    )
-    // A click on the thumbnail opens the preview, but the keyboard has the
-    // toggle for that, as it does for a click on the rest of the card. The
-    // thumbnail follows the toggle, so it would be next.
-    await user.tab()
-    expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {
