@@ -9,9 +9,17 @@ export type SegmentedControlOption<T extends string> = {
   'data-testid'?: string
 }
 
-export type SegmentedControlProps<T extends string> = Pick<
-  React.ComponentProps<'div'>,
-  'className' | 'aria-hidden'
+export type SegmentedControlProps<T extends string> = Omit<
+  ToggleGroup.ToggleGroupSingleProps,
+  // What it sets itself from the props below, and the div's own onChange,
+  // which its own replaces.
+  | 'type'
+  | 'value'
+  | 'defaultValue'
+  | 'onValueChange'
+  | 'onChange'
+  | 'rovingFocus'
+  | 'children'
 > & {
   options: readonly SegmentedControlOption<T>[]
   /** The option chosen, or undefined for none */
@@ -39,10 +47,10 @@ export const SegmentedControl = <T extends string>({
   onChange,
   focusable = true,
   className,
-  'aria-hidden': ariaHidden,
-  'data-testid': testId,
+  ...props
 }: SegmentedControlProps<T>) => (
   <ToggleGroup.Root
+    {...props}
     type="single"
     // Radix's value is a string, with none as an empty one.
     value={value ?? ''}
@@ -54,9 +62,7 @@ export const SegmentedControl = <T extends string>({
       }
     }}
     rovingFocus={focusable}
-    aria-hidden={ariaHidden}
-    className={cn('flex gap-1 text-xs', className)}
-    data-testid={testId}>
+    className={cn('flex gap-1 text-xs', className)}>
     {options.map((option) => (
       <ToggleGroup.Item
         key={option.value}
