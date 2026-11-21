@@ -1,7 +1,7 @@
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
+import { getAnchorId } from '@/lib/anchor-id'
 import { cn } from '@/lib/cn'
-import { sectionAnchor } from '@/lib/section-anchor'
 import { Badge } from '../primitives/Badge'
 import { Link, type LinkProps } from '../primitives/Link'
 import { SectionIcon, SubSectionIcon } from '../Section'
@@ -24,7 +24,7 @@ export type ContentsEntry = {
 /** Each project group, then the skills: the sections the contents link to. */
 export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
   ...PROJECTS.map((group) => ({
-    sectionId: sectionAnchor(group.title),
+    sectionId: getAnchorId(group.title),
     title: group.title,
     inReducedContents: group.inReducedContents ?? true,
     icon: (
@@ -32,7 +32,7 @@ export const CONTENTS_ENTRIES: readonly ContentsEntry[] = [
     ),
   })),
   {
-    sectionId: sectionAnchor(SECTIONS.SKILLS.title),
+    sectionId: getAnchorId(SECTIONS.SKILLS.title),
     title: SECTIONS.SKILLS.title,
     inReducedContents: true,
     // Gold, not the orange of every top-level section's heading: among the

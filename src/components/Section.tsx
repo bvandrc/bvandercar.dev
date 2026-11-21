@@ -2,9 +2,9 @@ import { useId } from 'react'
 
 import type { SectionLogo } from '@/generated/profile/content/projects'
 import type { GroupGlyph } from '@/generated/profile/content/sections'
+import { getAnchorId } from '@/lib/anchor-id'
 import { cn } from '@/lib/cn'
 import type { GlyphName } from '@/lib/icons'
-import { sectionAnchor } from '@/lib/section-anchor'
 import { BrandIcon } from './primitives/BrandIcon'
 import { Icon } from './primitives/Icon'
 
@@ -41,7 +41,7 @@ const TitledSection = ({
   const headingId = useId()
   return (
     <section
-      id={sectionAnchor(title)}
+      id={getAnchorId(title)}
       aria-labelledby={headingId}
       // Clear of the viewport's top edge when a link scrolls to it.
       className={cn('scroll-mt-6', className)}

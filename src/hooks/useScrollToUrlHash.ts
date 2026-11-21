@@ -5,14 +5,15 @@ const getHashId = () => {
   try {
     return decodeURIComponent(window.location.hash.slice(1)) || undefined
   } catch {
-    // A stray `%`, like `#100%`, which names no section anyway.
+    // A stray `%`, like `#100%`, which names no section or card anyway.
     return
   }
 }
 
 /**
  * Scrolls to the element the URL's `#` names once the app has first rendered,
- * so a link to a section, like `/#skills`, opens on it.
+ * so a link to a section, like `/#skills`, or a project card, like
+ * `/#bike-ride-tracker`, opens on it.
  */
 export const useScrollToUrlHash = () => {
   useEffect(() => {
@@ -21,8 +22,14 @@ export const useScrollToUrlHash = () => {
       return
     }
     // The browser looks for it as the page loads, before the app has rendered
-    // it, so finds nothing. Jumps, as the browser's own would, rather than
-    // gliding past every section above it.
-    document.getElementById(id)?.scrollIntoView({ behavior: 'instant' })
+    // it, so finds nothing. Waits for the frame, by when the layout effects
+    // that resize what's above it, like a card's name shrinking to fit its
+    // line, have settled, so it lands where it stays.
+    const frame = requestAnimationFrame(() => {
+      // Jumps, as the browser's own would, rather than gliding past every
+      // section above it.
+      document.getElementById(id)?.scrollIntoView({ behavior: 'instant' })
+    })
+    return () => cancelAnimationFrame(frame)
   }, [])
 }
