@@ -1,10 +1,43 @@
 import { expect, type Locator, type Page, test } from '@playwright/test'
 
 import { SELECTORS } from '~/test-support/selectors'
-import { getChartedCounts } from '../support/charted-counts'
+import { getChartedCounts, getChartedRepoLink } from '../support/charted-counts'
 
 const { LINE_CHART } = SELECTORS
-const { COMMITS_CHART, DOWNLOADS_CHART } = SELECTORS.PROJECTS
+const { CARD, COUNTS, COMMITS_CHART, DOWNLOADS_CHART } = SELECTORS.PROJECTS
+
+/**
+ * Hides the URL's `#` from the browser's own scroll to it as the page loads,
+ * putting it back before the app reads it, so the app's jump does the
+ * scrolling, as on a load where the app renders too late for the browser's.
+ *
+ * Marks the page with `data-scrolled` once it scrolls.
+ */
+const hideHashFromBrowser = (page: Page) =>
+  page.addInitScript(() => {
+    const { hash } = window.location
+    const path = window.location.pathname + window.location.search
+    window.history.replaceState(null, '', path)
+    document.addEventListener('DOMContentLoaded', () =>
+      window.history.replaceState(null, '', path + hash)
+    )
+    window.addEventListener(
+      'scroll',
+      () => {
+        document.documentElement.dataset.scrolled = ''
+      },
+      { once: true }
+    )
+  })
+
+/** Waits two frames, for what a state change rendered to show. */
+const waitForFrames = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      )
+  )
 
 /** Moves the pointer onto the middle of a chart's plot. */
 const hoverPlot = async (page: Page, chart: Locator) => {
@@ -64,4 +97,30 @@ test("the wheel zooms both of a project's charts around the pointer, without scr
 
   await page.mouse.wheel(0, 2000)
   await expect(totals).toHaveCount(2)
+})
+
+test('a URL naming a card, and asking for its charts, opens on the card with its counts charted', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const id = await page
+    .getByTestId(CARD)
+    .filter({ has: getChartedRepoLink(page) })
+    .getAttribute('id')
+
+  // A fresh load, where going from one `#` to another wouldn't reload.
+  await page.goto('about:blank')
+  // The jump's scroll would close a tooltip opened before it.
+  await hideHashFromBrowser(page)
+  await page.goto(`/?charts#${id}`)
+  const card = page.locator(`#${id}`)
+  await expect(card).toBeInViewport()
+  // Still open past the jump's scroll. Its trigger says so at once, where a
+  // closed tooltip lingers through its fade-in.
+  await expect(page.locator('html[data-scrolled]')).toBeAttached()
+  await waitForFrames(page)
+  await expect(card.getByTestId(COUNTS)).toHaveAttribute('data-state', /open$/)
+  const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
+  await expect(tooltip.getByTestId(COMMITS_CHART)).toBeVisible()
+  await expect(tooltip.getByTestId(DOWNLOADS_CHART)).toBeVisible()
 })

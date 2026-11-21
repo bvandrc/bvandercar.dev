@@ -5,6 +5,7 @@ import { Section, SubSection } from '@/components/Section'
 import type { ProjectSection } from '@/generated/profile/content/projects'
 import { PROJECTS } from '@/generated/profile/content/projects'
 import { SECTIONS } from '@/generated/profile/content/sections'
+import { getAnchorId } from '@/lib/anchor-id'
 import { cn } from '@/lib/cn'
 import { ProjectCard } from './ProjectCard'
 
@@ -21,9 +22,22 @@ const GRID_CLASSES = {
 const getGridLayout = ({ projects }: ProjectSection): GridLayout =>
   projects.some(({ embed }) => embed) ? 'PREVIEW' : 'PAIRS'
 
-export const Projects = () => {
+/** The query parameter that opens the charts of the card a URL's `#` names, as in `/?charts#task-rankr`. */
+const CHARTS_PARAM = 'charts'
+
+type ProjectsProps = {
+  /** The id the page landed on from the URL's `#`, whose card opens its counts' charts where the URL asks. */
+  urlTargetId: string | undefined
+}
+
+export const Projects = ({ urlTargetId }: ProjectsProps) => {
   // Every preview toggle pulses on each page visit, until any one is opened.
   const [previewOpened, setPreviewOpened] = useState(false)
+  const chartsOpenFor = new URLSearchParams(window.location.search).has(
+    CHARTS_PARAM
+  )
+    ? urlTargetId
+    : undefined
   return (
     <Section
       glyph={SECTIONS.PROJECTS.glyph}
@@ -56,6 +70,10 @@ export const Projects = () => {
                     centered={layout === 'PREVIEW'}
                     pulsePreview={!previewOpened}
                     onPreviewOpen={() => setPreviewOpened(true)}
+                    openCounts={
+                      chartsOpenFor !== undefined &&
+                      getAnchorId(project.name) === chartsOpenFor
+                    }
                   />
                 </li>
               ))}
