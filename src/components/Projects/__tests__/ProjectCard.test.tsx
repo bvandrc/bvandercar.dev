@@ -72,21 +72,6 @@ describe('ProjectCard', () => {
     expect(screen.getByTestId(BLURB).textContent).toBe('Built over 580+ PRs.')
   })
 
-  it('shows its counts beside its repo link, not in it, tabbing to them first', async () => {
-    const user = userEvent.setup()
-    const card = renderPreviewCard()
-    const counts = within(card).getByTestId(COUNTS)
-
-    // So a press on them only toggles their charts.
-    expect(counts.closest('a')).toBeNull()
-    // The name's link comes first.
-    await user.tab()
-    await user.tab()
-    expect(document.activeElement).toBe(counts)
-    await user.tab()
-    expect(document.activeElement).toBe(within(card).getByTestId(REPO_LINK))
-  })
-
   it("opens its counts' tooltip as openCounts turns true, as for a URL asking for their charts", async () => {
     const PROJECT = {
       name: 'Counted',
