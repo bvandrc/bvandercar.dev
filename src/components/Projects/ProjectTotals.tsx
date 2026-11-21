@@ -2,7 +2,7 @@ import { useFocusVisibleOpen } from '@bvandrc/react-toolkit'
 
 import { Link } from '@/components/primitives/Link'
 import { SECTIONS } from '@/generated/profile/content/sections'
-import { sectionAnchor } from '@/lib/section-anchor'
+import { getAnchorId } from '@/lib/anchor-id'
 import { Counts } from './Counts'
 import { getProjectTotals } from './lib/project-totals'
 
@@ -22,7 +22,7 @@ export const ProjectTotals = () => {
   }
   return (
     <Link
-      href={`#${sectionAnchor(SECTIONS.PROJECTS.title)}`}
+      href={`#${getAnchorId(SECTIONS.PROJECTS.title)}`}
       tone="muted"
       className="inline-flex items-center gap-1"
       {...focusProps}

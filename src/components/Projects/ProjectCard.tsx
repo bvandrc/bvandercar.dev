@@ -9,6 +9,7 @@ import { Link } from '@/components/primitives/Link'
 import { Tooltip } from '@/components/primitives/Tooltip'
 import { TYPE_ICONS } from '@/generated/profile/content/project-types'
 import { fillBlurb, type Project } from '@/generated/profile/content/projects'
+import { getAnchorId } from '@/lib/anchor-id'
 import { cn } from '@/lib/cn'
 import { THEME_COLORS } from '@/lib/theme-colors'
 import { COUNTS_FIELDS } from '~/counts'
@@ -88,6 +89,8 @@ export const ProjectCard = ({
   return (
     <Card
       ref={cardRef}
+      // Its name's anchor, so a `#` link, or a URL, can go straight to it.
+      id={getAnchorId(project.name)}
       // A click anywhere else on a card with a live preview opens it too.
       // Only the toggle closes it, so a click on or around the open page,
       // even as it's still growing, leaves it open.
@@ -104,7 +107,10 @@ export const ProjectCard = ({
         // as wide at the sides as at the top and bottom.
         'px-4 py-2 md:p-3.5',
         // Glows orange on hover, or while a link inside has keyboard focus.
-        'hover-glow-24'
+        'hover-glow-24',
+        // Clear of the viewport's top edge when a link scrolls to it, as a
+        // section is.
+        'scroll-mt-6'
       )}
       // Its thumbnail's hover shows on its live preview's toggle.
       data-preview-scope

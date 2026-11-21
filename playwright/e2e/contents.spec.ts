@@ -58,25 +58,46 @@ test('each contents link scrolls its section into view', async ({ page }) => {
   }
 })
 
-test('a URL naming a section opens on it', async ({ page }) => {
+test('a URL naming a section or project card opens on it', async ({ page }) => {
   await page.goto('/')
   const ids = await page
-    .locator('section[id]')
-    .evaluateAll((sections) => sections.map(({ id }) => id))
-  // Every section, and every group in one.
+    .locator(`section[id], [data-testid="${PROJECTS.CARD}"]`)
+    .evaluateAll((targets) => targets.map(({ id }) => id))
+  // Every section, every group in one, and every card.
   expect(ids.length).toBeGreaterThan(1)
-  // Each from its title, so two titles alike would clash.
+  // Each from its title or name, so two alike would clash.
   expect(new Set(ids).size, ids.join(', ')).toBe(ids.length)
 
   for (const id of ids) {
     // A fresh load, where going from one `#` to another wouldn't reload.
     await page.goto('about:blank')
     await page.goto(`/#${id}`)
-    await expect(page.locator(`section#${id}`), id).toBeInViewport()
-    // Scrolled to it, rather than left at the top where the first is in view.
+    // Its top where a link to it lands it, below what the page pins there,
+    // unless the page ran out of room to scroll it that far.
     await expect
-      .poll(() => page.evaluate(() => window.scrollY), { message: id })
-      .toBeGreaterThan(0)
+      .poll(
+        () =>
+          page.evaluate((targetId) => {
+            const target = document.getElementById(targetId)
+            if (target === null) {
+              return 'missing'
+            }
+            const landing =
+              Number.parseFloat(
+                getComputedStyle(document.documentElement).scrollPaddingTop
+              ) + Number.parseFloat(getComputedStyle(target).scrollMarginTop)
+            const { scrollY, innerHeight } = window
+            const atBottom =
+              scrollY + innerHeight >= document.documentElement.scrollHeight - 1
+            const top = target.getBoundingClientRect().top
+            return Math.abs(top - landing) <= 1 ||
+              (atBottom && top > landing && top < innerHeight)
+              ? 'landed'
+              : `at ${top}px, not ${landing}px`
+          }, id),
+        { message: id }
+      )
+      .toBe('landed')
   }
 })
 
