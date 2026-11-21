@@ -27,11 +27,8 @@ test("hovering a project's counts charts its commits and npm downloads as runnin
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
   const activity = tooltip.getByTestId(COMMITS_CHART)
   const downloads = tooltip.getByTestId(DOWNLOADS_CHART)
-  await expect(activity.getByTestId(LINE_CHART.CAPTION)).toHaveText('Commits')
-  await expect(downloads.getByTestId(LINE_CHART.CAPTION)).toHaveText(
-    'npm downloads'
-  )
-  // Each chart ends at the count its glyph shows, shortened the same way.
+  // Each chart ends at the count its glyph shows, shortened the same way:
+  // the fetched totals and histories agree, which fixtures can't show.
   for (const chart of [activity, downloads]) {
     const total = await chart.getByTestId(LINE_CHART.END_LABEL).textContent()
     await expect(counts).toContainText(total ?? '')
@@ -67,36 +64,4 @@ test("the wheel zooms both of a project's charts around the pointer, without scr
 
   await page.mouse.wheel(0, 2000)
   await expect(totals).toHaveCount(2)
-})
-
-test('a mouse drags a zoomed-in chart along its timeline', async ({ page }) => {
-  await page.goto('/')
-
-  await getChartedCounts(page).hover()
-  const activity = page
-    .getByTestId(SELECTORS.TOOLTIP)
-    .getByTestId(COMMITS_CHART)
-  const plot = activity.getByTestId(LINE_CHART.PLOT)
-  const readout = activity.getByTestId(LINE_CHART.CAPTION)
-  await hoverPlot(page, activity)
-  await page.mouse.wheel(0, -600)
-  const box = await plot.boundingBox()
-  if (!box) {
-    throw new Error('The chart has no box')
-  }
-  /** Hovers just inside the plot's left edge and reads out the week there. */
-  const readLeftEdge = async () => {
-    await page.mouse.move(box.x + 8, box.y + box.height / 2)
-    return readout.textContent()
-  }
-
-  const before = await readLeftEdge()
-  // Dragged right, so it shows earlier weeks.
-  await page.mouse.down()
-  await page.mouse.move(box.x + 160, box.y + box.height / 2, { steps: 10 })
-  await page.mouse.up()
-  const after = await readLeftEdge()
-  expect(
-    Date.parse(after?.replace(/^Through (.+): .*$/, '$1') ?? '')
-  ).toBeLessThan(Date.parse(before?.replace(/^Through (.+): .*$/, '$1') ?? ''))
 })

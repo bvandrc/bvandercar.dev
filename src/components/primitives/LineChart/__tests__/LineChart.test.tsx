@@ -137,6 +137,20 @@ describe('LineChart', () => {
     expect(onZoom).toHaveBeenCalledWith(20, expect.any(Number))
   })
 
+  it('pans by the x a mouse drag covers, the other way, so the line follows the mouse', () => {
+    const onPan = vi.fn()
+    renderChart({ onZoom: vi.fn(), onPan })
+    const plot = screen.getByTestId(PLOT_ID)
+    const init = { pointerId: 1, pointerType: 'mouse', buttons: 1 }
+
+    fireEvent.pointerDown(plot, { ...init, clientX: getPlotX(50) })
+    fireEvent.pointerMove(plot, { ...init, clientX: getPlotX(60) })
+    fireEvent.pointerUp(plot, { ...init, clientX: getPlotX(60) })
+    // Dragged 10 along x to the right, so it shows what's 10 earlier.
+    const panned = onPan.mock.calls.reduce((sum, [delta]) => sum + delta, 0)
+    expect(panned).toBeCloseTo(-10)
+  })
+
   it("writes the end label and note only while the line's end is in view", () => {
     const { rerender } = renderChart()
     expect(screen.getByTestId(END_LABEL).textContent).toBe('10')
