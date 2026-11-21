@@ -2,8 +2,11 @@ import { ToggleGroup } from 'radix-ui'
 
 import { cn } from '@/lib/cn'
 
-/** One of a segmented control's options: its value, and what it says. */
-export type SegmentedControlOption<T extends string> = {
+/** One of a segmented control's options: its value, what it says, and any other props for its button. */
+export type SegmentedControlOption<T extends string> = Omit<
+  ToggleGroup.ToggleGroupItemProps,
+  'value' | 'children'
+> & {
   value: T
   label: React.ReactNode
   'data-testid'?: string
@@ -63,18 +66,18 @@ export const SegmentedControl = <T extends string>({
     }}
     rovingFocus={focusable}
     className={cn('flex gap-1 text-xs', className)}>
-    {options.map((option) => (
+    {options.map(({ label, className: optionClassName, ...option }) => (
       <ToggleGroup.Item
         key={option.value}
-        value={option.value}
+        {...option}
         tabIndex={focusable ? undefined : -1}
         className={cn(
           'rounded-md px-2 py-0.5 text-ink-muted hover:text-ink',
           // The chosen one stands out from the others.
-          'data-[state=on]:bg-ink-muted/20 data-[state=on]:text-ink'
-        )}
-        data-testid={option['data-testid']}>
-        {option.label}
+          'data-[state=on]:bg-ink-muted/20 data-[state=on]:text-ink',
+          optionClassName
+        )}>
+        {label}
       </ToggleGroup.Item>
     ))}
   </ToggleGroup.Root>
