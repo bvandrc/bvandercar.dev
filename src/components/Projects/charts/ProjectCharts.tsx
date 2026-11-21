@@ -5,14 +5,16 @@ import {
   type ActivityHistory,
   CHART_PERIOD_DAYS,
   type ChartPeriod,
-  type DownloadHistory,
-  type Registry,
 } from '~/counts'
 import { ActivityChart } from './ActivityChart'
-import { DownloadsChart } from './DownloadsChart'
+import { DownloadsChart, type DownloadsChartProps } from './DownloadsChart'
 import { type DaySpan, getLastDaysSpan, panSpan, zoomSpan } from './lib/spans'
 import { PeriodSwitch } from './PeriodSwitch'
 import type { RunningTotalChartViewProps } from './RunningTotalChart'
+import {
+  VersionDownloadsChart,
+  type VersionDownloadsChartProps,
+} from './VersionDownloadsChart'
 
 export type ProjectChartsProps = Pick<
   RunningTotalChartViewProps,
@@ -26,18 +28,21 @@ export type ProjectChartsProps = Pick<
   activity?: ActivityHistory
   /** The history whose merged PRs it charts */
   prs?: ActivityHistory
-  /** The downloads it charts, and the registry they're from, if only one */
-  downloads?: { registry?: Registry; history: DownloadHistory }
+  /** The downloads it charts, the registry they're from, if only one, and each version's, where counted for two or more */
+  downloads?: Pick<DownloadsChartProps, 'history' | 'registry'> &
+    Partial<Pick<VersionDownloadsChartProps, 'versionDownloads'>>
 }
 
 /**
  * A project's commits chart, merged PRs chart, then its package's downloads
- * chart, whichever it has, sharing one span, zoom, and set of releases.
+ * chart, whichever it has, sharing one span, zoom, and set of releases, and
+ * last its package's downloads by version, where counted.
  *
  * Buttons below switch them all between all time and the last year, 90
- * days, or 30 days, zooming them to the period. A period reaching back past
- * where they start would show the same as all time, so it's left out, and
- * with none left, so are the buttons. Mounted with the tooltip it sits in,
+ * days, or 30 days: the line charts zoom to the period, and the versions bar
+ * its downloads. A period reaching back past where the line charts start
+ * would show the same as all time, so it's left out, and with none left, so
+ * are the buttons. Mounted with the tooltip it sits in,
  * so each opening starts on `initialPeriod`, or all time where that's left
  * out.
  * Loaded on its own, with the histories it charts, the first time a
@@ -62,7 +67,7 @@ export const ProjectCharts = ({
   const [zoomedSpan, setZoomedSpan] = useState(() =>
     getLastDaysSpan(fullSpan, CHART_PERIOD_DAYS[openingPeriod])
   )
-  // A zoom or pan leaves it chosen.
+  // A zoom or pan leaves it chosen, as what the versions bar.
   const [period, setPeriod] = useState(openingPeriod)
   /** Zooms every chart to `next`'s last days, all the way out for all time. */
   const choosePeriod = (next: ChartPeriod) => {
@@ -92,7 +97,19 @@ export const ProjectCharts = ({
         <ActivityChart activity={activity} kind="commits" {...shared} />
       )}
       {prs && <ActivityChart activity={prs} kind="prs" {...shared} />}
-      {downloads && <DownloadsChart {...downloads} {...shared} />}
+      {downloads && (
+        <DownloadsChart
+          history={downloads.history}
+          registry={downloads.registry}
+          {...shared}
+        />
+      )}
+      {downloads?.versionDownloads && (
+        <VersionDownloadsChart
+          versionDownloads={downloads.versionDownloads}
+          period={period}
+        />
+      )}
       {periods.length > 1 && (
         <PeriodSwitch
           periods={periods}

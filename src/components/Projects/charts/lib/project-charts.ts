@@ -3,10 +3,12 @@ import { isNotNil, sum } from 'es-toolkit'
 import {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import { REPO_ACTIVITY } from '@/generated/repo-activity'
 import type { Registry } from '~/counts'
 import { getSpanMs, MIN_CHART_MS } from './spans'
+import { describeVersionDownloads, getVersionBars } from './version-downloads'
 import {
   describeWeeklyActivity,
   getDayReachingCommits,
@@ -21,10 +23,17 @@ const UNPACKAGED_START_COMMITS = 15
 /** A package a project publishes: the registry, and its name there. */
 export type ProjectPackage = { registry: Registry; name: string }
 
+/** A package's downloads by minor version, where counted for two or more in all, which one alone wouldn't compare. */
+const getChartedVersions = ({ registry, name }: ProjectPackage) => {
+  const versions = PACKAGE_VERSION_DOWNLOADS[registry][name]
+  return versions && Object.keys(versions.ALL).length > 1 ? versions : undefined
+}
+
 /**
  * What a project's counts chart: its repo's commits, its package's
- * downloads, or both, with the package's releases, the dates both span, and
- * a sentence describing each for screen readers.
+ * downloads, with each minor version's where counted, or both, with the package's
+ * releases, the dates both span, and a sentence describing each chart for
+ * screen readers.
  *
  * Undefined for nothing to chart: no history, a repo with no package and
  * under 20 commits, or a stretch under two weeks, like a package released
@@ -48,7 +57,11 @@ export const getProjectCharts = (
       : undefined
   const downloads =
     pkg && downloadHistory && downloadHistory.daily.length > 1
-      ? { registry: pkg.registry, history: downloadHistory }
+      ? {
+          registry: pkg.registry,
+          history: downloadHistory,
+          versionDownloads: getChartedVersions(pkg),
+        }
       : undefined
   // Marked on both charts.
   const releases = pkg && PACKAGE_RELEASES[pkg.registry][pkg.name]
@@ -94,6 +107,11 @@ export const getProjectCharts = (
       activity && describeWeeklyActivity(activity, 'commits'),
       downloads &&
         describeWeeklyDownloads(downloads.history, downloads.registry),
+      // In all, which the chart opens on.
+      downloads?.versionDownloads &&
+        describeVersionDownloads(
+          getVersionBars(downloads.versionDownloads.ALL)
+        ),
     ].filter(isNotNil),
   }
 }

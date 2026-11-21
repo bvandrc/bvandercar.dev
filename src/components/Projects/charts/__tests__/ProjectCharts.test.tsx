@@ -12,6 +12,7 @@ const {
   PRS_CHART,
   DOWNLOADS_CHART,
   RUNNING_TOTAL_CHART,
+  VERSION_DOWNLOADS_CHART,
   CHART_PERIOD,
 } = SELECTORS.PROJECTS
 const { PLOT, RELEASE } = RUNNING_TOTAL_CHART
@@ -91,6 +92,12 @@ const clickPeriod = (label: string) => {
   }
   return userEvent.setup().click(button)
 }
+
+/** The minor versions the versions chart bars, most downloaded first. */
+const getBarredVersions = () =>
+  screen
+    .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
+    .map((row) => row.firstChild?.textContent)
 
 /** The plot of the chart with test id `chart`, which the wheel turns over. */
 const getPlot = (chart: string) =>
@@ -178,14 +185,25 @@ describe('ProjectCharts', () => {
     expect(panned[1]).toEqual(panned[0])
   })
 
-  it('switches every chart between all time, which it opens on, and the last 90 or 30 days, zooming them to the period', async () => {
-    renderCharts({ span: LONG_SPAN })
+  it("switches every chart between all time, which it opens on, and the last 90 or 30 days: the line charts' span, and the versions' downloads", async () => {
+    renderCharts({
+      span: LONG_SPAN,
+      downloads: {
+        ...DOWNLOADS,
+        versionDownloads: {
+          ALL: { '1.0': 1000, '1.1': 217 },
+          LAST_YEAR: { '1.0': 1000, '1.1': 217 },
+          LAST_90_DAYS: { '1.0': 100, '1.1': 217 },
+          LAST_30_DAYS: { '1.0': 1, '1.1': 9 },
+        },
+      },
+    })
     const allTime = getReleaseXs()
 
     // Below the charts.
     expect(
       screen
-        .getByTestId(DOWNLOADS_CHART)
+        .getByTestId(VERSION_DOWNLOADS_CHART.SELF)
         .compareDocumentPosition(
           screen.getAllByTestId(CHART_PERIOD.OPTION)[0]
         ) & Node.DOCUMENT_POSITION_FOLLOWING
@@ -195,12 +213,14 @@ describe('ProjectCharts', () => {
       ['90 days', 'false'],
       ['30 days', 'false'],
     ])
+    expect(getBarredVersions()).toEqual(['v1.0', 'v1.1'])
     await clickPeriod('30 days')
     const last30 = getReleaseXs()
     expect(last30).not.toEqual(allTime)
     // Both releases, Mar 4 and 12, are within the last 30 days, lined up.
     expect(last30[0]).toHaveLength(2)
     expect(last30[1]).toEqual(last30[0])
+    expect(getBarredVersions()).toEqual(['v1.1', 'v1.0'])
     await clickPeriod('90 days')
     expect(getReleaseXs()).not.toEqual(last30)
     await clickPeriod('All time')

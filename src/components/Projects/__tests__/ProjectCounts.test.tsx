@@ -5,6 +5,7 @@ import type { PACKAGE_DOWNLOAD_TOTALS } from '@/generated/package-download-total
 import type {
   PACKAGE_DOWNLOADS,
   PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS,
 } from '@/generated/package-downloads'
 import type { REPO_COUNTS } from '@/generated/profile/repo-counts'
 import type { REPO_ACTIVITY } from '@/generated/repo-activity'
@@ -14,8 +15,13 @@ import { turnWheel } from '@/test-helpers/wheel'
 import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCounts } from '../ProjectCounts'
 
-const { COUNTS, COMMITS_CHART, DOWNLOADS_CHART, CHARTS_LOADING } =
-  SELECTORS.PROJECTS
+const {
+  COUNTS,
+  COMMITS_CHART,
+  DOWNLOADS_CHART,
+  VERSION_DOWNLOADS_CHART,
+  CHARTS_LOADING,
+} = SELECTORS.PROJECTS
 const { TOOLTIP } = SELECTORS
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
@@ -130,6 +136,17 @@ vi.mock('@/generated/package-downloads', () => ({
     },
     pypi: {},
   } satisfies typeof PACKAGE_RELEASES,
+  PACKAGE_VERSION_DOWNLOADS: {
+    npm: {},
+    pypi: {
+      [FIXTURES.PYPI_PACKAGE]: {
+        ALL: { '1.0': 7, '2.0': 1210 },
+        LAST_YEAR: { '1.0': 7, '2.0': 1210 },
+        LAST_30_DAYS: { '2.0': 30 },
+        LAST_90_DAYS: { '2.0': 90 },
+      },
+    },
+  } satisfies typeof PACKAGE_VERSION_DOWNLOADS,
 }))
 
 /** Hovers the counts, and returns the tooltip once it opens and any charts in it have loaded. */
@@ -227,7 +244,7 @@ describe('ProjectCounts', () => {
     ])
   })
 
-  it("charts its PyPI package's downloads too, named as PyPI's", async () => {
+  it("charts its PyPI package's downloads too, named as PyPI's, then by version, and describes them", async () => {
     renderWithProviders(
       <ProjectCounts repo={REPO} pypiPackage={PYPI_PACKAGE} />
     )
@@ -237,6 +254,14 @@ describe('ProjectCounts', () => {
       within(screen.getByTestId(DOWNLOADS_CHART)).getByTestId(READOUT)
         .textContent
     ).toBe('PyPI downloads')
+    expect(
+      screen
+        .getAllByTestId(VERSION_DOWNLOADS_CHART.ROW)
+        .map((row) => row.firstChild?.textContent)
+    ).toEqual(['v2.0', 'v1.0'])
+    expect(getTooltipSentences()?.at(-1)).toBe(
+      'Most downloaded minor versions: v2.0 with 1,210 and v1.0 with 7'
+    )
   })
 
   it('leaves the counts in words where there is nothing to chart', async () => {

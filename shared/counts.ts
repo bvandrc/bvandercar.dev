@@ -48,7 +48,8 @@ export type DownloadHistory = {
 
 /**
  * The stretches a project's charts can show, by how many of their latest
- * days each covers.
+ * days each covers, which a package's downloads by minor version are counted
+ * over too.
  *
  * `ALL` covers every day the charts have.
  */
@@ -61,6 +62,9 @@ export const CHART_PERIOD_DAYS = {
 
 /** A stretch a project's charts can show. */
 export type ChartPeriod = keyof typeof CHART_PERIOD_DAYS
+
+/** A package's downloads of each minor version, like "4.0", over each period, by period, then minor version. */
+export type VersionDownloads = Record<ChartPeriod, Record<string, number>>
 
 /** A package's release: its version, and the ISO date it was published. */
 export type Release = { version: string; day: string }

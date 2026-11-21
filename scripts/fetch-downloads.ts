@@ -4,9 +4,9 @@
  * with its releases, for the charts in its counts' tooltip.
  *
  * Writes the totals to src/generated/package-download-totals.ts, and the
- * daily histories and releases to src/generated/package-downloads.ts, which
- * only the lazily loaded charts import, for the same packages; both
- * gitignored. Reads the
+ * daily histories, releases, and, for PyPI packages, each version's
+ * downloads to src/generated/package-downloads.ts, which only the lazily
+ * loaded charts import, for the same packages; both gitignored. Reads the
  * package names from the content `pnpm fetch:profile` copied, so run that
  * first. Each registry's fetches live in fetch-downloads/: npm.ts reads npm's
  * APIs, and pypi.ts reads PyPI's, and BigQuery's, only when
@@ -95,7 +95,7 @@ await writeGenerated(
 await writeGenerated(
   HISTORY_FILE,
   'fetch:downloads',
-  "import type { DownloadHistory, Registry, Release } from '~/counts'",
+  "import type { DownloadHistory, Registry, Release, VersionDownloads } from '~/counts'",
   [
     {
       name: 'PACKAGE_DOWNLOADS',
@@ -115,6 +115,18 @@ await writeGenerated(
       doc: "Each package's releases, oldest first and leaving out pre-releases, by registry, then package name.",
       type: 'Record<Registry, Record<string, Release[] | undefined>>',
       value: byPackage(({ releases }) => releases),
+    },
+    {
+      name: 'PACKAGE_VERSION_DOWNLOADS',
+      doc: `Each package's downloads of each minor version, like "4.0", over each period, by registry, package name, period, then minor version; npm's API gives only the last week's, so npm has none.`,
+      type: 'Record<Registry, Record<string, VersionDownloads | undefined>>',
+      value: mapValues(kept, (entries) =>
+        Object.fromEntries(
+          entries.flatMap(({ pkg, versions }) =>
+            versions ? [[pkg, versions]] : []
+          )
+        )
+      ),
     },
   ]
 )
