@@ -5,7 +5,13 @@ import { Icon } from '@/components/primitives/Icon'
 import { cn } from '@/lib/cn'
 import type { GlyphName } from '@/lib/icons'
 import { usePlotInput } from './hooks/usePlotInput'
-import { getPlotScale, PLOT, type PlotDomain, type PlotRange } from './lib/plot'
+import {
+  getPlotScale,
+  PLOT,
+  type PlotDomain,
+  type PlotRange,
+  type PlotSize,
+} from './lib/plot'
 
 /** A point the line runs through. */
 export type LineChartPoint = { x: number; y: number }
@@ -33,7 +39,7 @@ const MARKER_CLASSES = {
 // How near a marker the pointer snaps to it, in pixels.
 const MARKER_SNAP_PX = 4
 
-export type LineChartProps = {
+export type LineChartProps = PlotSize & {
   /** The points the line runs through, left to right; two or more */
   points: LineChartPoint[]
   /** The x values its width runs from and to, past which the line is cropped */
@@ -68,16 +74,18 @@ type HoverMarkerProps = {
   x: number
   /** Where it falls up the plot */
   y: number
+  /** Where the plot's baseline is */
+  baseline: number
 }
 
 /** The hovered point's line down the plot, with a dot where it meets the line. */
-const HoverMarker = ({ x, y }: HoverMarkerProps) => (
+const HoverMarker = ({ x, y, baseline }: HoverMarkerProps) => (
   <>
     <line
       x1={x}
       x2={x}
       y1={PLOT.CAPTION_HEIGHT}
-      y2={PLOT.BASELINE}
+      y2={baseline}
       className="stroke-ink-muted/50"
     />
     <circle
@@ -103,6 +111,8 @@ const HoverMarker = ({ x, y }: HoverMarkerProps) => (
  * its values in words for everyone else.
  */
 export const LineChart = ({
+  width,
+  height,
   points,
   domain,
   range,
@@ -123,10 +133,10 @@ export const LineChart = ({
   const clipId = `plot-${useId().replaceAll(':', '')}`
   // Worked out again only when the points or the plot's bounds change, not on
   // each render, as a pointer moving over the chart makes.
-  const { start, end } = domain
-  const { low, high } = range
+  const { x1, x2 } = domain
+  const { y1, y2 } = range
   const { scale, line } = useMemo(() => {
-    const plotScale = getPlotScale({ start, end }, { low, high })
+    const plotScale = getPlotScale({ x1, x2 }, { y1, y2 }, { width, height })
     const { toX, toY } = plotScale
     return {
       scale: plotScale,
@@ -134,14 +144,14 @@ export const LineChart = ({
         .map(({ x, y }, index) => `${index ? 'L' : 'M'}${toX(x)},${toY(y)}`)
         .join(''),
     }
-  }, [points, start, end, low, high])
-  const { toX, toY, xPerPx, getXAt } = scale
+  }, [points, x1, x2, y1, y2, width, height])
+  const { toX, toY, xPerPx, getXAt, right, baseline } = scale
   // It has two points or more, so a first and a last.
-  const first = points[0] ?? { x: start, y: low }
+  const first = points[0] ?? { x: x1, y: y1 }
   const last = points.at(-1) ?? first
   /** The x value at `px` across the plot, kept between the line's start and the domain's end, so it never falls where there's no line. */
-  const getShownXAt = (px: number) => clamp(getXAt(px), first.x, end)
-  const shownMarkers = markers.filter((x) => x >= start && x <= end)
+  const getShownXAt = (px: number) => clamp(getXAt(px), first.x, x2)
+  const shownMarkers = markers.filter((x) => x >= x1 && x <= x2)
   // Where the pointer is across the plot, rather than the point under it, so
   // a zoom or pan that slides the line beneath a still pointer reads out
   // what it's over now.
@@ -169,9 +179,9 @@ export const LineChart = ({
       <svg
         ref={plotRef}
         aria-hidden
-        width={PLOT.WIDTH}
-        height={PLOT.HEIGHT}
-        viewBox={`0 0 ${PLOT.WIDTH} ${PLOT.HEIGHT}`}
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
         className={cn(
           'overflow-visible',
           // A finger dragged across it moves the readout, not the page.
@@ -185,14 +195,14 @@ export const LineChart = ({
         <defs>
           {/* Crops a zoomed-in line at the plot's edges. */}
           <clipPath id={clipId}>
-            <rect width={PLOT.RIGHT + PLOT.INSET} height={PLOT.HEIGHT} />
+            <rect width={right + PLOT.INSET} height={height} />
           </clipPath>
         </defs>
         <line
           x1={PLOT.INSET}
-          x2={PLOT.RIGHT}
-          y1={PLOT.BASELINE}
-          y2={PLOT.BASELINE}
+          x2={right}
+          y1={baseline}
+          y2={baseline}
           className="stroke-ink-muted/30"
         />
         {shownMarkers.map((x) => (
@@ -201,13 +211,13 @@ export const LineChart = ({
             x1={toX(x)}
             x2={toX(x)}
             y1={PLOT.CAPTION_HEIGHT}
-            y2={PLOT.BASELINE}
+            y2={baseline}
             className={MARKER_CLASSES[x === hover?.marker ? 'ACTIVE' : 'IDLE']}
             data-testid="line-chart-marker"
           />
         ))}
         <path
-          d={`${line}L${lastX},${PLOT.BASELINE}L${startX},${PLOT.BASELINE}Z`}
+          d={`${line}L${lastX},${baseline}L${startX},${baseline}Z`}
           fill="currentColor"
           fillOpacity={0.1}
           clipPath={`url(#${clipId})`}
@@ -223,7 +233,7 @@ export const LineChart = ({
           data-testid="line-chart-line"
         />
         {/* Only while the line's end is in view, unless zoomed in short of it. */}
-        {last.x <= end && (
+        {last.x <= x2 && (
           <>
             {endLabel !== undefined && (
               <text
@@ -247,10 +257,14 @@ export const LineChart = ({
           </>
         )}
         {hoverPoint && (
-          <HoverMarker x={toX(hoverPoint.x)} y={toY(hoverPoint.y)} />
+          <HoverMarker
+            x={toX(hoverPoint.x)}
+            y={toY(hoverPoint.y)}
+            baseline={baseline}
+          />
         )}
         {/* The hover target: the whole box, not just the thin line. */}
-        <rect width={PLOT.WIDTH} height={PLOT.HEIGHT} fill="transparent" />
+        <rect width={width} height={height} fill="transparent" />
       </svg>
       <p
         className={cn(

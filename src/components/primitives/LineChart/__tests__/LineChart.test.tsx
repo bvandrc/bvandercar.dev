@@ -7,7 +7,7 @@ import {
   type LineChartHover,
   type LineChartProps,
 } from '../LineChart'
-import { PLOT } from '../lib/plot'
+import { PLOT, type PlotSize } from '../lib/plot'
 
 const {
   PLOT: PLOT_ID,
@@ -24,11 +24,14 @@ const POINTS = [
   { x: 60, y: 4 },
   { x: 100, y: 10 },
 ] satisfies LineChartProps['points']
-const DOMAIN = { start: 0, end: 100 } satisfies LineChartProps['domain']
+const DOMAIN = { x1: 0, x2: 100 } satisfies LineChartProps['domain']
+const SIZE = { width: 328, height: 84 } satisfies PlotSize
+// Where the domain's x2 is drawn, the end label to its right.
+const RIGHT = SIZE.width - PLOT.END_LABEL_WIDTH
 
 /** Where `x` falls across the plot over `DOMAIN`, which the test DOM lays out from 0. */
 const getPlotX = (x: number) =>
-  PLOT.INSET + (x / DOMAIN.end) * (PLOT.RIGHT - PLOT.INSET)
+  PLOT.INSET + (x / DOMAIN.x2) * (RIGHT - PLOT.INSET)
 
 /** Captions the pointer's place along x, rounded, its marker, or "none" off the plot. */
 const captionHover = (hover: LineChartHover | undefined) => {
@@ -44,8 +47,9 @@ const captionHover = (hover: LineChartHover | undefined) => {
 const buildChart = (props?: Partial<LineChartProps>) => (
   <LineChart
     points={POINTS}
+    {...SIZE}
     domain={DOMAIN}
-    range={{ low: 0, high: 10 }}
+    range={{ y1: 0, y2: 10 }}
     colorClassName="text-commits"
     renderCaption={captionHover}
     endLabel="10"
@@ -81,7 +85,7 @@ describe('LineChart', () => {
       // Left of the line's start, which is past the domain's.
       [getPlotX(5), 'x 20'],
       // Past the plot's right edge, over the end label.
-      [PLOT.WIDTH + 20, 'x 100'],
+      [SIZE.width + 20, 'x 100'],
     ] as const
     for (const [clientX, expected] of CASES) {
       movePointer(clientX)
@@ -95,7 +99,7 @@ describe('LineChart', () => {
     expect(screen.getByTestId(CAPTION).textContent).toBe('x 40')
 
     // The same place across the plot, 40% of the way along the new domain.
-    rerender(buildChart({ domain: { start: 50, end: 150 } }))
+    rerender(buildChart({ domain: { x1: 50, x2: 150 } }))
     expect(screen.getByTestId(CAPTION).textContent).toBe('x 90')
   })
 
@@ -157,7 +161,7 @@ describe('LineChart', () => {
     expect(screen.getByTestId(END_NOTE).textContent).toBe('+10')
 
     // Zoomed in short of the line's end.
-    rerender(buildChart({ domain: { start: 0, end: 50 } }))
+    rerender(buildChart({ domain: { x1: 0, x2: 50 } }))
     expect(screen.queryByTestId(END_LABEL)).toBeNull()
     expect(screen.queryByTestId(END_NOTE)).toBeNull()
   })

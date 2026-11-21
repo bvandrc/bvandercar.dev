@@ -23,6 +23,10 @@ const TONE_CLASSES = {
   DOWNLOADS: 'text-cyan-600',
 } as const satisfies Record<ChartTone, string>
 
+// As wide as fits a 375px phone screen, with the tooltip's padding and margins.
+const CHART_WIDTH = 328
+const CHART_HEIGHT = 84
+
 /** Along x as times: a zoom's anchor is one, and a pan's delta is in milliseconds. */
 export type RunningTotalChartProps = Pick<
   LineChartProps,
@@ -97,7 +101,7 @@ export const RunningTotalChart = ({
     const period = index === -1 ? periodEnds.length - 1 : index
     // A zoomed-in span can end partway through a week, whose end, where its
     // dot would sit, is out of view, so the period before it reads out instead.
-    return Date.parse(periodEnds[period]) > domain.end
+    return Date.parse(periodEnds[period]) > domain.x2
       ? Math.max(period - 1, 0)
       : period
   }
@@ -123,6 +127,8 @@ export const RunningTotalChart = ({
   }
   return (
     <LineChart
+      width={CHART_WIDTH}
+      height={CHART_HEIGHT}
       points={points}
       domain={domain}
       range={range}

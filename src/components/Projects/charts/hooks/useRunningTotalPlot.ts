@@ -50,22 +50,22 @@ export const useRunningTotalPlot = ({
     // Compared as times, not strings: a zoomed-in span's ends are ISO times,
     // which sort after the plain ISO date of the same day.
     const domain = {
-      start: Date.parse(spanStart ?? firstDay),
-      end: Date.parse(spanEnd ?? lastDay),
+      x1: Date.parse(spanStart ?? firstDay),
+      x2: Date.parse(spanEnd ?? lastDay),
     }
     // The line starts on the first day, at what was counted before it, or at
     // a span's later start, at what was counted by then.
-    const lineStartTime = Math.max(Date.parse(firstDay), domain.start)
+    const lineStartTime = Math.max(Date.parse(firstDay), domain.x1)
     const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
-    const lastShown = days.findLastIndex((day) => Date.parse(day) <= domain.end)
+    const lastShown = days.findLastIndex((day) => Date.parse(day) <= domain.x2)
     // The height spans what the shown stretch counts, from where the line
     // starts to the last day in view, so a short one's rise fills it too.
     const lineStartTotal = dayTotals[firstShown - 1] ?? 0
     return {
       domain,
       range: {
-        low: lineStartTotal,
-        high: dayTotals[lastShown] ?? lineStartTotal,
+        y1: lineStartTotal,
+        y2: dayTotals[lastShown] ?? lineStartTotal,
       },
       lineStartTotal,
       // Through every day, whichever periods it reads out.
