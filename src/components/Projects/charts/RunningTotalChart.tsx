@@ -8,8 +8,8 @@ import {
 import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { formatDay } from '@/lib/format-date'
 import type { Release } from '~/counts'
-import { DAY_MS } from '~/dates'
 import { useRunningTotalPlot } from './hooks/useRunningTotalPlot'
+import { getPeriodAt } from './lib/periods'
 import type { DaySpan } from './lib/spans'
 import { formatLatestVersion } from './lib/weeks'
 
@@ -92,19 +92,9 @@ export const RunningTotalChart = ({
 }: RunningTotalChartProps) => {
   const { total, periodTotals, lineStartTotal, domain, range, points } =
     useRunningTotalPlot({ firstDay, daily, periodEnds, span })
-  /** The period the day at `time` falls in. */
-  const getActivePeriod = (time: number) => {
-    // The first period ending on or after that day, or the last past them all.
-    const index = periodEnds.findIndex(
-      (periodEnd) => Date.parse(periodEnd) + DAY_MS > time
-    )
-    const period = index === -1 ? periodEnds.length - 1 : index
-    // A zoomed-in span can end partway through a week, whose end, where its
-    // dot would sit, is out of view, so the period before it reads out instead.
-    return Date.parse(periodEnds[period]) > domain.x2
-      ? Math.max(period - 1, 0)
-      : period
-  }
+  /** The period the day at `time` falls in, of those ending in view. */
+  const getActivePeriod = (time: number) =>
+    getPeriodAt(periodEnds, time, domain.x2)
   /** The hovered period's last day and total, which the dot marks. */
   const getPeriodPoint = (time: number) => {
     const period = getActivePeriod(time)

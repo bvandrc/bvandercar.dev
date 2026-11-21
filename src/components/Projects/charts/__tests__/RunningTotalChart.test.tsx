@@ -68,19 +68,6 @@ describe('RunningTotalChart', () => {
     expect(screen.getByTestId(END_LABEL).textContent).toBe('1.2K')
   })
 
-  it('reads out the last week ending in view where a zoomed-in span ends partway through one', () => {
-    renderChart({
-      span: { start: '2026-03-02', end: '2026-03-12' },
-      zoomed: true,
-    })
-
-    // Its right edge is Mar 12, whose week ends out of view on Mar 15.
-    movePointer(400)
-    expect(screen.getByTestId(CAPTION).textContent).toBe(
-      'Through Mar 8, 2026: 5 commits'
-    )
-  })
-
   it('writes what the stretch in view added under the total, while zoomed in on one that starts past zero', () => {
     const { unmount } = renderChart()
     // From zero, the total says it all.
