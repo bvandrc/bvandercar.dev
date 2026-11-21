@@ -6,13 +6,13 @@ import { BeyondCode } from './components/BeyondCode'
 import { Contents } from './components/Contents'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
-import { Projects } from './components/Projects'
+import { Projects, scrollToUrlTarget } from './components/Projects'
 import { TooltipProvider } from './components/primitives/Tooltip'
 import { Skills } from './components/Skills'
 import { cn } from './lib/cn'
 
 export const App = () => {
-  const urlTarget = useUrlHashTarget()
+  const urlTarget = useUrlHashTarget({ scrollToTarget: scrollToUrlTarget })
   return (
     <TooltipProvider>
       <div

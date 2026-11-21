@@ -17,7 +17,8 @@ const waitForFrames = (page: Page) =>
 
 /**
  * Asserts the card with `id` has scrolled into view with its counts' charts
- * open, past the scroll to it, which closes a tooltip opened before it.
+ * open above them, past the scroll to it, which closes a tooltip opened before
+ * it.
  */
 const expectChartsOpenOn = async (page: Page, id: string) => {
   const card = page.locator(`#${id}`)
@@ -25,10 +26,18 @@ const expectChartsOpenOn = async (page: Page, id: string) => {
   await waitForFrames(page)
   // Its trigger says it's closed at once, where a closed tooltip lingers
   // through its fade-in.
-  await expect(card.getByTestId(COUNTS)).toHaveAttribute('data-state', /open$/)
+  const counts = card.getByTestId(COUNTS)
+  await expect(counts).toHaveAttribute('data-state', /open$/)
   const tooltip = page.getByTestId(SELECTORS.TOOLTIP)
   await expect(tooltip.getByTestId(COMMITS_CHART)).toBeVisible()
   await expect(tooltip.getByTestId(DOWNLOADS_CHART)).toBeVisible()
+  // Above the counts, where landing their card's title centered leaves it room.
+  const tooltipBox = await tooltip.boundingBox()
+  const countsBox = await counts.boundingBox()
+  if (!(tooltipBox && countsBox)) {
+    throw new Error('The tooltip or counts have no box')
+  }
+  expect(tooltipBox.y + tooltipBox.height).toBeLessThanOrEqual(countsBox.y)
 }
 
 /** Moves the pointer onto the middle of a chart's plot. */
