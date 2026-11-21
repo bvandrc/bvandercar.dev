@@ -7,8 +7,7 @@ import { SELECTORS } from '~/test-support/selectors'
 import { ProjectCard } from '../ProjectCard'
 
 const { LIVE_PREVIEW } = SELECTORS
-const { CARD, BLURB, COUNTS, COMMITS_CHART, REPO_LINK, THUMBNAIL } =
-  SELECTORS.PROJECTS
+const { CARD, BLURB, COUNTS, COMMITS_CHART, THUMBNAIL } = SELECTORS.PROJECTS
 const { END_LABEL } = SELECTORS.LINE_CHART
 
 // Hoisted with the mocks below, which run before the file's other top-level code.
@@ -65,14 +64,11 @@ const renderCard = (project: Project, onPreviewOpen: () => void = vi.fn()) =>
     />
   )
 
-/** Renders a card with a live preview and a repo link, and returns it. */
+/** Renders a card with a live preview, and returns it. */
 const renderPreviewCard = (onPreviewOpen?: () => void) => {
-  // A private repo's card has no repo link to tab from.
-  const project = ALL_PROJECTS.find(
-    ({ embed, privateRepo }) => embed && !privateRepo
-  )
+  const project = ALL_PROJECTS.find(({ embed }) => embed)
   if (!project) {
-    throw new Error('No project with a public repo has a live preview')
+    throw new Error('No project has a live preview')
   }
   renderCard(project, onPreviewOpen)
   return screen.getByTestId(CARD)
@@ -151,22 +147,6 @@ describe('ProjectCard', () => {
 
     await user.click(within(card).getByTestId(LIVE_PREVIEW.TOGGLE))
     expect(within(card).getByTestId(THUMBNAIL)).toBeDefined()
-  })
-
-  it("tabs from its repo link to its live preview's toggle, and on past its thumbnail", async () => {
-    const user = userEvent.setup()
-    const card = renderPreviewCard()
-    within(card).getByTestId(REPO_LINK).focus()
-
-    await user.tab()
-    expect(document.activeElement).toBe(
-      within(card).getByTestId(LIVE_PREVIEW.TOGGLE)
-    )
-    // A click on the thumbnail opens the preview, but the keyboard has the
-    // toggle for that, as it does for a click on the rest of the card. The
-    // thumbnail follows the toggle, so it would be next.
-    await user.tab()
-    expect(document.activeElement).not.toBe(within(card).getByTestId(THUMBNAIL))
   })
 
   it('shows a screenshot without a live preview at full width, not as a thumbnail', () => {

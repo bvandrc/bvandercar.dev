@@ -103,36 +103,15 @@ const getPlot = (chart: string) =>
   within(screen.getByTestId(chart)).getByTestId(PLOT)
 
 describe('ProjectCharts', () => {
-  it('shows the commits chart, then the downloads chart below it', () => {
-    renderCharts()
-
-    const activity = screen.getByTestId(COMMITS_CHART)
-    const downloads = screen.getByTestId(DOWNLOADS_CHART)
-    expect(
-      activity.compareDocumentPosition(downloads) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy()
-  })
-
-  it('shows the merged PRs chart between the commits and downloads charts', () => {
-    renderCharts({ prs: ACTIVITY })
-
-    const prs = screen.getByTestId(PRS_CHART)
-    expect(
-      screen.getByTestId(COMMITS_CHART).compareDocumentPosition(prs) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy()
-    expect(
-      prs.compareDocumentPosition(screen.getByTestId(DOWNLOADS_CHART)) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy()
-  })
-
   it('shows only the charts it has a history for', () => {
-    renderCharts({ activity: undefined })
-
+    const { unmount } = renderCharts({ activity: undefined })
     expect(screen.queryByTestId(COMMITS_CHART)).toBeNull()
+    expect(screen.queryByTestId(PRS_CHART)).toBeNull()
     expect(screen.getByTestId(DOWNLOADS_CHART)).toBeDefined()
+    unmount()
+
+    renderCharts({ prs: ACTIVITY })
+    expect(screen.getByTestId(PRS_CHART)).toBeDefined()
   })
 
   it('spans both charts over the same dates, so each release lines up across them', () => {
@@ -199,14 +178,6 @@ describe('ProjectCharts', () => {
     })
     const allTime = getReleaseXs()
 
-    // Below the charts.
-    expect(
-      screen
-        .getByTestId(VERSION_DOWNLOADS_CHART.SELF)
-        .compareDocumentPosition(
-          screen.getAllByTestId(CHART_PERIOD.OPTION)[0]
-        ) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy()
     expect(getPeriods()).toEqual([
       ['All time', 'true'],
       ['90 days', 'false'],

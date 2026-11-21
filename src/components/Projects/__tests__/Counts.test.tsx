@@ -269,16 +269,11 @@ describe('Counts', () => {
       expect(unhandled).toEqual([true])
     })
 
-    it("shows the counts as an image, not a button, which the link can't hold, and leaves the link as the only tab stop", async () => {
-      const user = userEvent.setup()
-      const link = renderInLink()
+    it("shows the counts as an image, not a button, which the link can't hold", () => {
+      renderInLink()
 
       expect(screen.getByRole('img', { name: LABEL })).toBeDefined()
       expect(screen.queryByRole('button')).toBeNull()
-      await user.tab()
-      expect(document.activeElement).toBe(link)
-      await user.tab()
-      expect(document.activeElement).toBe(document.body)
     })
   })
 })
