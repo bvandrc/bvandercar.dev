@@ -4,7 +4,8 @@ import { SELECTORS } from '~/test-support/selectors'
 import { getChartedCounts, getChartedRepoLink } from '../support/charted-counts'
 
 const { LINE_CHART } = SELECTORS
-const { CARD, COUNTS, COMMITS_CHART, DOWNLOADS_CHART } = SELECTORS.PROJECTS
+const { CARD, CHART_PERIOD, COUNTS, COMMITS_CHART, DOWNLOADS_CHART } =
+  SELECTORS.PROJECTS
 
 /** Waits two frames, for what a state change rendered to show. */
 const waitForFrames = (page: Page) =>
@@ -122,6 +123,20 @@ test('a URL whose `#` names a card, and asks for its charts, opens on the card w
   await page.goto('about:blank')
   await page.goto(`/#${id}?show_charts=true`)
   await expectChartsOpenOn(page, id)
+
+  // Its period buttons sit in the tooltip, inside the link React renders it
+  // in, so their focus and blur reach the link's own: they mustn't close it.
+  const counts = page.locator(`#${id}`).getByTestId(COUNTS)
+  const periods = page
+    .getByTestId(SELECTORS.TOOLTIP)
+    .getByTestId(CHART_PERIOD.OPTION)
+  for (const option of [periods.last(), periods.first()]) {
+    await option.click()
+    await expect(option).toHaveAttribute('aria-checked', 'true')
+    // Past the frame the focus would close it in.
+    await waitForFrames(page)
+    await expect(counts).toHaveAttribute('data-state', /open$/)
+  }
 })
 
 test("changing the page's `#` to ask for a card's charts scrolls to it and opens them, with no reload", async ({
