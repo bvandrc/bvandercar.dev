@@ -7,11 +7,12 @@ import { formatCompactCount, formatCount } from '@/lib/format-count'
 import { formatDay } from '@/lib/format-date'
 import type { GlyphName } from '@/lib/icons'
 import type { Release } from '~/counts'
-import { addDays, DAY_MS, getDaysBetween } from '~/dates'
+import { DAY_MS } from '~/dates'
 import { usePlotInput } from './hooks/usePlotInput'
-import { getPlotScale, PLOT } from './lib/plot'
+import { useRunningTotalPlot } from './hooks/useRunningTotalPlot'
+import { PLOT } from './lib/plot'
 import type { DaySpan } from './lib/spans'
-import { formatLatestVersion, getRunningTotals } from './lib/weeks'
+import { formatLatestVersion } from './lib/weeks'
 
 /** What a chart counts, which picks its color, the same on every chart. */
 export type ChartTone = 'COMMITS' | 'PRS' | 'DOWNLOADS'
@@ -147,42 +148,22 @@ export const RunningTotalChart = ({
   const plotRef = useRef<SVGSVGElement>(null)
   // An id is only for the clip path's url(), where colons don't belong.
   const clipId = `plot-${useId().replaceAll(':', '')}`
-  const days = daily.map((_, index) => addDays(firstDay, index))
-  // It counts two days or more, so has a last.
-  const lastDay = days.at(-1) ?? firstDay
-  const dayTotals = getRunningTotals(daily)
-  // A running total only grows, so it peaks at the end.
-  const total = dayTotals.at(-1) ?? 0
-  const periodTotals = periodEnds.map(
-    (periodEnd) => dayTotals[getDaysBetween(firstDay, periodEnd)]
-  )
-  const shownSpan = span ?? { start: firstDay, end: lastDay }
-  // The line starts on the first day, at what was counted before it, or at a
-  // span's later start, at what was counted by then.
-  const lineStart =
-    Date.parse(firstDay) < Date.parse(shownSpan.start)
-      ? shownSpan.start
-      : firstDay
-  const lineStartTime = Date.parse(lineStart)
-  const firstShown = days.findIndex((day) => Date.parse(day) >= lineStartTime)
-  const lastShown = days.findLastIndex(
-    (day) => Date.parse(day) <= Date.parse(shownSpan.end)
-  )
-  // The height spans what the shown stretch counts, from where the line
-  // starts to the last day in view, so a short one's rise fills it too.
-  const lineStartTotal = dayTotals[firstShown - 1] ?? 0
-  const { startTime, endTime, msPerPx, toX, toY, getTimeAtX } = getPlotScale(
-    shownSpan,
-    { low: lineStartTotal, high: dayTotals[lastShown] ?? lineStartTotal }
-  )
-  const lastX = toX(lastDay)
-  const startX = toX(lineStart)
-  // Through every day, whichever periods it reads out.
-  const line = `M${startX},${toY(lineStartTotal)}${dayTotals
-    .map((count, index) => [count, days[index]] as const)
-    .slice(firstShown)
-    .map(([count, day]) => `L${toX(day)},${toY(count)}`)
-    .join('')}`
+  const {
+    lastDay,
+    total,
+    periodTotals,
+    lineStartTime,
+    lineStartTotal,
+    startTime,
+    endTime,
+    msPerPx,
+    toX,
+    toY,
+    getTimeAtX,
+    startX,
+    lastX,
+    line,
+  } = useRunningTotalPlot({ firstDay, daily, periodEnds, span })
   /** The time at `x` across the plot, kept between where the line starts and the span's end, so it never falls on a period the chart leaves out. */
   const getShownTimeAtX = (x: number) =>
     clamp(getTimeAtX(x), lineStartTime, endTime)
