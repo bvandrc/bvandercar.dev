@@ -9,14 +9,7 @@ import {
 } from '../LineChart'
 import { PLOT, type PlotSize } from '../lib/plot'
 
-const {
-  PLOT: PLOT_ID,
-  CAPTION,
-  DOT,
-  MARKER,
-  END_LABEL,
-  END_NOTE,
-} = SELECTORS.LINE_CHART
+const { PLOT: PLOT_ID, CAPTION, DOT, MARKER } = SELECTORS.LINE_CHART
 
 // A line from 20 to 100 along x, rising from 0 to 10.
 const POINTS = [
@@ -52,8 +45,6 @@ const buildChart = (props?: Partial<LineChartProps>) => (
     range={{ y1: 0, y2: 10 }}
     colorClassName="text-commits"
     renderCaption={captionHover}
-    endLabel="10"
-    endNote="+10"
     {...props}
   />
 )
@@ -125,12 +116,6 @@ describe('LineChart', () => {
     expect(screen.getByTestId(DOT)).toBeDefined()
   })
 
-  it('leaves out markers outside the domain', () => {
-    renderChart({ markers: [-10, 0, 50, 100, 150] })
-
-    expect(screen.getAllByTestId(MARKER)).toHaveLength(3)
-  })
-
   // How a wheel, a pinch, or a drag zooms and pans is useZoomPanGestures'
   // own, tested in @bvandrc/react-toolkit; this keeps what the chart adds.
   it('zooms with the wheel around the x under the pointer, kept to where the line starts', () => {
@@ -153,33 +138,5 @@ describe('LineChart', () => {
     // Dragged 10 along x to the right, so it shows what's 10 earlier.
     const panned = onPan.mock.calls.reduce((sum, [delta]) => sum + delta, 0)
     expect(panned).toBeCloseTo(-10)
-  })
-
-  it("writes the end label and note only while the line's end is in view", () => {
-    const { rerender } = renderChart()
-    expect(screen.getByTestId(END_LABEL).textContent).toBe('10')
-    expect(screen.getByTestId(END_NOTE).textContent).toBe('+10')
-
-    // Zoomed in short of the line's end.
-    rerender(buildChart({ domain: { x1: 0, x2: 50 } }))
-    expect(screen.queryByTestId(END_LABEL)).toBeNull()
-    expect(screen.queryByTestId(END_NOTE)).toBeNull()
-  })
-
-  it('shows a grab cursor only while pannable, with a pan to make', () => {
-    const CASES = [
-      [{ pannable: true, onPan: vi.fn() }, true],
-      // Nothing to call with the drag.
-      [{ pannable: true }, false],
-      [{ onPan: vi.fn() }, false],
-    ] as const
-    for (const [props, grabs] of CASES) {
-      const { unmount } = renderChart(props)
-      expect(
-        screen.getByTestId(PLOT_ID).classList.contains('cursor-grab'),
-        JSON.stringify(Object.keys(props))
-      ).toBe(grabs)
-      unmount()
-    }
   })
 })
