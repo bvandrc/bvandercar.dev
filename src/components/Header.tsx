@@ -77,14 +77,16 @@ const Intro = () => {
 
 export const Header = () => (
   <header className="flex flex-col items-center gap-3" data-testid="header">
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    {/* On a phone, the portrait sits beside the name at its height, so it
+        costs no space above the projects; from sm, it stands above it. */}
+    <div className="flex flex-wrap items-center justify-center gap-3 sm:flex-col">
       <img
-        src={`${import.meta.env.BASE_URL}logo.svg`}
+        src={`${import.meta.env.BASE_URL}portrait.webp`}
         alt=""
-        width={40}
-        height={40}
-        className="size-10"
-        data-testid="header-logo"
+        width={96}
+        height={96}
+        className="size-10 rounded-full sm:size-24"
+        data-testid="header-portrait"
       />
       <h1
         className="text-3xl font-semibold tracking-tight"
