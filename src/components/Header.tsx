@@ -89,15 +89,19 @@ export const Header = () => (
     {/* On a phone, the portrait sits beside the name at its height; from sm,
         this row gives way, so its two take their own places in the grid. */}
     <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
-      {/* The photo in black and white, tinted the accent: its lightness laid
-          over the accent, which this keeps from blending with the page. */}
-      <span className="isolate size-10 overflow-hidden rounded-full bg-accent sm:row-span-3 sm:size-40">
+      {/* Behind the photo, the accent, which shows faintly through it. */}
+      <span className="size-10 overflow-hidden rounded-full bg-accent sm:row-span-3 sm:size-40">
         <img
           src={`${import.meta.env.BASE_URL}portrait.webp`}
           alt=""
           width={160}
           height={160}
-          className="size-full mix-blend-luminosity"
+          className={cn(
+            'size-full',
+            // A dim black and white, so it sits back on the dark page, letting
+            // through just enough of the accent behind it to tint it.
+            'brightness-80 contrast-115 grayscale opacity-92'
+          )}
           data-testid="header-portrait"
         />
       </span>
