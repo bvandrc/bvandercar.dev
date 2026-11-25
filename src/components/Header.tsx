@@ -76,16 +76,23 @@ const Intro = () => {
 }
 
 export const Header = () => (
-  <header className="flex flex-col items-center gap-3" data-testid="header">
-    {/* On a phone, the portrait sits beside the name at its height, so it
-        costs no space above the projects; from sm, it stands above it. */}
-    <div className="flex flex-wrap items-center justify-center gap-3 sm:flex-col">
+  <header
+    className={cn(
+      'flex flex-col items-center gap-3',
+      // From sm, the portrait stands to the left of the name, intro, and links,
+      // spanning their rows, so it adds no height above the projects.
+      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:justify-items-center sm:gap-x-8'
+    )}
+    data-testid="header">
+    {/* On a phone, the portrait sits beside the name at its height; from sm,
+        this row gives way, so its two take their own places in the grid. */}
+    <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
       <img
         src={`${import.meta.env.BASE_URL}portrait.webp`}
         alt=""
-        width={96}
-        height={96}
-        className="size-10 rounded-full sm:size-24"
+        width={160}
+        height={160}
+        className="size-10 rounded-full sm:row-span-3 sm:size-40"
         data-testid="header-portrait"
       />
       <h1
