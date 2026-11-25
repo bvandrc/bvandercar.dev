@@ -24,7 +24,7 @@ const Intro = () => {
       open={!isPhone || expanded}
       onOpenChange={setExpanded}
       className={cn(
-        'group/intro flex max-w-prose flex-col items-center gap-1 text-ink-muted',
+        'group/intro flex max-w-prose flex-col items-center gap-1 text-ink-muted sm:items-start',
         // A size down on a phone, so the intro takes fewer lines.
         'text-sm sm:text-base',
         // Evens out a line that wraps, rather than leaving one word on its own.
@@ -81,20 +81,26 @@ export const Header = () => (
       'flex flex-col items-center gap-3',
       // From sm, the portrait stands to the left of the name, intro, and links,
       // spanning their rows, so it adds no height above the projects.
-      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:justify-items-center sm:gap-x-8'
+      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-8',
+      // Those three line up on the portrait's side, as a profile's do.
+      'sm:justify-items-start sm:text-left'
     )}
     data-testid="header">
     {/* On a phone, the portrait sits beside the name at its height; from sm,
         this row gives way, so its two take their own places in the grid. */}
     <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
-      <img
-        src={`${import.meta.env.BASE_URL}portrait.webp`}
-        alt=""
-        width={160}
-        height={160}
-        className="size-10 rounded-full sm:row-span-3 sm:size-40"
-        data-testid="header-portrait"
-      />
+      {/* The photo in black and white, tinted the accent: its lightness laid
+          over the accent, which this keeps from blending with the page. */}
+      <span className="isolate size-10 overflow-hidden rounded-full bg-accent sm:row-span-3 sm:size-40">
+        <img
+          src={`${import.meta.env.BASE_URL}portrait.webp`}
+          alt=""
+          width={160}
+          height={160}
+          className="size-full mix-blend-luminosity"
+          data-testid="header-portrait"
+        />
+      </span>
       <h1
         className="text-3xl font-semibold tracking-tight"
         data-testid="header-title">
@@ -102,7 +108,7 @@ export const Header = () => (
       </h1>
     </div>
     <Intro />
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-start">
       <SocialLinks />
     </div>
   </header>
