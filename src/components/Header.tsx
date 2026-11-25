@@ -82,8 +82,10 @@ export const Header = () => (
       'flex flex-col items-center gap-3',
       // From sm, the portrait, with the links as icons below it, stands to the
       // left of the name and intro, so neither adds height above the projects.
-      'sm:grid sm:grid-cols-[auto_auto] sm:grid-rows-[auto_1fr_auto] sm:justify-center sm:gap-x-8',
-      "sm:[grid-template-areas:'photo_name'_'photo_intro'_'links_intro']",
+      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-8',
+      // The portrait's rows fit it, level with the name's top, and the links
+      // take the rest of the intro's height, centered in it.
+      "sm:grid-rows-[auto_auto_1fr] sm:[grid-template-areas:'photo_name'_'photo_intro'_'links_intro']",
       // The name and intro line up on the portrait's side, as a profile's do.
       'sm:justify-items-start sm:text-left'
     )}
