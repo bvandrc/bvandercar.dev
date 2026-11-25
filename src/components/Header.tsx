@@ -28,7 +28,8 @@ const Intro = () => {
         // A size down on a phone, so the intro takes fewer lines.
         'text-sm sm:text-base',
         // Evens out a line that wraps, rather than leaving one word on its own.
-        'text-balance'
+        'text-balance',
+        'sm:[grid-area:intro]'
       )}
       data-testid="header-tagline">
       {INTRO_LINES.slice(0, PHONE_INTRO_LINES).map((line) => (
@@ -79,10 +80,11 @@ export const Header = () => (
   <header
     className={cn(
       'flex flex-col items-center gap-3',
-      // From sm, the portrait stands to the left of the name, intro, and links,
-      // spanning their rows, so it adds no height above the projects.
-      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-8',
-      // Those three line up on the portrait's side, as a profile's do.
+      // From sm, the portrait, with the links as icons below it, stands to the
+      // left of the name and intro, so neither adds height above the projects.
+      'sm:grid sm:grid-cols-[auto_auto] sm:grid-rows-[auto_1fr_auto] sm:justify-center sm:gap-x-8',
+      "sm:[grid-template-areas:'photo_name'_'photo_intro'_'links_intro']",
+      // The name and intro line up on the portrait's side, as a profile's do.
       'sm:justify-items-start sm:text-left'
     )}
     data-testid="header">
@@ -90,12 +92,12 @@ export const Header = () => (
         this row gives way, so its two take their own places in the grid. */}
     <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
       {/* Behind the photo, the accent, which shows faintly through it. */}
-      <span className="size-10 overflow-hidden rounded-full bg-accent sm:row-span-3 sm:size-40">
+      <span className="size-10 overflow-hidden rounded-full bg-accent sm:size-32 sm:[grid-area:photo]">
         <img
           src={`${import.meta.env.BASE_URL}portrait.webp`}
           alt=""
-          width={160}
-          height={160}
+          width={128}
+          height={128}
           className={cn(
             'size-full',
             // A dim black and white, so it sits back on the dark page, letting
@@ -106,14 +108,14 @@ export const Header = () => (
         />
       </span>
       <h1
-        className="text-3xl font-semibold tracking-tight"
+        className="text-3xl font-semibold tracking-tight sm:[grid-area:name]"
         data-testid="header-title">
         Blake Vandercar
       </h1>
     </div>
     <Intro />
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-start">
-      <SocialLinks />
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:gap-x-4 sm:justify-self-center sm:[grid-area:links]">
+      <SocialLinks labels="hiddenFromSm" />
     </div>
   </header>
 )
