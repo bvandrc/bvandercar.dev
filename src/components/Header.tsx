@@ -94,12 +94,12 @@ export const Header = () => (
         this row gives way, so its two take their own places in the grid. */}
     <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
       {/* Behind the photo, the accent, which shows faintly through it. */}
-      <span className="size-10 overflow-hidden rounded-full bg-accent sm:size-32 sm:[grid-area:photo]">
+      <span className="size-10 overflow-hidden rounded-full bg-accent sm:size-40 sm:[grid-area:photo]">
         <img
           src={`${import.meta.env.BASE_URL}portrait.webp`}
           alt=""
-          width={128}
-          height={128}
+          width={160}
+          height={160}
           className={cn(
             'size-full',
             // A dim black and white, so it sits back on the dark page, letting
