@@ -122,7 +122,7 @@ export const Header = () => (
       </h1>
     </div>
     <Intro />
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:gap-x-3 sm:justify-self-center sm:[grid-area:links]">
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:gap-x-6 sm:justify-self-center sm:[grid-area:links]">
       <SocialLinks labels="hiddenFromSm" />
     </div>
   </header>
