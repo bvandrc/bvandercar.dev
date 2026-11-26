@@ -96,10 +96,10 @@ export const Header = () => (
       {/* Behind the photo, the accent, which shows faintly through it. */}
       <span
         className={cn(
-          'size-10 overflow-hidden rounded-full bg-accent sm:[grid-area:photo]',
-          // Its top level with the name's letters rather than their line, and
-          // smaller by as much, so the links below it stay where they are.
-          'sm:mt-2 sm:size-38'
+          'size-10 overflow-hidden rounded-full bg-accent sm:size-38 sm:[grid-area:photo]',
+          // Level with the name's capitals, which its box starts at where the
+          // browser can trim it; elsewhere, about as far down its line.
+          'sm:mt-2 sm:supports-[text-box:trim-start_cap_alphabetic]:mt-0'
         )}>
         <img
           src={`${import.meta.env.BASE_URL}portrait.webp`}
@@ -116,13 +116,18 @@ export const Header = () => (
         />
       </span>
       <h1
-        className="text-3xl font-semibold tracking-tight sm:[grid-area:name]"
+        className={cn(
+          'text-3xl font-semibold tracking-tight sm:[grid-area:name]',
+          // From sm, its box starts at its capitals' tops, whatever the font,
+          // so the portrait beside it can line up with them.
+          'sm:[text-box:trim-start_cap_alphabetic]'
+        )}
         data-testid="header-title">
         Blake Vandercar
       </h1>
     </div>
     <Intro />
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:gap-x-6 sm:justify-self-center sm:[grid-area:links]">
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-self-center sm:[grid-area:links]">
       <SocialLinks labels="hiddenFromSm" />
     </div>
   </header>
