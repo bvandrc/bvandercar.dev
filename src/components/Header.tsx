@@ -82,7 +82,7 @@ export const Header = () => (
       'flex flex-col items-center gap-3',
       // From sm, the portrait, with the links as icons below it, stands to the
       // left of the name and intro, so neither adds height above the projects.
-      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-8',
+      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-6',
       // The portrait's rows fit it, level with the name's top, and the links
       // take the rest of the intro's height, centered in it.
       "sm:grid-rows-[auto_auto_1fr] sm:[grid-template-areas:'photo_name'_'photo_intro'_'links_intro']",
@@ -94,12 +94,18 @@ export const Header = () => (
         this row gives way, so its two take their own places in the grid. */}
     <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
       {/* Behind the photo, the accent, which shows faintly through it. */}
-      <span className="size-10 overflow-hidden rounded-full bg-accent sm:size-40 sm:[grid-area:photo]">
+      <span
+        className={cn(
+          'size-10 overflow-hidden rounded-full bg-accent sm:[grid-area:photo]',
+          // Its top level with the name's letters rather than their line, and
+          // smaller by as much, so the links below it stay where they are.
+          'sm:mt-2 sm:size-38'
+        )}>
         <img
           src={`${import.meta.env.BASE_URL}portrait.webp`}
           alt=""
-          width={160}
-          height={160}
+          width={152}
+          height={152}
           className={cn(
             'size-full',
             // A dim black and white, so it sits back on the dark page, letting
@@ -116,7 +122,7 @@ export const Header = () => (
       </h1>
     </div>
     <Intro />
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:gap-x-4 sm:justify-self-center sm:[grid-area:links]">
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:gap-x-3 sm:justify-self-center sm:[grid-area:links]">
       <SocialLinks labels="hiddenFromSm" />
     </div>
   </header>
