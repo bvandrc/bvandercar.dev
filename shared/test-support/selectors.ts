@@ -1,7 +1,7 @@
 export const SELECTORS = {
   HEADER: {
     SELF: 'header',
-    LOGO: 'header-logo',
+    PORTRAIT: 'header-portrait',
     TITLE: 'header-title',
     TAGLINE: 'header-tagline',
     INTRO_MORE: 'header-intro-more',

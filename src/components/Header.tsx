@@ -24,11 +24,12 @@ const Intro = () => {
       open={!isPhone || expanded}
       onOpenChange={setExpanded}
       className={cn(
-        'group/intro flex max-w-prose flex-col items-center gap-1 text-ink-muted',
+        'group/intro flex max-w-prose flex-col items-center gap-1 text-ink-muted sm:items-start',
         // A size down on a phone, so the intro takes fewer lines.
         'text-sm sm:text-base',
         // Evens out a line that wraps, rather than leaving one word on its own.
-        'text-balance'
+        'text-balance',
+        'sm:[grid-area:intro]'
       )}
       data-testid="header-tagline">
       {INTRO_LINES.slice(0, PHONE_INTRO_LINES).map((line) => (
@@ -76,25 +77,58 @@ const Intro = () => {
 }
 
 export const Header = () => (
-  <header className="flex flex-col items-center gap-3" data-testid="header">
-    <div className="flex flex-wrap items-center justify-center gap-3">
-      <img
-        src={`${import.meta.env.BASE_URL}logo.svg`}
-        alt=""
-        width={40}
-        height={40}
-        className="size-10"
-        data-testid="header-logo"
-      />
+  <header
+    className={cn(
+      'flex flex-col items-center gap-3',
+      // From sm, the portrait, with the links as icons below it, stands to the
+      // left of the name and intro, so neither adds height above the projects.
+      'sm:grid sm:grid-cols-[auto_auto] sm:justify-center sm:gap-x-6',
+      // The portrait's rows fit it, level with the name's top, and the links
+      // take the rest of the intro's height, centered in it.
+      "sm:grid-rows-[auto_auto_1fr] sm:[grid-template-areas:'photo_name'_'photo_intro'_'links_intro']",
+      // The name and intro line up on the portrait's side, as a profile's do.
+      'sm:justify-items-start sm:text-left'
+    )}
+    data-testid="header">
+    {/* On a phone, the portrait sits beside the name at its height; from sm,
+        this row gives way, so its two take their own places in the grid. */}
+    <div className="flex flex-wrap items-center justify-center gap-3 sm:contents">
+      {/* Behind the photo, the accent, which shows faintly through it. */}
+      <span
+        className={cn(
+          'size-10 overflow-hidden rounded-full bg-accent sm:size-38 sm:[grid-area:photo]',
+          // Level with the name's capitals, which its box starts at where the
+          // browser can trim it; elsewhere, about as far down its line.
+          'sm:mt-2 sm:supports-[text-box:trim-start_cap_alphabetic]:mt-0'
+        )}>
+        <img
+          src={`${import.meta.env.BASE_URL}portrait.webp`}
+          alt=""
+          width={152}
+          height={152}
+          className={cn(
+            'size-full',
+            // A dim black and white, so it sits back on the dark page, letting
+            // through just enough of the accent behind it to tint it.
+            'brightness-80 contrast-115 grayscale opacity-92'
+          )}
+          data-testid="header-portrait"
+        />
+      </span>
       <h1
-        className="text-3xl font-semibold tracking-tight"
+        className={cn(
+          'text-3xl font-semibold tracking-tight sm:[grid-area:name]',
+          // From sm, its box starts at its capitals' tops, whatever the font,
+          // so the portrait beside it can line up with them.
+          'sm:[text-box:trim-start_cap_alphabetic]'
+        )}
         data-testid="header-title">
         Blake Vandercar
       </h1>
     </div>
     <Intro />
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-      <SocialLinks />
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-self-center sm:[grid-area:links]">
+      <SocialLinks labels="hiddenFromSm" />
     </div>
   </header>
 )
